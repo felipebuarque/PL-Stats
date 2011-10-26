@@ -18,5 +18,7 @@ Options:
 	-p, --project=PROJECT		set a project to be analyzed as PROJECT.
 	-w, --workspace=WORKSPACE	set a workspace to be analyzed as WORKSPACE. All projects within WORKSPACE will be analyzed.
 
+	('_pl-stats' directory is generated under each root project directory)
+
 Example:
 	python pl-stats.py -l C -p ../projects/cherokee-1.0.8/
