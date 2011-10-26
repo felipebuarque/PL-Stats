@@ -1,0 +1,164 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+                "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+  <head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+    <meta http-equiv="Content-Language" content="en-us" />
+    <meta name="ROBOTS" content="ALL" />
+    <meta http-equiv="imagetoolbar" content="no" />
+    <meta name="MSSmartTagsPreventParsing" content="true" />
+    <meta name="Keywords" content="cherokee web server httpd http" />
+    <meta name="Description" content="Cherokee is a flexible, very fast, lightweight Web server. It is implemented entirely in C, and has no dependencies beyond a standard C library. It is embeddable and extensible with plug-ins. It supports on-the-fly configuration by reading files or strings, TLS/SSL (via GNUTLS or OpenSSL), virtual hosts, authentication, cache friendly features, PHP, custom error management, and much more." />
+    <link href="media/css/cherokee_doc.css" rel="stylesheet" type="text/css" media="all" />
+  </head>
+<body>
+<h2 id="_a_href_index_html_index_a_8594_a_href_cookbook_html_cookbook_a"><a href="index.html">Index</a> &#8594; <a href="cookbook.html">Cookbook</a></h2>
+<div class="sectionbody">
+</div>
+<h2 id="_cookbook_setting_up_wordpress">Cookbook: Setting up WordPress</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Setting up <a href="http://wordpress.org/">WordPress</a> with Cherokee is
+really easy. This recipe describes the WordPress 2.8.x installation,
+which is the latest release at the time of writing.</p></div>
+<div class="paragraph"><p>There is a
+<a href="http://www.cherokee-project.com/screencasts.html#wordpress">screencast</a>
+available at the
+<a href="http://www.cherokee-project.com/">Cherokee-Project website</a> to
+demonstrate how easy it is to use the WordPress wizard.</p></div>
+<div class="paragraph"><p><span class="image">
+<a class="image" href="http://www.cherokee-project.com/screencasts.html#wordpress">
+<img src="media/images/screencast.png" alt="media/images/screencast.png" />
+</a>
+</span></p></div>
+<div class="paragraph"><p>There are two ways of installing WordPress: it can either be installed
+as a new virtual server or be installed inside a directory of some of
+the virtual servers that already exist.</p></div>
+<h3 id="cherokee_vserver">Setting up WordPress as a new Virtual Server</h3><div style="clear:left"></div>
+<div class="paragraph"><p>The first step would be to go to the virtual server list page. Once in
+there, click on the <tt>Add</tt> button at the top of the panel to show the
+list of available wizards.</p></div>
+<div class="imageblock">
+<div class="content">
+<img src="media/images/admin_vservers_wizard.png" alt="media/images/admin_vservers_wizard.png" />
+</div>
+</div>
+<div class="paragraph"><p>Now, you will have to select the <tt>CMS</tt> category, and run the WordPress
+wizard.  At this stage the WordPress wizard will ask you for some
+basic parameters about the installation. It will try to auto-fill as
+many entries of the form as possible.  For instance, if it finds
+WordPress installed in a standard location it will use that path as
+the default directory.</p></div>
+<div class="paragraph"><p>The new virtual server will be created after this form is submitted.
+The virtual server configuration will cover the vast majority of the
+cases. Most probably it will cover your needs, although you are free
+to modify it as you will.</p></div>
+<h3 id="cherokee_dir">Setting up WordPress inside a Directory</h3><div style="clear:left"></div>
+<div class="paragraph"><p>WordPress can also be configured inside a directory. Let&#8217;s suppose we
+want to set up WordPress inside the <tt>/blog</tt> directory of one of our
+virtual servers.</p></div>
+<div class="paragraph"><p>In this case, the first thing you will have to do is to enter the
+virtual server configuration you&#8217;d like to configure WordPress
+in. Visit the <tt>Behavior</tt> tab, use the <tt>Rule Management</tt> button and
+click on the <tt>Add</tt> button at the top of the panel.</p></div>
+<div class="imageblock">
+<div class="content">
+<img src="media/images/admin_vserver_wizard.png" alt="media/images/admin_vserver_wizard.png" />
+</div>
+</div>
+<div class="paragraph"><p>As in the previous case, this wizard will ask some very basic
+information, including the public web directory where WordPress will
+be set up and the local WordPress source directory.</p></div>
+<h4 id="_warning">WARNING</h4>
+<div class="paragraph"><p>Beware of the long time it gets WordPress to get through the
+installation. It has been known to exceed the timeout that Cherokee
+uses as default, and while this will still sometimes allow for a
+complete installation, it will most probably cause a failure while
+delivering the last page of the process. Since this is the page that
+provides the random password needed to access the admin page of
+WordPress, you installation will be useless.</p></div>
+<div class="paragraph"><p>If you encounter this problem, please increase your server&#8217;s <tt>timeout</tt>
+value, under the <tt>Basic Behavior</tt> paragraph of the <tt>General</tt> tab, and
+start over.</p></div>
+<div class="paragraph"><p>If you are going to attempt to make an installation as is, with no
+reconfiguration of Cherokee whatsoever, you can skip right to the
+section <a href="cookbook_wordpress.html#setting_up_wordpress">Setting up
+WordPress</a>.</p></div>
+<h4 id="_warning_2">WARNING</h4>
+<div class="paragraph"><p>Beware of another possible break point. The last step in the
+installation of WordPress involves mailing the details of the new
+account to the provided email. Normally the process will be painless:
+if the system is running an MTA, this report will be sent. If not, it
+will simply skip this step. In both cases the information will also be
+displayed on screen. However, there is a corner case that might make
+your installation fail: if the server is running a broken MTA, this
+could make PHP fail when trying to deliver the email, in turn
+resulting in a failure during the installation, and making Cherokee
+report an <tt>Error 500</tt>. Having a broken MTA on a production server is a
+very unlikely scenario, but double check your MTA in case you receive
+this error.</p></div>
+<h3 id="wordpress">Setting up WordPress</h3><div style="clear:left"></div>
+<div class="paragraph"><p>First download and uncompress the distributed WordPress release into
+<tt>/var/www/wordpress</tt>, and create a database suitable for the installation.</p></div>
+<div class="paragraph"><p>Log in to MySQL:</p></div>
+<div class="listingblock">
+<div class="content">
+<pre><tt>mysql -u root -p</tt></pre>
+</div></div>
+<div class="paragraph"><p>And create the database for WordPress. We will be using the name
+<em>wp</em>, the user <em>wpuser</em> and the password <em>wppassword</em>, but
+you should set up your own.</p></div>
+<div class="listingblock">
+<div class="content">
+<pre><tt>CREATE DATABASE wp;
+GRANT ALL PRIVILEGES ON wp.* TO wpuser@localhost IDENTIFIED BY 'wppassword';
+GRANT ALL PRIVILEGES ON wp.* TO wpuser@localhost.localdomain IDENTIFIED BY 'wppassword';
+FLUSH PRIVILEGES;
+quit;</tt></pre>
+</div></div>
+<div class="paragraph"><p>Then point your web browser to <tt>http://localhost</tt> and follow the
+instructions provided by the installer.</p></div>
+<div class="imageblock">
+<div class="content">
+<img src="media/images/cookbook_wp1.png" alt="media/images/cookbook_wp1.png" />
+</div>
+</div>
+<div class="paragraph"><p>And the installation will be automatic. Just fill up the
+requested values and you will obtain the following results once your
+are through.</p></div>
+<div class="imageblock">
+<div class="content">
+<img src="media/images/cookbook_wp2.png" alt="media/images/cookbook_wp2.png" />
+</div>
+</div>
+<div class="paragraph"><p>With that, you are done installing. Let&#8217;s log in and make the last
+adjustments.</p></div>
+<div class="imageblock">
+<div class="content">
+<img src="media/images/cookbook_wp3.png" alt="media/images/cookbook_wp3.png" />
+</div>
+</div>
+<div class="paragraph"><p>Once we&#8217;re logged, we can configure the way <tt>permalinks</tt> are
+displayed. Just use the <tt>Settings</tt>&#8594;<tt>Permalinks</tt> menu, and adjust the
+way the links are to be rewritten.</p></div>
+<div class="imageblock">
+<div class="content">
+<img src="media/images/cookbook_wp4.png" alt="media/images/cookbook_wp4.png" />
+</div>
+</div>
+<div class="paragraph"><p>Remember to set up the plugins that are of interest for you, such as
+the sitemap generator, in a fashion compatible with what you
+configured in Cherokee.</p></div>
+<div class="paragraph"><p>And voilà! You have a WordPress installation working flawlessly with
+Cherokee.</p></div>
+<div class="imageblock">
+<div class="content">
+<img src="media/images/cookbook_wp5.png" alt="media/images/cookbook_wp5.png" />
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+</div>
+</div>
+</body>
+</html>

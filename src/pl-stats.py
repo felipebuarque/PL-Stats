@@ -14,14 +14,14 @@ def usage():
     Help!
     '''
     print ''
-    print 'Usage: python pl-stats.py [OPTIONS] [PROJECT]'
+    print 'Usage: python pl-stats.py [OPTIONS] [PROJECT|WORKSPACE]'
     print 'Generates Antenna directives statistics about the PROJECT.'
     print ''
     print 'Options:'
-    print '    -h, --help             print this help'
-    print '    -g, --generate         generate statistics. Whithout this flag, is there statistics data in project directory, they will be kept.'
-    print '    -l, --language=LANG    set the project language as LANG. Actually supports C and Java languages.'
-    print '    -e, --export           export statistics to different formats. Actually supports CSV and XML formats.'
+    print '    -h, --help                 print this help'
+    print '    -l, --language=LANG        set the project language as LANG. Actually supports C and Java languages.'
+    print '    -p, --project=PROJECT      set a project to be analyzed as PROJECT.'
+    print '    -w, --workspace=WORKSPACE  set a workspace to be analyzed as WORKSPACE. All projects within WORKSPACE will be analyzed.'
     print ''
 
 

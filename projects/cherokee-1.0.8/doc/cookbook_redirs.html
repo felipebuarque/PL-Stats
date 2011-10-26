@@ -1,0 +1,67 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+                "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+  <head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+    <meta http-equiv="Content-Language" content="en-us" />
+    <meta name="ROBOTS" content="ALL" />
+    <meta http-equiv="imagetoolbar" content="no" />
+    <meta name="MSSmartTagsPreventParsing" content="true" />
+    <meta name="Keywords" content="cherokee web server httpd http" />
+    <meta name="Description" content="Cherokee is a flexible, very fast, lightweight Web server. It is implemented entirely in C, and has no dependencies beyond a standard C library. It is embeddable and extensible with plug-ins. It supports on-the-fly configuration by reading files or strings, TLS/SSL (via GNUTLS or OpenSSL), virtual hosts, authentication, cache friendly features, PHP, custom error management, and much more." />
+    <link href="media/css/cherokee_doc.css" rel="stylesheet" type="text/css" media="all" />
+  </head>
+<body>
+<h2 id="_a_href_index_html_index_a_8594_a_href_cookbook_html_cookbook_a"><a href="index.html">Index</a> &#8594; <a href="cookbook.html">Cookbook</a></h2>
+<div class="sectionbody">
+</div>
+<h2 id="_cookbook_redirections">Cookbook: Redirections</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Every now and then a redirection example is requested in the
+<a href="other_community.html">mailing list</a>. This recipe is meant to be a
+central archive of such examples. Remember there are some more generic
+examples both in the <a href="config_quickstart.html">quickstart</a> and in
+the <a href="modules_handlers_redir.html">redirection</a> handler sections.</p></div>
+<div class="paragraph"><p>There is also a wizard to automatically assist you with
+redirections. It can be found in the <a href="config_wizards.html">Wizards</a>
+section of the <tt>Virtual Servers</tt> panel.</p></div>
+<h3 id="_redirecting_www_example_net_to_example_net">Redirecting www.example.net to example.net</h3><div style="clear:left"></div>
+<div class="paragraph"><p>Sometimes a site will have several domains or subdomains pointing to
+the same official name. For whatever reasons (site statistics, for
+instance), having many subdomains redirected to a unique subdomain
+might be desirable. This can be accomplished fairly easily. The
+general recipe consists in defining a virtual host with the sole
+purpose of redirecting petitions to the official subdomain. In our
+example, this could manage <em>*.example.net</em> and the <em>.com</em> and
+<em>.org</em> variations.</p></div>
+<div class="imageblock">
+<div class="content">
+<img src="media/images/cookbook_redir_domains.png" alt="media/images/cookbook_redir_domains.png" />
+</div>
+</div>
+<div class="paragraph"><p>The official name would then be managed by another virtual host
+(just for <em>example.net</em>). The <tt>redir</tt> virtual host will have a
+<tt>Default</tt> managed by the <tt>Redirection</tt> handler.</p></div>
+<div class="imageblock">
+<div class="content">
+<img src="media/images/cookbook_redir_behavior.png" alt="media/images/cookbook_redir_behavior.png" />
+</div>
+</div>
+<div class="paragraph"><p>This in turn would define an <em>external redirection</em> with a <em>Regular
+Expression</em> like <em>^/(.*)$</em> and the appropriate <em>Substitution</em>:
+<a href="http://example.net/$1">http://example.net/$1</a></p></div>
+<div class="imageblock">
+<div class="content">
+<img src="media/images/cookbook_redir_handler.png" alt="media/images/cookbook_redir_handler.png" />
+</div>
+</div>
+<div class="paragraph"><p>Keep in mind the redirection has to be external in order for Cherokee
+to rewrite the the URL. If it wasn&#8217;t, the redirection would be applied
+but no change would be displayed to the users while browsing the site.</p></div>
+</div>
+<div id="footer">
+<div id="footer-text">
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,175 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+                "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+  <head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+    <meta http-equiv="Content-Language" content="en-us" />
+    <meta name="ROBOTS" content="ALL" />
+    <meta http-equiv="imagetoolbar" content="no" />
+    <meta name="MSSmartTagsPreventParsing" content="true" />
+    <meta name="Keywords" content="cherokee web server httpd http" />
+    <meta name="Description" content="Cherokee is a flexible, very fast, lightweight Web server. It is implemented entirely in C, and has no dependencies beyond a standard C library. It is embeddable and extensible with plug-ins. It supports on-the-fly configuration by reading files or strings, TLS/SSL (via GNUTLS or OpenSSL), virtual hosts, authentication, cache friendly features, PHP, custom error management, and much more." />
+    <link href="media/css/cherokee_doc.css" rel="stylesheet" type="text/css" media="all" />
+  </head>
+<body>
+<h2 id="_a_href_index_html_index_a_8594_a_href_other_html_other_information_a_8594_a_href_other_bundle_html_man_pages_a"><a href="index.html">Index</a> &#8594; <a href="other.html">Other information</a> &#8594; <a href="other_bundle.html">Man pages</a></h2>
+<div class="sectionbody">
+</div>
+<h2 id="_man_pages_spawn_fcgi">Man pages: spawn-fcgi</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>This is a tool used to spawn FastCGI processes so that any FastCGI
+application can be interfaced with Cherokee. This is, for example, how PHP is
+supported in Cherokee, though in PHP&#8217;s case you do not need any
+knowledge of spawn-fcgi since it is configured by default.</p></div>
+<div class="paragraph"><p>It supports many parameters, but there is not much to be added to the
+information about arguments supplied by the program.</p></div>
+<div class="paragraph"><p>This is the full information provided by the manpage.</p></div>
+<div class="sidebarblock">
+<div class="sidebar-content">
+<div class="dlist"><dl>
+<dt class="hdlist1">
+<strong>NAME</strong>
+</dt>
+<dd>
+<p>
+       spawn-fcgi - Spawns FastCGI processes
+</p>
+</dd>
+<dt class="hdlist1">
+<strong>SYNOPSIS</strong>
+</dt>
+<dd>
+<p>
+       spawn-fcgi -f &lt;fcgiapp&gt; -a &lt;addr&gt; -p port spawn-fcgi -s &lt;path&gt;
+</p>
+</dd>
+<dt class="hdlist1">
+<strong>DESCRIPTION</strong>
+</dt>
+<dd>
+<p>
+       spawn-fcgi  spawns  FASTCGI  processes.  This way any FASTCGI compliant
+       application can be interfaced with Cherokee.
+</p>
+</dd>
+<dt class="hdlist1">
+<strong>OPTIONS</strong>
+</dt>
+<dd>
+<p>
+       spawn-fcgi accepts the following options:
+</p>
+</dd>
+<dt class="hdlist1">
+-h
+</dt>
+<dd>
+<p>
+             General usage instructions
+</p>
+</dd>
+<dt class="hdlist1">
+-f &lt;fcgiapp&gt;
+</dt>
+<dd>
+<p>
+             Filename of the FastCGI application to spawn
+</p>
+</dd>
+<dt class="hdlist1">
+-a &lt;addr&gt;
+</dt>
+<dd>
+<p>
+             IP address to bind to (for TCP/IP-based IPC)
+</p>
+</dd>
+<dt class="hdlist1">
+-p &lt;port&gt;
+</dt>
+<dd>
+<p>
+             TCP port to bind to (for TCP/IP-based IPC)
+</p>
+</dd>
+<dt class="hdlist1">
+-s &lt;path&gt;
+</dt>
+<dd>
+<p>
+             Path to the Unix-domain socket to bind to  (for  Unix  sockets-based IPC)
+</p>
+</dd>
+<dt class="hdlist1">
+-C &lt;children&gt;
+</dt>
+<dd>
+<p>
+             (PHP only) Number of children to spawn. Defaults to 5.
+</p>
+</dd>
+<dt class="hdlist1">
+-F &lt;children&gt;
+</dt>
+<dd>
+<p>
+             Number of children to fork. Defaults to 1.
+</p>
+</dd>
+<dt class="hdlist1">
+-P &lt;path&gt;
+</dt>
+<dd>
+<p>
+             Name of the PID file for spawned processes
+</p>
+</dd>
+<dt class="hdlist1">
+-n
+</dt>
+<dd>
+<p>
+             No forking should take place (for daemontools)
+</p>
+</dd>
+<dt class="hdlist1">
+-v
+</dt>
+<dd>
+<p>
+             Shows version information and exits
+</p>
+</dd>
+<dt class="hdlist1">
+-c &lt;dir&gt;
+</dt>
+<dd>
+<p>
+             Chroot to specified directory (can only be invoked by root)
+</p>
+</dd>
+<dt class="hdlist1">
+-u
+</dt>
+<dd>
+<p>
+             User ID to change to (can only be invoked by root)
+</p>
+</dd>
+<dt class="hdlist1">
+-g
+</dt>
+<dd>
+<p>
+             Group ID to change to (can only be invoked by root)
+</p>
+</dd>
+</dl></div>
+</div></div>
+</div>
+<div id="footer">
+<div id="footer-text">
+</div>
+</div>
+</body>
+</html>
