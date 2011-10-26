@@ -16,10 +16,8 @@ class Setup():
     def __init__(self, language, project):
         self.language = language.lower()
         self.project_dir = os.path.abspath(project)
-        
-        # REMEMBER TO SET THE RELATIVE PATH OF SRC2SCRML SCRIPT BEFORE PUBLISH !!!
-        self.script_dir = os.path.abspath('/home/felipe/workspace-msc/PL-Stats/scripts/src2srcml.ubuntu')
-#        self.script_dir = os.path.abspath('/home/felipe/workspace-msc/pl_stats/scripts/src2srcml')
+#        self.script_dir = os.path.abspath('../scripts/src2srcml.ubuntu')
+        self.script_dir = os.path.abspath('../scripts/src2srcml')
 
     
     def getProject(self):
