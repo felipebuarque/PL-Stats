@@ -1,0 +1,22 @@
+PL-Stats - Statistics about feature dependencies on software product lines.
+
+Requirements:
+	- Ubuntu Linux 10.10+ 32 bits
+	- Python 2.6+
+
+Dependencies:
+	- lxml (python-lxml)
+	- libboost (libboost1.40.0-dbg)
+
+Usage:
+	python pl-stats.py [OPTIONS] [PROJECT|WORKSPACE]
+	Generate Antenna directives statistics about the PROJECT
+
+Options:
+	-h, --help			print this help.
+	-l, --language=LANG		set the project language as LANG. Actually supports C and Java languages.
+	-p, --project=PROJECT		set a project to be analyzed as PROJECT.
+	-w, --workspace=WORKSPACE	set a workspace to be analyzed as WORKSPACE. All projects within WORKSPACE will be analyzed.
+
+Example:
+	python pl-stats.py -l C -p ../../cherokee-1.0.8/
