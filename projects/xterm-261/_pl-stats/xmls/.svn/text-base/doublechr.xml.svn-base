@@ -1,0 +1,304 @@
+<unit xmlns="http://www.sdml.info/srcML/src" xmlns:cpp="http://www.sdml.info/srcML/cpp" language="C" dir="" filename="doublechr.c"><comment type="block">/* $XTermId: doublechr.c,v 1.75 2010/06/15 10:58:13 tom Exp $ */</comment>
+
+<comment type="block">/************************************************************
+
+Copyright 1997-2009,2010 by Thomas E. Dickey
+
+                        All Rights Reserved
+
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
+IN NO EVENT SHALL THE ABOVE LISTED COPYRIGHT HOLDER(S) BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+Except as contained in this notice, the name(s) of the above copyright
+holders shall not be used in advertising or otherwise to promote the
+sale, use or other dealings in this Software without prior written
+authorization.
+
+********************************************************/</comment>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;xterm.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;data.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;fontutils.h&gt;</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;assert.h&gt;</cpp:file></cpp:include>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>WhichCgsId</name>(flag) (((flag) &amp; BOLD) ? gcCBold : gcCNorm)</cpp:define>
+
+<comment type="block">/*
+ * The first column is all that matters for double-size characters (since the
+ * controls apply to a whole line).  However, it's easier to maintain the
+ * information for special fonts by writing to all cells.
+ */</comment>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_DEC_CHRSET</name></expr></cpp:if>
+
+<function><type><name>static</name> <name>void</name></type>
+<name>repaint_line</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>, <param><decl><type><name>unsigned</name></type> <name>newChrSet</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>TScreen</name> *</type><name>screen</name> =<init> <expr><call><name>TScreenOf</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>LineData</name> *</type><name>ld</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>int</name></type> <name>curcol</name> =<init> <expr><name>screen</name>-&gt;<name>cur_col</name></expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>int</name></type> <name>currow</name> =<init> <expr><name>screen</name>-&gt;<name>cur_row</name></expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>int</name></type> <name>width</name> =<init> <expr><call><name>MaxCols</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>unsigned</name></type> <name>len</name> =<init> <expr>(<name>unsigned</name>) <name>width</name></expr></init></decl>;</decl_stmt>
+
+    <expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>width</name> &gt; 0</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+    <comment type="block">/*
+     * Ignore repetition.
+     */</comment>
+    <if>if <condition>(<expr>(<name>ld</name> = <call><name>getLineData</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr><name>currow</name></expr></argument>)</argument_list></call>) != 0</expr>)</condition><then> <block>{
+	<decl_stmt><decl><type><name>unsigned</name></type> <name>oldChrSet</name> =<init> <expr><call><name>GetLineDblCS</name><argument_list>(<argument><expr><name>ld</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+	<if>if <condition>(<expr><name>oldChrSet</name> != <name>newChrSet</name></expr>)</condition><then> <block>{
+	    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("repaint_line(%2d,%2d) (%s -&gt; %s)\n", <name>currow</name>, <name>screen</name>-&gt;<name>cur_col</name>,
+		   <call><name>visibleChrsetName</name><argument_list>(<argument><expr><name>oldChrSet</name></expr></argument>)</argument_list></call>,
+		   <call><name>visibleChrsetName</name><argument_list>(<argument><expr><name>newChrSet</name></expr></argument>)</argument_list></call>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><call><name>HideCursor</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+
+	    <comment type="block">/* If switching from single-width, keep the cursor in the visible part
+	     * of the line.
+	     */</comment>
+	    <if>if <condition>(<expr><call><name>CSET_DOUBLE</name><argument_list>(<argument><expr><name>newChrSet</name></expr></argument>)</argument_list></call></expr>)</condition><then> <block>{
+		<expr_stmt><expr><name>width</name> /= 2</expr>;</expr_stmt>
+		<if>if <condition>(<expr><name>curcol</name> &gt; <name>width</name></expr>)</condition><then>
+		    <expr_stmt><expr><name>curcol</name> = <name>width</name></expr>;</expr_stmt></then></if>
+	    }</block></then></if>
+
+	    <comment type="block">/*
+	     * ScrnRefresh won't paint blanks for us if we're switching between a
+	     * single-size and double-size font.  So we paint our own.
+	     */</comment>
+	    <expr_stmt><expr><call><name>ClearCurBackground</name><argument_list>(<argument><expr><name>xw</name></expr></argument>,
+			       <argument><expr><call><name>CursorY</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr><name>currow</name></expr></argument>)</argument_list></call></expr></argument>,
+			       <argument><expr><call><name>LineCursorX</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr><name>ld</name></expr></argument>, <argument><expr>0</expr></argument>)</argument_list></call></expr></argument>,
+			       <argument><expr>(<name>unsigned</name>) <call><name>FontHeight</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call></expr></argument>,
+			       <argument><expr><name>len</name> * (<name>unsigned</name>) <call><name>LineFontWidth</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr><name>ld</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+	    <expr_stmt><expr><call><name>SetLineDblCS</name><argument_list>(<argument><expr><name>ld</name></expr></argument>, <argument><expr><name>newChrSet</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+	    <expr_stmt><expr><call><name>set_cur_col</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr>0</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><call><name>ScrnUpdate</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>currow</name></expr></argument>, <argument><expr>0</expr></argument>, <argument><expr>1</expr></argument>, <argument><expr>(<name>int</name>) <name>len</name></expr></argument>, <argument><expr><name>True</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><call><name>set_cur_col</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr><name>curcol</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	}</block></then></if>
+    }</block></then></if>
+}</block></function>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<comment type="block">/*
+ * Set the line to double-height characters.  The 'top' flag denotes whether
+ * we'll be using it for the top (true) or bottom (false) of the line.
+ */</comment>
+<function><type><name>void</name></type>
+<name>xterm_DECDHL</name><parameter_list>(<param><decl><type><name>XtermWidget</name> <name>xw</name></type> <name>GCC_UNUSED</name></decl></param>, <param><decl><type><name>Bool</name></type> <name>top</name></decl></param>)</parameter_list>
+<block>{
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_DEC_CHRSET</name></expr></cpp:if>
+    <expr_stmt><expr><call><name>repaint_line</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><call>(<name>unsigned</name>) <argument_list>(<argument><expr><name>top</name> ? <name>CSET_DHL_TOP</name> : <name>CSET_DHL_BOT</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+    <expr_stmt><expr>(<name>void</name>) <name>top</name></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+}</block></function>
+
+<comment type="block">/*
+ * Set the line to single-width characters (the normal state).
+ */</comment>
+<function><type><name>void</name></type>
+<name>xterm_DECSWL</name><parameter_list>(<param><decl><type><name>XtermWidget</name> <name>xw</name></type> <name>GCC_UNUSED</name></decl></param>)</parameter_list>
+<block>{
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_DEC_CHRSET</name></expr></cpp:if>
+    <expr_stmt><expr><call><name>repaint_line</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>CSET_SWL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+}</block></function>
+
+<comment type="block">/*
+ * Set the line to double-width characters
+ */</comment>
+<function><type><name>void</name></type>
+<name>xterm_DECDWL</name><parameter_list>(<param><decl><type><name>XtermWidget</name> <name>xw</name></type> <name>GCC_UNUSED</name></decl></param>)</parameter_list>
+<block>{
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_DEC_CHRSET</name></expr></cpp:if>
+    <expr_stmt><expr><call><name>repaint_line</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>CSET_DWL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+}</block></function>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_DEC_CHRSET</name></expr></cpp:if>
+<function><type><name>static</name> <name>void</name></type>
+<name>discard_font</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>, <param><decl><type><name>int</name></type> <name>n</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>TScreen</name> *</type><name>screen</name> =<init> <expr><call><name>TScreenOf</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>XTermFonts</name> *</type><name>data</name> =<init> <expr>&amp;(<name>screen</name>-&gt;<name><name>double_fonts</name><index>[<expr><name>n</name></expr>]</index></name>)</expr></init></decl>;</decl_stmt>
+
+    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("discard_font chrset=%d %s\n", <name>data</name>-&gt;<name>chrset</name>,
+	   (<name>data</name>-&gt;<name>fn</name> != 0) ? <name>data</name>-&gt;<name>fn</name> : "&lt;no-name&gt;")</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+    <expr_stmt><expr><name>data</name>-&gt;<name>chrset</name> = 0</expr>;</expr_stmt>
+    <expr_stmt><expr><name>data</name>-&gt;<name>flags</name> = 0</expr>;</expr_stmt>
+    <if>if <condition>(<expr><name>data</name>-&gt;<name>fn</name> != 0</expr>)</condition><then> <block>{
+	<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>data</name>-&gt;<name>fn</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><name>data</name>-&gt;<name>fn</name> = 0</expr>;</expr_stmt>
+    }</block></then></if>
+    <expr_stmt><expr>(<name>void</name>) <call><name>xtermCloseFont</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>data</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+    <expr_stmt><expr><name>screen</name>-&gt;<name>fonts_used</name> -= 1</expr>;</expr_stmt>
+    <while>while <condition>(<expr><name>n</name> &lt; <name>screen</name>-&gt;<name>fonts_used</name></expr>)</condition> <block>{
+	<expr_stmt><expr><name>screen</name>-&gt;<name><name>double_fonts</name><index>[<expr><name>n</name></expr>]</index></name> = <name>screen</name>-&gt;<name><name>double_fonts</name><index>[<expr><name>n</name> + 1</expr>]</index></name></expr>;</expr_stmt>
+	<expr_stmt><expr>++<name>n</name></expr>;</expr_stmt>
+    }</block></while>
+}</block></function>
+
+<comment type="block">/* push back existing fonts and create a new entry */</comment>
+<function><type><name>static</name> <name>XTermFonts</name> *</type>
+<name>pushback_font</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>, <param><decl><type><name>XTermFonts</name> *</type> <name>source</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>TScreen</name> *</type><name>screen</name> =<init> <expr><call><name>TScreenOf</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>XTermFonts</name> *</type><name>data</name> =<init> <expr><name>screen</name>-&gt;<name>double_fonts</name></expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>int</name></type> <name>n</name></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr><name>screen</name>-&gt;<name>fonts_used</name> &gt;= <name>screen</name>-&gt;<name>cache_doublesize</name></expr>)</condition><then> <block>{
+	<expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("pushback_font: discard oldest\n")</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>discard_font</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>screen</name>-&gt;<name>fonts_used</name> - 1</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></then> <else>else <block>{
+	<expr_stmt><expr><name>screen</name>-&gt;<name>fonts_used</name> += 1</expr>;</expr_stmt>
+    }</block></else></if>
+
+    <for>for (<init><expr><name>n</name> = <name>screen</name>-&gt;<name>fonts_used</name></expr>;</init> <condition><expr><name>n</name> &gt; 0</expr>;</condition> <incr><expr><name>n</name>--</expr></incr>)
+	<expr_stmt><expr><name><name>data</name><index>[<expr><name>n</name></expr>]</index></name> = <name><name>data</name><index>[<expr><name>n</name> - 1</expr>]</index></name></expr>;</expr_stmt></for>
+    <expr_stmt><expr><name><name>data</name><index>[<expr>0</expr>]</index></name> = *<name>source</name></expr>;</expr_stmt>
+
+    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("pushback_font -&gt; (NEW:%d)\n", <name>screen</name>-&gt;<name>fonts_used</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+    <return>return <expr><name>data</name></expr>;</return>
+}</block></function>
+
+<function><type><name>int</name></type>
+<name>xterm_Double_index</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>, <param><decl><type><name>unsigned</name></type> <name>chrset</name></decl></param>, <param><decl><type><name>unsigned</name></type> <name>flags</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>int</name></type> <name>n</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>int</name></type> <name>result</name> =<init> <expr>-1</expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>TScreen</name> *</type><name>screen</name> =<init> <expr><call><name>TScreenOf</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>XTermFonts</name> *</type><name>data</name> =<init> <expr><name>screen</name>-&gt;<name>double_fonts</name></expr></init></decl>;</decl_stmt>
+
+    <expr_stmt><expr><name>flags</name> &amp;= <name>BOLD</name></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("xterm_Double_index chrset=%#x, flags=%#x\n", <name>chrset</name>, <name>flags</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+    <for>for (<init><expr><name>n</name> = 0</expr>;</init> <condition><expr><name>n</name> &lt; <name>screen</name>-&gt;<name>fonts_used</name></expr>;</condition> <incr><expr><name>n</name>++</expr></incr>) <block>{
+	<if>if <condition>(<expr><name><name>data</name><index>[<expr><name>n</name></expr>]</index></name>.<name>chrset</name> == <name>chrset</name>
+	    &amp;&amp; <name><name>data</name><index>[<expr><name>n</name></expr>]</index></name>.<name>flags</name> == <name>flags</name></expr>)</condition><then> <block>{
+	    <if>if <condition>(<expr><name>n</name> != 0</expr>)</condition><then> <block>{
+		<decl_stmt><decl><type><name>XTermFonts</name></type> <name>save</name></decl>;</decl_stmt>
+		<expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("...xterm_Double_index -&gt; %d (OLD:%d)\n", <name>n</name>, <name>screen</name>-&gt;<name>fonts_used</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><name>save</name> = <name><name>data</name><index>[<expr><name>n</name></expr>]</index></name></expr>;</expr_stmt>
+		<while>while <condition>(<expr><name>n</name> &gt; 0</expr>)</condition> <block>{
+		    <expr_stmt><expr><name><name>data</name><index>[<expr><name>n</name></expr>]</index></name> = <name><name>data</name><index>[<expr><name>n</name> - 1</expr>]</index></name></expr>;</expr_stmt>
+		    <expr_stmt><expr><name>n</name>--</expr>;</expr_stmt>
+		}</block></while>
+		<expr_stmt><expr><name><name>data</name><index>[<expr><name>n</name></expr>]</index></name> = <name>save</name></expr>;</expr_stmt>
+	    }</block></then></if>
+	    <expr_stmt><expr><name>result</name> = <name>n</name></expr>;</expr_stmt>
+	    <break>break;</break>
+	}</block></then></if>
+    }</block></for>
+
+    <return>return <expr><name>result</name></expr>;</return>
+}</block></function>
+
+<comment type="block">/*
+ * Lookup/cache a GC for the double-size character display.  We save up to
+ * NUM_CHRSET values.
+ */</comment>
+<function><type><name>GC</name></type>
+<name>xterm_DoubleGC</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>,
+	       <param><decl><type><name>unsigned</name></type> <name>chrset</name></decl></param>,
+	       <param><decl><type><name>unsigned</name></type> <name>flags</name></decl></param>,
+	       <param><decl><type><name>GC</name></type> <name>old_gc</name></decl></param>,
+	       <param><decl><type><name>int</name> *</type><name>inxp</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>TScreen</name> *</type><name>screen</name> =<init> <expr><call><name>TScreenOf</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>VTwin</name> *</type><name>cgsWin</name> =<init> <expr><call><name>WhichVWin</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>int</name></type> <name>n</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>char</name> *</type><name>name</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>XTermFonts</name> *</type><name>data</name> =<init> <expr>0</expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>GC</name></type> <name>result</name> =<init> <expr>0</expr></init></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr>(<name>name</name> = <call><name>xtermSpecialFont</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr><name>flags</name></expr></argument>, <argument><expr><name>chrset</name></expr></argument>)</argument_list></call>) != 0</expr>)</condition><then> <block>{
+	<decl_stmt><decl><type><name>CgsEnum</name></type> <name>cgsId</name> =<init> <expr><call><name>WhichCgsId</name><argument_list>(<argument><expr><name>flags</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+	<decl_stmt><decl><type><name>Boolean</name></type> <name>found</name> =<init> <expr><name>False</name></expr></init></decl>;</decl_stmt>
+
+	<if>if <condition>(<expr>(<name>n</name> = <call><name>xterm_Double_index</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>chrset</name></expr></argument>, <argument><expr><name>flags</name></expr></argument>)</argument_list></call>) &gt;= 0</expr>)</condition><then> <block>{
+	    <expr_stmt><expr><name>data</name> = &amp;(<name>screen</name>-&gt;<name><name>double_fonts</name><index>[<expr><name>n</name></expr>]</index></name>)</expr>;</expr_stmt>
+	    <if>if <condition>(<expr><name>data</name>-&gt;<name>fn</name> != 0</expr>)</condition><then> <block>{
+		<if>if <condition>(<expr>!<call><name>strcmp</name><argument_list>(<argument><expr><name>data</name>-&gt;<name>fn</name></expr></argument>, <argument><expr><name>name</name></expr></argument>)</argument_list></call>
+		    &amp;&amp; <name>data</name>-&gt;<name>fs</name> != 0</expr>)</condition><then> <block>{
+		    <expr_stmt><expr><name>found</name> = <name>True</name></expr>;</expr_stmt>
+		    <expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>name</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		}</block></then> <else>else <block>{
+		    <expr_stmt><expr><call><name>discard_font</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>n</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		}</block></else></if>
+	    }</block></then></if>
+	}</block></then></if>
+
+	<if>if <condition>(<expr>!<name>found</name></expr>)</condition><then> <block>{
+	    <decl_stmt><decl><type><name>XTermFonts</name></type> <name>temp</name></decl>;</decl_stmt>
+
+	    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("xterm_DoubleGC %s %d: %s\n",
+		   <name>flags</name> &amp; <name>BOLD</name> ? "BOLD" : "NORM", <name>n</name>, <name>name</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+	    <expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr>&amp;<name>temp</name></expr></argument>, <argument><expr>0</expr></argument>, <argument><expr><call><name>sizeof</name><argument_list>(<argument><expr><name>temp</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><name>temp</name>.<name>fn</name> = <name>name</name></expr>;</expr_stmt>
+	    <expr_stmt><expr><name>temp</name>.<name>chrset</name> = <name>chrset</name></expr>;</expr_stmt>
+	    <expr_stmt><expr><name>temp</name>.<name>flags</name> = (<name>flags</name> &amp; <name>BOLD</name>)</expr>;</expr_stmt>
+
+	    <if>if <condition>(<expr>!<call><name>xtermOpenFont</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>name</name></expr></argument>, <argument><expr>&amp;<name>temp</name></expr></argument>, <argument><expr><name>fwAlways</name></expr></argument>, <argument><expr><name>False</name></expr></argument>)</argument_list></call></expr>)</condition><then> <block>{
+		<comment type="block">/* Retry with * in resolutions */</comment>
+		<decl_stmt><decl><type><name>char</name> *</type><name>nname</name> =<init> <expr><call><name>xtermSpecialFont</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr><name>flags</name> | <name>NORESOLUTION</name></expr></argument>, <argument><expr><name>chrset</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+		<if>if <condition>(<expr><name>nname</name> != 0</expr>)</condition><then> <block>{
+		    <expr_stmt><expr><name>found</name> = (<name>Boolean</name>) <call><name>xtermOpenFont</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>nname</name></expr></argument>, <argument><expr>&amp;<name>temp</name></expr></argument>,
+						    <argument><expr><name>fwAlways</name></expr></argument>, <argument><expr><name>False</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		    <expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>nname</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		}</block></then></if>
+	    }</block></then> <else>else <block>{
+		<expr_stmt><expr><name>found</name> = <name>True</name></expr>;</expr_stmt>
+	    }</block></else></if>
+	    <expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>name</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+	    <if>if <condition>(<expr><name>found</name></expr>)</condition><then> <block>{
+		<expr_stmt><expr><name>n</name> = 0</expr>;</expr_stmt>
+		<expr_stmt><expr><name>data</name> = <call><name>pushback_font</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr>&amp;<name>temp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    }</block></then></if>
+
+	    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("-&gt; %s\n", <name>found</name> ? "OK" : "FAIL")</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	}</block></then></if>
+
+	<if>if <condition>(<expr><name>found</name></expr>)</condition><then> <block>{
+	    <expr_stmt><expr><call><name>setCgsCSet</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>cgsWin</name></expr></argument>, <argument><expr><name>cgsId</name></expr></argument>, <argument><expr><name>chrset</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><call><name>setCgsFont</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>cgsWin</name></expr></argument>, <argument><expr><name>cgsId</name></expr></argument>, <argument><expr><name>data</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><call><name>setCgsFore</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>cgsWin</name></expr></argument>, <argument><expr><name>cgsId</name></expr></argument>, <argument><expr><call><name>getCgsFore</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>cgsWin</name></expr></argument>, <argument><expr><name>old_gc</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><call><name>setCgsBack</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>cgsWin</name></expr></argument>, <argument><expr><name>cgsId</name></expr></argument>, <argument><expr><call><name>getCgsBack</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>cgsWin</name></expr></argument>, <argument><expr><name>old_gc</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><name>result</name> = <call><name>getCgsGC</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>cgsWin</name></expr></argument>, <argument><expr><name>cgsId</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr>*<name>inxp</name> = <name>n</name></expr>;</expr_stmt>
+	}</block></then> <else>else <if>if <condition>(<expr><name>flags</name> &amp; <name>BOLD</name></expr>)</condition><then> <block>{
+	    <expr_stmt><expr><call><name>UIntClr</name><argument_list>(<argument><expr><name>flags</name></expr></argument>, <argument><expr><name>BOLD</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><name>result</name> = <call><name>xterm_DoubleGC</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>chrset</name></expr></argument>, <argument><expr><name>flags</name></expr></argument>, <argument><expr><name>old_gc</name></expr></argument>, <argument><expr><name>inxp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	}</block></then></if></else></if>
+    }</block></then></if>
+
+    <return>return <expr><name>result</name></expr>;</return>
+}</block></function>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</unit>

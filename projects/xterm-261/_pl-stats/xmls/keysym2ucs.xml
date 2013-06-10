@@ -1,0 +1,872 @@
+<unit xmlns="http://www.sdml.info/srcML/src" xmlns:cpp="http://www.sdml.info/srcML/cpp" language="C" dir="" filename="keysym2ucs.c"><comment type="block">/* $XTermId: keysym2ucs.c,v 1.15 2007/06/13 00:16:56 tom Exp $
+ * This module converts keysym values into the corresponding ISO 10646
+ * (UCS, Unicode) values.
+ *
+ * The array keysymtab[] contains pairs of X11 keysym values for graphical
+ * characters and the corresponding Unicode value. The function
+ * keysym2ucs() maps a keysym onto a Unicode value using a binary search,
+ * therefore keysymtab[] must remain SORTED by keysym value.
+ *
+ * The keysym -&gt; UTF-8 conversion will hopefully one day be provided
+ * by Xlib via XmbLookupString() and should ideally not have to be
+ * done in X applications. But we are not there yet.
+ *
+ * We allow to represent any UCS character in the range U-00000000 to
+ * U-00FFFFFF by a keysym value in the range 0x01000000 to 0x01ffffff.
+ * This admittedly does not cover the entire 31-bit space of UCS, but
+ * it does cover all of the characters up to U-10FFFF, which can be
+ * represented by UTF-16, and more, and it is very unlikely that higher
+ * UCS codes will ever be assigned by ISO. So to get Unicode character
+ * U+ABCD you can directly use keysym 0x0100abcd.
+ *
+ * NOTE: The comments in the table below contain the actual character
+ * encoded in UTF-8, so for viewing and editing best use an editor in
+ * UTF-8 mode.
+ *
+ * Author: Markus G. Kuhn &lt;mkuhn@acm.org&gt;, University of Cambridge, April 2001
+ *
+ * Special thanks to Richard Verhoeven &lt;river@win.tue.nl&gt; for preparing
+ * an initial draft of the mapping table.
+ *
+ * This software is in the public domain. Share and enjoy!
+ *
+ * AUTOMATICALLY GENERATED FILE, DO NOT EDIT !!! (unicode/convmap.pl)
+ */</comment>
+
+<cpp:ifndef>#<cpp:directive>ifndef</cpp:directive> <name>KEYSYM2UCS_INCLUDED</name></cpp:ifndef>
+  
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"keysym2ucs.h"</cpp:file></cpp:include>
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>VISIBLE</name></cpp:define> <comment type="block">/* */</comment>
+
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>VISIBLE</name> <name>static</name></cpp:define>
+
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<decl_stmt><decl><type><name>static</name> struct</type> <name>codepair</name> <block>{
+  <decl_stmt><decl><type><name>unsigned</name> <name>short</name></type> <name>keysym</name></decl>;</decl_stmt>
+  <decl_stmt><decl><type><name>unsigned</name> <name>short</name></type> <name>ucs</name></decl>;</decl_stmt>
+}</block></decl></decl_stmt> <expr_stmt><expr><name><name>keysymtab</name><index>[]</index></name> = <block>{
+  <expr><block>{ <expr>0x01a1</expr>, <expr>0x0104</expr> }</block></expr>, <comment type="block">/*                     Aogonek Ä LATIN CAPITAL LETTER A WITH OGONEK */</comment>
+  <expr><block>{ <expr>0x01a2</expr>, <expr>0x02d8</expr> }</block></expr>, <comment type="block">/*                       breve Ë BREVE */</comment>
+  <expr><block>{ <expr>0x01a3</expr>, <expr>0x0141</expr> }</block></expr>, <comment type="block">/*                     Lstroke Å LATIN CAPITAL LETTER L WITH STROKE */</comment>
+  <expr><block>{ <expr>0x01a5</expr>, <expr>0x013d</expr> }</block></expr>, <comment type="block">/*                      Lcaron Ä½ LATIN CAPITAL LETTER L WITH CARON */</comment>
+  <expr><block>{ <expr>0x01a6</expr>, <expr>0x015a</expr> }</block></expr>, <comment type="block">/*                      Sacute Å LATIN CAPITAL LETTER S WITH ACUTE */</comment>
+  <expr><block>{ <expr>0x01a9</expr>, <expr>0x0160</expr> }</block></expr>, <comment type="block">/*                      Scaron Å  LATIN CAPITAL LETTER S WITH CARON */</comment>
+  <expr><block>{ <expr>0x01aa</expr>, <expr>0x015e</expr> }</block></expr>, <comment type="block">/*                    Scedilla Å LATIN CAPITAL LETTER S WITH CEDILLA */</comment>
+  <expr><block>{ <expr>0x01ab</expr>, <expr>0x0164</expr> }</block></expr>, <comment type="block">/*                      Tcaron Å¤ LATIN CAPITAL LETTER T WITH CARON */</comment>
+  <expr><block>{ <expr>0x01ac</expr>, <expr>0x0179</expr> }</block></expr>, <comment type="block">/*                      Zacute Å¹ LATIN CAPITAL LETTER Z WITH ACUTE */</comment>
+  <expr><block>{ <expr>0x01ae</expr>, <expr>0x017d</expr> }</block></expr>, <comment type="block">/*                      Zcaron Å½ LATIN CAPITAL LETTER Z WITH CARON */</comment>
+  <expr><block>{ <expr>0x01af</expr>, <expr>0x017b</expr> }</block></expr>, <comment type="block">/*                   Zabovedot Å» LATIN CAPITAL LETTER Z WITH DOT ABOVE */</comment>
+  <expr><block>{ <expr>0x01b1</expr>, <expr>0x0105</expr> }</block></expr>, <comment type="block">/*                     aogonek Ä LATIN SMALL LETTER A WITH OGONEK */</comment>
+  <expr><block>{ <expr>0x01b2</expr>, <expr>0x02db</expr> }</block></expr>, <comment type="block">/*                      ogonek Ë OGONEK */</comment>
+  <expr><block>{ <expr>0x01b3</expr>, <expr>0x0142</expr> }</block></expr>, <comment type="block">/*                     lstroke Å LATIN SMALL LETTER L WITH STROKE */</comment>
+  <expr><block>{ <expr>0x01b5</expr>, <expr>0x013e</expr> }</block></expr>, <comment type="block">/*                      lcaron Ä¾ LATIN SMALL LETTER L WITH CARON */</comment>
+  <expr><block>{ <expr>0x01b6</expr>, <expr>0x015b</expr> }</block></expr>, <comment type="block">/*                      sacute Å LATIN SMALL LETTER S WITH ACUTE */</comment>
+  <expr><block>{ <expr>0x01b7</expr>, <expr>0x02c7</expr> }</block></expr>, <comment type="block">/*                       caron Ë CARON */</comment>
+  <expr><block>{ <expr>0x01b9</expr>, <expr>0x0161</expr> }</block></expr>, <comment type="block">/*                      scaron Å¡ LATIN SMALL LETTER S WITH CARON */</comment>
+  <expr><block>{ <expr>0x01ba</expr>, <expr>0x015f</expr> }</block></expr>, <comment type="block">/*                    scedilla Å LATIN SMALL LETTER S WITH CEDILLA */</comment>
+  <expr><block>{ <expr>0x01bb</expr>, <expr>0x0165</expr> }</block></expr>, <comment type="block">/*                      tcaron Å¥ LATIN SMALL LETTER T WITH CARON */</comment>
+  <expr><block>{ <expr>0x01bc</expr>, <expr>0x017a</expr> }</block></expr>, <comment type="block">/*                      zacute Åº LATIN SMALL LETTER Z WITH ACUTE */</comment>
+  <expr><block>{ <expr>0x01bd</expr>, <expr>0x02dd</expr> }</block></expr>, <comment type="block">/*                 doubleacute Ë DOUBLE ACUTE ACCENT */</comment>
+  <expr><block>{ <expr>0x01be</expr>, <expr>0x017e</expr> }</block></expr>, <comment type="block">/*                      zcaron Å¾ LATIN SMALL LETTER Z WITH CARON */</comment>
+  <expr><block>{ <expr>0x01bf</expr>, <expr>0x017c</expr> }</block></expr>, <comment type="block">/*                   zabovedot Å¼ LATIN SMALL LETTER Z WITH DOT ABOVE */</comment>
+  <expr><block>{ <expr>0x01c0</expr>, <expr>0x0154</expr> }</block></expr>, <comment type="block">/*                      Racute Å LATIN CAPITAL LETTER R WITH ACUTE */</comment>
+  <expr><block>{ <expr>0x01c3</expr>, <expr>0x0102</expr> }</block></expr>, <comment type="block">/*                      Abreve Ä LATIN CAPITAL LETTER A WITH BREVE */</comment>
+  <expr><block>{ <expr>0x01c5</expr>, <expr>0x0139</expr> }</block></expr>, <comment type="block">/*                      Lacute Ä¹ LATIN CAPITAL LETTER L WITH ACUTE */</comment>
+  <expr><block>{ <expr>0x01c6</expr>, <expr>0x0106</expr> }</block></expr>, <comment type="block">/*                      Cacute Ä LATIN CAPITAL LETTER C WITH ACUTE */</comment>
+  <expr><block>{ <expr>0x01c8</expr>, <expr>0x010c</expr> }</block></expr>, <comment type="block">/*                      Ccaron Ä LATIN CAPITAL LETTER C WITH CARON */</comment>
+  <expr><block>{ <expr>0x01ca</expr>, <expr>0x0118</expr> }</block></expr>, <comment type="block">/*                     Eogonek Ä LATIN CAPITAL LETTER E WITH OGONEK */</comment>
+  <expr><block>{ <expr>0x01cc</expr>, <expr>0x011a</expr> }</block></expr>, <comment type="block">/*                      Ecaron Ä LATIN CAPITAL LETTER E WITH CARON */</comment>
+  <expr><block>{ <expr>0x01cf</expr>, <expr>0x010e</expr> }</block></expr>, <comment type="block">/*                      Dcaron Ä LATIN CAPITAL LETTER D WITH CARON */</comment>
+  <expr><block>{ <expr>0x01d0</expr>, <expr>0x0110</expr> }</block></expr>, <comment type="block">/*                     Dstroke Ä LATIN CAPITAL LETTER D WITH STROKE */</comment>
+  <expr><block>{ <expr>0x01d1</expr>, <expr>0x0143</expr> }</block></expr>, <comment type="block">/*                      Nacute Å LATIN CAPITAL LETTER N WITH ACUTE */</comment>
+  <expr><block>{ <expr>0x01d2</expr>, <expr>0x0147</expr> }</block></expr>, <comment type="block">/*                      Ncaron Å LATIN CAPITAL LETTER N WITH CARON */</comment>
+  <expr><block>{ <expr>0x01d5</expr>, <expr>0x0150</expr> }</block></expr>, <comment type="block">/*                Odoubleacute Å LATIN CAPITAL LETTER O WITH DOUBLE ACUTE */</comment>
+  <expr><block>{ <expr>0x01d8</expr>, <expr>0x0158</expr> }</block></expr>, <comment type="block">/*                      Rcaron Å LATIN CAPITAL LETTER R WITH CARON */</comment>
+  <expr><block>{ <expr>0x01d9</expr>, <expr>0x016e</expr> }</block></expr>, <comment type="block">/*                       Uring Å® LATIN CAPITAL LETTER U WITH RING ABOVE */</comment>
+  <expr><block>{ <expr>0x01db</expr>, <expr>0x0170</expr> }</block></expr>, <comment type="block">/*                Udoubleacute Å° LATIN CAPITAL LETTER U WITH DOUBLE ACUTE */</comment>
+  <expr><block>{ <expr>0x01de</expr>, <expr>0x0162</expr> }</block></expr>, <comment type="block">/*                    Tcedilla Å¢ LATIN CAPITAL LETTER T WITH CEDILLA */</comment>
+  <expr><block>{ <expr>0x01e0</expr>, <expr>0x0155</expr> }</block></expr>, <comment type="block">/*                      racute Å LATIN SMALL LETTER R WITH ACUTE */</comment>
+  <expr><block>{ <expr>0x01e3</expr>, <expr>0x0103</expr> }</block></expr>, <comment type="block">/*                      abreve Ä LATIN SMALL LETTER A WITH BREVE */</comment>
+  <expr><block>{ <expr>0x01e5</expr>, <expr>0x013a</expr> }</block></expr>, <comment type="block">/*                      lacute Äº LATIN SMALL LETTER L WITH ACUTE */</comment>
+  <expr><block>{ <expr>0x01e6</expr>, <expr>0x0107</expr> }</block></expr>, <comment type="block">/*                      cacute Ä LATIN SMALL LETTER C WITH ACUTE */</comment>
+  <expr><block>{ <expr>0x01e8</expr>, <expr>0x010d</expr> }</block></expr>, <comment type="block">/*                      ccaron Ä LATIN SMALL LETTER C WITH CARON */</comment>
+  <expr><block>{ <expr>0x01ea</expr>, <expr>0x0119</expr> }</block></expr>, <comment type="block">/*                     eogonek Ä LATIN SMALL LETTER E WITH OGONEK */</comment>
+  <expr><block>{ <expr>0x01ec</expr>, <expr>0x011b</expr> }</block></expr>, <comment type="block">/*                      ecaron Ä LATIN SMALL LETTER E WITH CARON */</comment>
+  <expr><block>{ <expr>0x01ef</expr>, <expr>0x010f</expr> }</block></expr>, <comment type="block">/*                      dcaron Ä LATIN SMALL LETTER D WITH CARON */</comment>
+  <expr><block>{ <expr>0x01f0</expr>, <expr>0x0111</expr> }</block></expr>, <comment type="block">/*                     dstroke Ä LATIN SMALL LETTER D WITH STROKE */</comment>
+  <expr><block>{ <expr>0x01f1</expr>, <expr>0x0144</expr> }</block></expr>, <comment type="block">/*                      nacute Å LATIN SMALL LETTER N WITH ACUTE */</comment>
+  <expr><block>{ <expr>0x01f2</expr>, <expr>0x0148</expr> }</block></expr>, <comment type="block">/*                      ncaron Å LATIN SMALL LETTER N WITH CARON */</comment>
+  <expr><block>{ <expr>0x01f5</expr>, <expr>0x0151</expr> }</block></expr>, <comment type="block">/*                odoubleacute Å LATIN SMALL LETTER O WITH DOUBLE ACUTE */</comment>
+  <expr><block>{ <expr>0x01f8</expr>, <expr>0x0159</expr> }</block></expr>, <comment type="block">/*                      rcaron Å LATIN SMALL LETTER R WITH CARON */</comment>
+  <expr><block>{ <expr>0x01f9</expr>, <expr>0x016f</expr> }</block></expr>, <comment type="block">/*                       uring Å¯ LATIN SMALL LETTER U WITH RING ABOVE */</comment>
+  <expr><block>{ <expr>0x01fb</expr>, <expr>0x0171</expr> }</block></expr>, <comment type="block">/*                udoubleacute Å± LATIN SMALL LETTER U WITH DOUBLE ACUTE */</comment>
+  <expr><block>{ <expr>0x01fe</expr>, <expr>0x0163</expr> }</block></expr>, <comment type="block">/*                    tcedilla Å£ LATIN SMALL LETTER T WITH CEDILLA */</comment>
+  <expr><block>{ <expr>0x01ff</expr>, <expr>0x02d9</expr> }</block></expr>, <comment type="block">/*                    abovedot Ë DOT ABOVE */</comment>
+  <expr><block>{ <expr>0x02a1</expr>, <expr>0x0126</expr> }</block></expr>, <comment type="block">/*                     Hstroke Ä¦ LATIN CAPITAL LETTER H WITH STROKE */</comment>
+  <expr><block>{ <expr>0x02a6</expr>, <expr>0x0124</expr> }</block></expr>, <comment type="block">/*                 Hcircumflex Ä¤ LATIN CAPITAL LETTER H WITH CIRCUMFLEX */</comment>
+  <expr><block>{ <expr>0x02a9</expr>, <expr>0x0130</expr> }</block></expr>, <comment type="block">/*                   Iabovedot Ä° LATIN CAPITAL LETTER I WITH DOT ABOVE */</comment>
+  <expr><block>{ <expr>0x02ab</expr>, <expr>0x011e</expr> }</block></expr>, <comment type="block">/*                      Gbreve Ä LATIN CAPITAL LETTER G WITH BREVE */</comment>
+  <expr><block>{ <expr>0x02ac</expr>, <expr>0x0134</expr> }</block></expr>, <comment type="block">/*                 Jcircumflex Ä´ LATIN CAPITAL LETTER J WITH CIRCUMFLEX */</comment>
+  <expr><block>{ <expr>0x02b1</expr>, <expr>0x0127</expr> }</block></expr>, <comment type="block">/*                     hstroke Ä§ LATIN SMALL LETTER H WITH STROKE */</comment>
+  <expr><block>{ <expr>0x02b6</expr>, <expr>0x0125</expr> }</block></expr>, <comment type="block">/*                 hcircumflex Ä¥ LATIN SMALL LETTER H WITH CIRCUMFLEX */</comment>
+  <expr><block>{ <expr>0x02b9</expr>, <expr>0x0131</expr> }</block></expr>, <comment type="block">/*                    idotless Ä± LATIN SMALL LETTER DOTLESS I */</comment>
+  <expr><block>{ <expr>0x02bb</expr>, <expr>0x011f</expr> }</block></expr>, <comment type="block">/*                      gbreve Ä LATIN SMALL LETTER G WITH BREVE */</comment>
+  <expr><block>{ <expr>0x02bc</expr>, <expr>0x0135</expr> }</block></expr>, <comment type="block">/*                 jcircumflex Äµ LATIN SMALL LETTER J WITH CIRCUMFLEX */</comment>
+  <expr><block>{ <expr>0x02c5</expr>, <expr>0x010a</expr> }</block></expr>, <comment type="block">/*                   Cabovedot Ä LATIN CAPITAL LETTER C WITH DOT ABOVE */</comment>
+  <expr><block>{ <expr>0x02c6</expr>, <expr>0x0108</expr> }</block></expr>, <comment type="block">/*                 Ccircumflex Ä LATIN CAPITAL LETTER C WITH CIRCUMFLEX */</comment>
+  <expr><block>{ <expr>0x02d5</expr>, <expr>0x0120</expr> }</block></expr>, <comment type="block">/*                   Gabovedot Ä  LATIN CAPITAL LETTER G WITH DOT ABOVE */</comment>
+  <expr><block>{ <expr>0x02d8</expr>, <expr>0x011c</expr> }</block></expr>, <comment type="block">/*                 Gcircumflex Ä LATIN CAPITAL LETTER G WITH CIRCUMFLEX */</comment>
+  <expr><block>{ <expr>0x02dd</expr>, <expr>0x016c</expr> }</block></expr>, <comment type="block">/*                      Ubreve Å¬ LATIN CAPITAL LETTER U WITH BREVE */</comment>
+  <expr><block>{ <expr>0x02de</expr>, <expr>0x015c</expr> }</block></expr>, <comment type="block">/*                 Scircumflex Å LATIN CAPITAL LETTER S WITH CIRCUMFLEX */</comment>
+  <expr><block>{ <expr>0x02e5</expr>, <expr>0x010b</expr> }</block></expr>, <comment type="block">/*                   cabovedot Ä LATIN SMALL LETTER C WITH DOT ABOVE */</comment>
+  <expr><block>{ <expr>0x02e6</expr>, <expr>0x0109</expr> }</block></expr>, <comment type="block">/*                 ccircumflex Ä LATIN SMALL LETTER C WITH CIRCUMFLEX */</comment>
+  <expr><block>{ <expr>0x02f5</expr>, <expr>0x0121</expr> }</block></expr>, <comment type="block">/*                   gabovedot Ä¡ LATIN SMALL LETTER G WITH DOT ABOVE */</comment>
+  <expr><block>{ <expr>0x02f8</expr>, <expr>0x011d</expr> }</block></expr>, <comment type="block">/*                 gcircumflex Ä LATIN SMALL LETTER G WITH CIRCUMFLEX */</comment>
+  <expr><block>{ <expr>0x02fd</expr>, <expr>0x016d</expr> }</block></expr>, <comment type="block">/*                      ubreve Å­ LATIN SMALL LETTER U WITH BREVE */</comment>
+  <expr><block>{ <expr>0x02fe</expr>, <expr>0x015d</expr> }</block></expr>, <comment type="block">/*                 scircumflex Å LATIN SMALL LETTER S WITH CIRCUMFLEX */</comment>
+  <expr><block>{ <expr>0x03a2</expr>, <expr>0x0138</expr> }</block></expr>, <comment type="block">/*                         kra Ä¸ LATIN SMALL LETTER KRA */</comment>
+  <expr><block>{ <expr>0x03a3</expr>, <expr>0x0156</expr> }</block></expr>, <comment type="block">/*                    Rcedilla Å LATIN CAPITAL LETTER R WITH CEDILLA */</comment>
+  <expr><block>{ <expr>0x03a5</expr>, <expr>0x0128</expr> }</block></expr>, <comment type="block">/*                      Itilde Ä¨ LATIN CAPITAL LETTER I WITH TILDE */</comment>
+  <expr><block>{ <expr>0x03a6</expr>, <expr>0x013b</expr> }</block></expr>, <comment type="block">/*                    Lcedilla Ä» LATIN CAPITAL LETTER L WITH CEDILLA */</comment>
+  <expr><block>{ <expr>0x03aa</expr>, <expr>0x0112</expr> }</block></expr>, <comment type="block">/*                     Emacron Ä LATIN CAPITAL LETTER E WITH MACRON */</comment>
+  <expr><block>{ <expr>0x03ab</expr>, <expr>0x0122</expr> }</block></expr>, <comment type="block">/*                    Gcedilla Ä¢ LATIN CAPITAL LETTER G WITH CEDILLA */</comment>
+  <expr><block>{ <expr>0x03ac</expr>, <expr>0x0166</expr> }</block></expr>, <comment type="block">/*                      Tslash Å¦ LATIN CAPITAL LETTER T WITH STROKE */</comment>
+  <expr><block>{ <expr>0x03b3</expr>, <expr>0x0157</expr> }</block></expr>, <comment type="block">/*                    rcedilla Å LATIN SMALL LETTER R WITH CEDILLA */</comment>
+  <expr><block>{ <expr>0x03b5</expr>, <expr>0x0129</expr> }</block></expr>, <comment type="block">/*                      itilde Ä© LATIN SMALL LETTER I WITH TILDE */</comment>
+  <expr><block>{ <expr>0x03b6</expr>, <expr>0x013c</expr> }</block></expr>, <comment type="block">/*                    lcedilla Ä¼ LATIN SMALL LETTER L WITH CEDILLA */</comment>
+  <expr><block>{ <expr>0x03ba</expr>, <expr>0x0113</expr> }</block></expr>, <comment type="block">/*                     emacron Ä LATIN SMALL LETTER E WITH MACRON */</comment>
+  <expr><block>{ <expr>0x03bb</expr>, <expr>0x0123</expr> }</block></expr>, <comment type="block">/*                    gcedilla Ä£ LATIN SMALL LETTER G WITH CEDILLA */</comment>
+  <expr><block>{ <expr>0x03bc</expr>, <expr>0x0167</expr> }</block></expr>, <comment type="block">/*                      tslash Å§ LATIN SMALL LETTER T WITH STROKE */</comment>
+  <expr><block>{ <expr>0x03bd</expr>, <expr>0x014a</expr> }</block></expr>, <comment type="block">/*                         ENG Å LATIN CAPITAL LETTER ENG */</comment>
+  <expr><block>{ <expr>0x03bf</expr>, <expr>0x014b</expr> }</block></expr>, <comment type="block">/*                         eng Å LATIN SMALL LETTER ENG */</comment>
+  <expr><block>{ <expr>0x03c0</expr>, <expr>0x0100</expr> }</block></expr>, <comment type="block">/*                     Amacron Ä LATIN CAPITAL LETTER A WITH MACRON */</comment>
+  <expr><block>{ <expr>0x03c7</expr>, <expr>0x012e</expr> }</block></expr>, <comment type="block">/*                     Iogonek Ä® LATIN CAPITAL LETTER I WITH OGONEK */</comment>
+  <expr><block>{ <expr>0x03cc</expr>, <expr>0x0116</expr> }</block></expr>, <comment type="block">/*                   Eabovedot Ä LATIN CAPITAL LETTER E WITH DOT ABOVE */</comment>
+  <expr><block>{ <expr>0x03cf</expr>, <expr>0x012a</expr> }</block></expr>, <comment type="block">/*                     Imacron Äª LATIN CAPITAL LETTER I WITH MACRON */</comment>
+  <expr><block>{ <expr>0x03d1</expr>, <expr>0x0145</expr> }</block></expr>, <comment type="block">/*                    Ncedilla Å LATIN CAPITAL LETTER N WITH CEDILLA */</comment>
+  <expr><block>{ <expr>0x03d2</expr>, <expr>0x014c</expr> }</block></expr>, <comment type="block">/*                     Omacron Å LATIN CAPITAL LETTER O WITH MACRON */</comment>
+  <expr><block>{ <expr>0x03d3</expr>, <expr>0x0136</expr> }</block></expr>, <comment type="block">/*                    Kcedilla Ä¶ LATIN CAPITAL LETTER K WITH CEDILLA */</comment>
+  <expr><block>{ <expr>0x03d9</expr>, <expr>0x0172</expr> }</block></expr>, <comment type="block">/*                     Uogonek Å² LATIN CAPITAL LETTER U WITH OGONEK */</comment>
+  <expr><block>{ <expr>0x03dd</expr>, <expr>0x0168</expr> }</block></expr>, <comment type="block">/*                      Utilde Å¨ LATIN CAPITAL LETTER U WITH TILDE */</comment>
+  <expr><block>{ <expr>0x03de</expr>, <expr>0x016a</expr> }</block></expr>, <comment type="block">/*                     Umacron Åª LATIN CAPITAL LETTER U WITH MACRON */</comment>
+  <expr><block>{ <expr>0x03e0</expr>, <expr>0x0101</expr> }</block></expr>, <comment type="block">/*                     amacron Ä LATIN SMALL LETTER A WITH MACRON */</comment>
+  <expr><block>{ <expr>0x03e7</expr>, <expr>0x012f</expr> }</block></expr>, <comment type="block">/*                     iogonek Ä¯ LATIN SMALL LETTER I WITH OGONEK */</comment>
+  <expr><block>{ <expr>0x03ec</expr>, <expr>0x0117</expr> }</block></expr>, <comment type="block">/*                   eabovedot Ä LATIN SMALL LETTER E WITH DOT ABOVE */</comment>
+  <expr><block>{ <expr>0x03ef</expr>, <expr>0x012b</expr> }</block></expr>, <comment type="block">/*                     imacron Ä« LATIN SMALL LETTER I WITH MACRON */</comment>
+  <expr><block>{ <expr>0x03f1</expr>, <expr>0x0146</expr> }</block></expr>, <comment type="block">/*                    ncedilla Å LATIN SMALL LETTER N WITH CEDILLA */</comment>
+  <expr><block>{ <expr>0x03f2</expr>, <expr>0x014d</expr> }</block></expr>, <comment type="block">/*                     omacron Å LATIN SMALL LETTER O WITH MACRON */</comment>
+  <expr><block>{ <expr>0x03f3</expr>, <expr>0x0137</expr> }</block></expr>, <comment type="block">/*                    kcedilla Ä· LATIN SMALL LETTER K WITH CEDILLA */</comment>
+  <expr><block>{ <expr>0x03f9</expr>, <expr>0x0173</expr> }</block></expr>, <comment type="block">/*                     uogonek Å³ LATIN SMALL LETTER U WITH OGONEK */</comment>
+  <expr><block>{ <expr>0x03fd</expr>, <expr>0x0169</expr> }</block></expr>, <comment type="block">/*                      utilde Å© LATIN SMALL LETTER U WITH TILDE */</comment>
+  <expr><block>{ <expr>0x03fe</expr>, <expr>0x016b</expr> }</block></expr>, <comment type="block">/*                     umacron Å« LATIN SMALL LETTER U WITH MACRON */</comment>
+  <expr><block>{ <expr>0x047e</expr>, <expr>0x203e</expr> }</block></expr>, <comment type="block">/*                    overline â¾ OVERLINE */</comment>
+  <expr><block>{ <expr>0x04a1</expr>, <expr>0x3002</expr> }</block></expr>, <comment type="block">/*               kana_fullstop ã IDEOGRAPHIC FULL STOP */</comment>
+  <expr><block>{ <expr>0x04a2</expr>, <expr>0x300c</expr> }</block></expr>, <comment type="block">/*         kana_openingbracket ã LEFT CORNER BRACKET */</comment>
+  <expr><block>{ <expr>0x04a3</expr>, <expr>0x300d</expr> }</block></expr>, <comment type="block">/*         kana_closingbracket ã RIGHT CORNER BRACKET */</comment>
+  <expr><block>{ <expr>0x04a4</expr>, <expr>0x3001</expr> }</block></expr>, <comment type="block">/*                  kana_comma ã IDEOGRAPHIC COMMA */</comment>
+  <expr><block>{ <expr>0x04a5</expr>, <expr>0x30fb</expr> }</block></expr>, <comment type="block">/*            kana_conjunctive ã» KATAKANA MIDDLE DOT */</comment>
+  <expr><block>{ <expr>0x04a6</expr>, <expr>0x30f2</expr> }</block></expr>, <comment type="block">/*                     kana_WO ã² KATAKANA LETTER WO */</comment>
+  <expr><block>{ <expr>0x04a7</expr>, <expr>0x30a1</expr> }</block></expr>, <comment type="block">/*                      kana_a ã¡ KATAKANA LETTER SMALL A */</comment>
+  <expr><block>{ <expr>0x04a8</expr>, <expr>0x30a3</expr> }</block></expr>, <comment type="block">/*                      kana_i ã£ KATAKANA LETTER SMALL I */</comment>
+  <expr><block>{ <expr>0x04a9</expr>, <expr>0x30a5</expr> }</block></expr>, <comment type="block">/*                      kana_u ã¥ KATAKANA LETTER SMALL U */</comment>
+  <expr><block>{ <expr>0x04aa</expr>, <expr>0x30a7</expr> }</block></expr>, <comment type="block">/*                      kana_e ã§ KATAKANA LETTER SMALL E */</comment>
+  <expr><block>{ <expr>0x04ab</expr>, <expr>0x30a9</expr> }</block></expr>, <comment type="block">/*                      kana_o ã© KATAKANA LETTER SMALL O */</comment>
+  <expr><block>{ <expr>0x04ac</expr>, <expr>0x30e3</expr> }</block></expr>, <comment type="block">/*                     kana_ya ã£ KATAKANA LETTER SMALL YA */</comment>
+  <expr><block>{ <expr>0x04ad</expr>, <expr>0x30e5</expr> }</block></expr>, <comment type="block">/*                     kana_yu ã¥ KATAKANA LETTER SMALL YU */</comment>
+  <expr><block>{ <expr>0x04ae</expr>, <expr>0x30e7</expr> }</block></expr>, <comment type="block">/*                     kana_yo ã§ KATAKANA LETTER SMALL YO */</comment>
+  <expr><block>{ <expr>0x04af</expr>, <expr>0x30c3</expr> }</block></expr>, <comment type="block">/*                    kana_tsu ã KATAKANA LETTER SMALL TU */</comment>
+  <expr><block>{ <expr>0x04b0</expr>, <expr>0x30fc</expr> }</block></expr>, <comment type="block">/*              prolongedsound ã¼ KATAKANA-HIRAGANA PROLONGED SOUND MARK */</comment>
+  <expr><block>{ <expr>0x04b1</expr>, <expr>0x30a2</expr> }</block></expr>, <comment type="block">/*                      kana_A ã¢ KATAKANA LETTER A */</comment>
+  <expr><block>{ <expr>0x04b2</expr>, <expr>0x30a4</expr> }</block></expr>, <comment type="block">/*                      kana_I ã¤ KATAKANA LETTER I */</comment>
+  <expr><block>{ <expr>0x04b3</expr>, <expr>0x30a6</expr> }</block></expr>, <comment type="block">/*                      kana_U ã¦ KATAKANA LETTER U */</comment>
+  <expr><block>{ <expr>0x04b4</expr>, <expr>0x30a8</expr> }</block></expr>, <comment type="block">/*                      kana_E ã¨ KATAKANA LETTER E */</comment>
+  <expr><block>{ <expr>0x04b5</expr>, <expr>0x30aa</expr> }</block></expr>, <comment type="block">/*                      kana_O ãª KATAKANA LETTER O */</comment>
+  <expr><block>{ <expr>0x04b6</expr>, <expr>0x30ab</expr> }</block></expr>, <comment type="block">/*                     kana_KA ã« KATAKANA LETTER KA */</comment>
+  <expr><block>{ <expr>0x04b7</expr>, <expr>0x30ad</expr> }</block></expr>, <comment type="block">/*                     kana_KI ã­ KATAKANA LETTER KI */</comment>
+  <expr><block>{ <expr>0x04b8</expr>, <expr>0x30af</expr> }</block></expr>, <comment type="block">/*                     kana_KU ã¯ KATAKANA LETTER KU */</comment>
+  <expr><block>{ <expr>0x04b9</expr>, <expr>0x30b1</expr> }</block></expr>, <comment type="block">/*                     kana_KE ã± KATAKANA LETTER KE */</comment>
+  <expr><block>{ <expr>0x04ba</expr>, <expr>0x30b3</expr> }</block></expr>, <comment type="block">/*                     kana_KO ã³ KATAKANA LETTER KO */</comment>
+  <expr><block>{ <expr>0x04bb</expr>, <expr>0x30b5</expr> }</block></expr>, <comment type="block">/*                     kana_SA ãµ KATAKANA LETTER SA */</comment>
+  <expr><block>{ <expr>0x04bc</expr>, <expr>0x30b7</expr> }</block></expr>, <comment type="block">/*                    kana_SHI ã· KATAKANA LETTER SI */</comment>
+  <expr><block>{ <expr>0x04bd</expr>, <expr>0x30b9</expr> }</block></expr>, <comment type="block">/*                     kana_SU ã¹ KATAKANA LETTER SU */</comment>
+  <expr><block>{ <expr>0x04be</expr>, <expr>0x30bb</expr> }</block></expr>, <comment type="block">/*                     kana_SE ã» KATAKANA LETTER SE */</comment>
+  <expr><block>{ <expr>0x04bf</expr>, <expr>0x30bd</expr> }</block></expr>, <comment type="block">/*                     kana_SO ã½ KATAKANA LETTER SO */</comment>
+  <expr><block>{ <expr>0x04c0</expr>, <expr>0x30bf</expr> }</block></expr>, <comment type="block">/*                     kana_TA ã¿ KATAKANA LETTER TA */</comment>
+  <expr><block>{ <expr>0x04c1</expr>, <expr>0x30c1</expr> }</block></expr>, <comment type="block">/*                    kana_CHI ã KATAKANA LETTER TI */</comment>
+  <expr><block>{ <expr>0x04c2</expr>, <expr>0x30c4</expr> }</block></expr>, <comment type="block">/*                    kana_TSU ã KATAKANA LETTER TU */</comment>
+  <expr><block>{ <expr>0x04c3</expr>, <expr>0x30c6</expr> }</block></expr>, <comment type="block">/*                     kana_TE ã KATAKANA LETTER TE */</comment>
+  <expr><block>{ <expr>0x04c4</expr>, <expr>0x30c8</expr> }</block></expr>, <comment type="block">/*                     kana_TO ã KATAKANA LETTER TO */</comment>
+  <expr><block>{ <expr>0x04c5</expr>, <expr>0x30ca</expr> }</block></expr>, <comment type="block">/*                     kana_NA ã KATAKANA LETTER NA */</comment>
+  <expr><block>{ <expr>0x04c6</expr>, <expr>0x30cb</expr> }</block></expr>, <comment type="block">/*                     kana_NI ã KATAKANA LETTER NI */</comment>
+  <expr><block>{ <expr>0x04c7</expr>, <expr>0x30cc</expr> }</block></expr>, <comment type="block">/*                     kana_NU ã KATAKANA LETTER NU */</comment>
+  <expr><block>{ <expr>0x04c8</expr>, <expr>0x30cd</expr> }</block></expr>, <comment type="block">/*                     kana_NE ã KATAKANA LETTER NE */</comment>
+  <expr><block>{ <expr>0x04c9</expr>, <expr>0x30ce</expr> }</block></expr>, <comment type="block">/*                     kana_NO ã KATAKANA LETTER NO */</comment>
+  <expr><block>{ <expr>0x04ca</expr>, <expr>0x30cf</expr> }</block></expr>, <comment type="block">/*                     kana_HA ã KATAKANA LETTER HA */</comment>
+  <expr><block>{ <expr>0x04cb</expr>, <expr>0x30d2</expr> }</block></expr>, <comment type="block">/*                     kana_HI ã KATAKANA LETTER HI */</comment>
+  <expr><block>{ <expr>0x04cc</expr>, <expr>0x30d5</expr> }</block></expr>, <comment type="block">/*                     kana_FU ã KATAKANA LETTER HU */</comment>
+  <expr><block>{ <expr>0x04cd</expr>, <expr>0x30d8</expr> }</block></expr>, <comment type="block">/*                     kana_HE ã KATAKANA LETTER HE */</comment>
+  <expr><block>{ <expr>0x04ce</expr>, <expr>0x30db</expr> }</block></expr>, <comment type="block">/*                     kana_HO ã KATAKANA LETTER HO */</comment>
+  <expr><block>{ <expr>0x04cf</expr>, <expr>0x30de</expr> }</block></expr>, <comment type="block">/*                     kana_MA ã KATAKANA LETTER MA */</comment>
+  <expr><block>{ <expr>0x04d0</expr>, <expr>0x30df</expr> }</block></expr>, <comment type="block">/*                     kana_MI ã KATAKANA LETTER MI */</comment>
+  <expr><block>{ <expr>0x04d1</expr>, <expr>0x30e0</expr> }</block></expr>, <comment type="block">/*                     kana_MU ã  KATAKANA LETTER MU */</comment>
+  <expr><block>{ <expr>0x04d2</expr>, <expr>0x30e1</expr> }</block></expr>, <comment type="block">/*                     kana_ME ã¡ KATAKANA LETTER ME */</comment>
+  <expr><block>{ <expr>0x04d3</expr>, <expr>0x30e2</expr> }</block></expr>, <comment type="block">/*                     kana_MO ã¢ KATAKANA LETTER MO */</comment>
+  <expr><block>{ <expr>0x04d4</expr>, <expr>0x30e4</expr> }</block></expr>, <comment type="block">/*                     kana_YA ã¤ KATAKANA LETTER YA */</comment>
+  <expr><block>{ <expr>0x04d5</expr>, <expr>0x30e6</expr> }</block></expr>, <comment type="block">/*                     kana_YU ã¦ KATAKANA LETTER YU */</comment>
+  <expr><block>{ <expr>0x04d6</expr>, <expr>0x30e8</expr> }</block></expr>, <comment type="block">/*                     kana_YO ã¨ KATAKANA LETTER YO */</comment>
+  <expr><block>{ <expr>0x04d7</expr>, <expr>0x30e9</expr> }</block></expr>, <comment type="block">/*                     kana_RA ã© KATAKANA LETTER RA */</comment>
+  <expr><block>{ <expr>0x04d8</expr>, <expr>0x30ea</expr> }</block></expr>, <comment type="block">/*                     kana_RI ãª KATAKANA LETTER RI */</comment>
+  <expr><block>{ <expr>0x04d9</expr>, <expr>0x30eb</expr> }</block></expr>, <comment type="block">/*                     kana_RU ã« KATAKANA LETTER RU */</comment>
+  <expr><block>{ <expr>0x04da</expr>, <expr>0x30ec</expr> }</block></expr>, <comment type="block">/*                     kana_RE ã¬ KATAKANA LETTER RE */</comment>
+  <expr><block>{ <expr>0x04db</expr>, <expr>0x30ed</expr> }</block></expr>, <comment type="block">/*                     kana_RO ã­ KATAKANA LETTER RO */</comment>
+  <expr><block>{ <expr>0x04dc</expr>, <expr>0x30ef</expr> }</block></expr>, <comment type="block">/*                     kana_WA ã¯ KATAKANA LETTER WA */</comment>
+  <expr><block>{ <expr>0x04dd</expr>, <expr>0x30f3</expr> }</block></expr>, <comment type="block">/*                      kana_N ã³ KATAKANA LETTER N */</comment>
+  <expr><block>{ <expr>0x04de</expr>, <expr>0x309b</expr> }</block></expr>, <comment type="block">/*                 voicedsound ã KATAKANA-HIRAGANA VOICED SOUND MARK */</comment>
+  <expr><block>{ <expr>0x04df</expr>, <expr>0x309c</expr> }</block></expr>, <comment type="block">/*             semivoicedsound ã KATAKANA-HIRAGANA SEMI-VOICED SOUND MARK */</comment>
+  <expr><block>{ <expr>0x05ac</expr>, <expr>0x060c</expr> }</block></expr>, <comment type="block">/*                Arabic_comma Ø ARABIC COMMA */</comment>
+  <expr><block>{ <expr>0x05bb</expr>, <expr>0x061b</expr> }</block></expr>, <comment type="block">/*            Arabic_semicolon Ø ARABIC SEMICOLON */</comment>
+  <expr><block>{ <expr>0x05bf</expr>, <expr>0x061f</expr> }</block></expr>, <comment type="block">/*        Arabic_question_mark Ø ARABIC QUESTION MARK */</comment>
+  <expr><block>{ <expr>0x05c1</expr>, <expr>0x0621</expr> }</block></expr>, <comment type="block">/*                Arabic_hamza Ø¡ ARABIC LETTER HAMZA */</comment>
+  <expr><block>{ <expr>0x05c2</expr>, <expr>0x0622</expr> }</block></expr>, <comment type="block">/*          Arabic_maddaonalef Ø¢ ARABIC LETTER ALEF WITH MADDA ABOVE */</comment>
+  <expr><block>{ <expr>0x05c3</expr>, <expr>0x0623</expr> }</block></expr>, <comment type="block">/*          Arabic_hamzaonalef Ø£ ARABIC LETTER ALEF WITH HAMZA ABOVE */</comment>
+  <expr><block>{ <expr>0x05c4</expr>, <expr>0x0624</expr> }</block></expr>, <comment type="block">/*           Arabic_hamzaonwaw Ø¤ ARABIC LETTER WAW WITH HAMZA ABOVE */</comment>
+  <expr><block>{ <expr>0x05c5</expr>, <expr>0x0625</expr> }</block></expr>, <comment type="block">/*       Arabic_hamzaunderalef Ø¥ ARABIC LETTER ALEF WITH HAMZA BELOW */</comment>
+  <expr><block>{ <expr>0x05c6</expr>, <expr>0x0626</expr> }</block></expr>, <comment type="block">/*           Arabic_hamzaonyeh Ø¦ ARABIC LETTER YEH WITH HAMZA ABOVE */</comment>
+  <expr><block>{ <expr>0x05c7</expr>, <expr>0x0627</expr> }</block></expr>, <comment type="block">/*                 Arabic_alef Ø§ ARABIC LETTER ALEF */</comment>
+  <expr><block>{ <expr>0x05c8</expr>, <expr>0x0628</expr> }</block></expr>, <comment type="block">/*                  Arabic_beh Ø¨ ARABIC LETTER BEH */</comment>
+  <expr><block>{ <expr>0x05c9</expr>, <expr>0x0629</expr> }</block></expr>, <comment type="block">/*           Arabic_tehmarbuta Ø© ARABIC LETTER TEH MARBUTA */</comment>
+  <expr><block>{ <expr>0x05ca</expr>, <expr>0x062a</expr> }</block></expr>, <comment type="block">/*                  Arabic_teh Øª ARABIC LETTER TEH */</comment>
+  <expr><block>{ <expr>0x05cb</expr>, <expr>0x062b</expr> }</block></expr>, <comment type="block">/*                 Arabic_theh Ø« ARABIC LETTER THEH */</comment>
+  <expr><block>{ <expr>0x05cc</expr>, <expr>0x062c</expr> }</block></expr>, <comment type="block">/*                 Arabic_jeem Ø¬ ARABIC LETTER JEEM */</comment>
+  <expr><block>{ <expr>0x05cd</expr>, <expr>0x062d</expr> }</block></expr>, <comment type="block">/*                  Arabic_hah Ø­ ARABIC LETTER HAH */</comment>
+  <expr><block>{ <expr>0x05ce</expr>, <expr>0x062e</expr> }</block></expr>, <comment type="block">/*                 Arabic_khah Ø® ARABIC LETTER KHAH */</comment>
+  <expr><block>{ <expr>0x05cf</expr>, <expr>0x062f</expr> }</block></expr>, <comment type="block">/*                  Arabic_dal Ø¯ ARABIC LETTER DAL */</comment>
+  <expr><block>{ <expr>0x05d0</expr>, <expr>0x0630</expr> }</block></expr>, <comment type="block">/*                 Arabic_thal Ø° ARABIC LETTER THAL */</comment>
+  <expr><block>{ <expr>0x05d1</expr>, <expr>0x0631</expr> }</block></expr>, <comment type="block">/*                   Arabic_ra Ø± ARABIC LETTER REH */</comment>
+  <expr><block>{ <expr>0x05d2</expr>, <expr>0x0632</expr> }</block></expr>, <comment type="block">/*                 Arabic_zain Ø² ARABIC LETTER ZAIN */</comment>
+  <expr><block>{ <expr>0x05d3</expr>, <expr>0x0633</expr> }</block></expr>, <comment type="block">/*                 Arabic_seen Ø³ ARABIC LETTER SEEN */</comment>
+  <expr><block>{ <expr>0x05d4</expr>, <expr>0x0634</expr> }</block></expr>, <comment type="block">/*                Arabic_sheen Ø´ ARABIC LETTER SHEEN */</comment>
+  <expr><block>{ <expr>0x05d5</expr>, <expr>0x0635</expr> }</block></expr>, <comment type="block">/*                  Arabic_sad Øµ ARABIC LETTER SAD */</comment>
+  <expr><block>{ <expr>0x05d6</expr>, <expr>0x0636</expr> }</block></expr>, <comment type="block">/*                  Arabic_dad Ø¶ ARABIC LETTER DAD */</comment>
+  <expr><block>{ <expr>0x05d7</expr>, <expr>0x0637</expr> }</block></expr>, <comment type="block">/*                  Arabic_tah Ø· ARABIC LETTER TAH */</comment>
+  <expr><block>{ <expr>0x05d8</expr>, <expr>0x0638</expr> }</block></expr>, <comment type="block">/*                  Arabic_zah Ø¸ ARABIC LETTER ZAH */</comment>
+  <expr><block>{ <expr>0x05d9</expr>, <expr>0x0639</expr> }</block></expr>, <comment type="block">/*                  Arabic_ain Ø¹ ARABIC LETTER AIN */</comment>
+  <expr><block>{ <expr>0x05da</expr>, <expr>0x063a</expr> }</block></expr>, <comment type="block">/*                Arabic_ghain Øº ARABIC LETTER GHAIN */</comment>
+  <expr><block>{ <expr>0x05e0</expr>, <expr>0x0640</expr> }</block></expr>, <comment type="block">/*              Arabic_tatweel Ù ARABIC TATWEEL */</comment>
+  <expr><block>{ <expr>0x05e1</expr>, <expr>0x0641</expr> }</block></expr>, <comment type="block">/*                  Arabic_feh Ù ARABIC LETTER FEH */</comment>
+  <expr><block>{ <expr>0x05e2</expr>, <expr>0x0642</expr> }</block></expr>, <comment type="block">/*                  Arabic_qaf Ù ARABIC LETTER QAF */</comment>
+  <expr><block>{ <expr>0x05e3</expr>, <expr>0x0643</expr> }</block></expr>, <comment type="block">/*                  Arabic_kaf Ù ARABIC LETTER KAF */</comment>
+  <expr><block>{ <expr>0x05e4</expr>, <expr>0x0644</expr> }</block></expr>, <comment type="block">/*                  Arabic_lam Ù ARABIC LETTER LAM */</comment>
+  <expr><block>{ <expr>0x05e5</expr>, <expr>0x0645</expr> }</block></expr>, <comment type="block">/*                 Arabic_meem Ù ARABIC LETTER MEEM */</comment>
+  <expr><block>{ <expr>0x05e6</expr>, <expr>0x0646</expr> }</block></expr>, <comment type="block">/*                 Arabic_noon Ù ARABIC LETTER NOON */</comment>
+  <expr><block>{ <expr>0x05e7</expr>, <expr>0x0647</expr> }</block></expr>, <comment type="block">/*                   Arabic_ha Ù ARABIC LETTER HEH */</comment>
+  <expr><block>{ <expr>0x05e8</expr>, <expr>0x0648</expr> }</block></expr>, <comment type="block">/*                  Arabic_waw Ù ARABIC LETTER WAW */</comment>
+  <expr><block>{ <expr>0x05e9</expr>, <expr>0x0649</expr> }</block></expr>, <comment type="block">/*          Arabic_alefmaksura Ù ARABIC LETTER ALEF MAKSURA */</comment>
+  <expr><block>{ <expr>0x05ea</expr>, <expr>0x064a</expr> }</block></expr>, <comment type="block">/*                  Arabic_yeh Ù ARABIC LETTER YEH */</comment>
+  <expr><block>{ <expr>0x05eb</expr>, <expr>0x064b</expr> }</block></expr>, <comment type="block">/*             Arabic_fathatan Ù ARABIC FATHATAN */</comment>
+  <expr><block>{ <expr>0x05ec</expr>, <expr>0x064c</expr> }</block></expr>, <comment type="block">/*             Arabic_dammatan Ù ARABIC DAMMATAN */</comment>
+  <expr><block>{ <expr>0x05ed</expr>, <expr>0x064d</expr> }</block></expr>, <comment type="block">/*             Arabic_kasratan Ù ARABIC KASRATAN */</comment>
+  <expr><block>{ <expr>0x05ee</expr>, <expr>0x064e</expr> }</block></expr>, <comment type="block">/*                Arabic_fatha Ù ARABIC FATHA */</comment>
+  <expr><block>{ <expr>0x05ef</expr>, <expr>0x064f</expr> }</block></expr>, <comment type="block">/*                Arabic_damma Ù ARABIC DAMMA */</comment>
+  <expr><block>{ <expr>0x05f0</expr>, <expr>0x0650</expr> }</block></expr>, <comment type="block">/*                Arabic_kasra Ù ARABIC KASRA */</comment>
+  <expr><block>{ <expr>0x05f1</expr>, <expr>0x0651</expr> }</block></expr>, <comment type="block">/*               Arabic_shadda Ù ARABIC SHADDA */</comment>
+  <expr><block>{ <expr>0x05f2</expr>, <expr>0x0652</expr> }</block></expr>, <comment type="block">/*                Arabic_sukun Ù ARABIC SUKUN */</comment>
+  <expr><block>{ <expr>0x06a1</expr>, <expr>0x0452</expr> }</block></expr>, <comment type="block">/*                 Serbian_dje Ñ CYRILLIC SMALL LETTER DJE */</comment>
+  <expr><block>{ <expr>0x06a2</expr>, <expr>0x0453</expr> }</block></expr>, <comment type="block">/*               Macedonia_gje Ñ CYRILLIC SMALL LETTER GJE */</comment>
+  <expr><block>{ <expr>0x06a3</expr>, <expr>0x0451</expr> }</block></expr>, <comment type="block">/*                 Cyrillic_io Ñ CYRILLIC SMALL LETTER IO */</comment>
+  <expr><block>{ <expr>0x06a4</expr>, <expr>0x0454</expr> }</block></expr>, <comment type="block">/*                Ukrainian_ie Ñ CYRILLIC SMALL LETTER UKRAINIAN IE */</comment>
+  <expr><block>{ <expr>0x06a5</expr>, <expr>0x0455</expr> }</block></expr>, <comment type="block">/*               Macedonia_dse Ñ CYRILLIC SMALL LETTER DZE */</comment>
+  <expr><block>{ <expr>0x06a6</expr>, <expr>0x0456</expr> }</block></expr>, <comment type="block">/*                 Ukrainian_i Ñ CYRILLIC SMALL LETTER BYELORUSSIAN-UKRAINIAN I */</comment>
+  <expr><block>{ <expr>0x06a7</expr>, <expr>0x0457</expr> }</block></expr>, <comment type="block">/*                Ukrainian_yi Ñ CYRILLIC SMALL LETTER YI */</comment>
+  <expr><block>{ <expr>0x06a8</expr>, <expr>0x0458</expr> }</block></expr>, <comment type="block">/*                 Cyrillic_je Ñ CYRILLIC SMALL LETTER JE */</comment>
+  <expr><block>{ <expr>0x06a9</expr>, <expr>0x0459</expr> }</block></expr>, <comment type="block">/*                Cyrillic_lje Ñ CYRILLIC SMALL LETTER LJE */</comment>
+  <expr><block>{ <expr>0x06aa</expr>, <expr>0x045a</expr> }</block></expr>, <comment type="block">/*                Cyrillic_nje Ñ CYRILLIC SMALL LETTER NJE */</comment>
+  <expr><block>{ <expr>0x06ab</expr>, <expr>0x045b</expr> }</block></expr>, <comment type="block">/*                Serbian_tshe Ñ CYRILLIC SMALL LETTER TSHE */</comment>
+  <expr><block>{ <expr>0x06ac</expr>, <expr>0x045c</expr> }</block></expr>, <comment type="block">/*               Macedonia_kje Ñ CYRILLIC SMALL LETTER KJE */</comment>
+  <expr><block>{ <expr>0x06ad</expr>, <expr>0x0491</expr> }</block></expr>, <comment type="block">/*   Ukrainian_ghe_with_upturn Ò CYRILLIC SMALL LETTER GHE WITH UPTURN */</comment>
+  <expr><block>{ <expr>0x06ae</expr>, <expr>0x045e</expr> }</block></expr>, <comment type="block">/*         Byelorussian_shortu Ñ CYRILLIC SMALL LETTER SHORT U */</comment>
+  <expr><block>{ <expr>0x06af</expr>, <expr>0x045f</expr> }</block></expr>, <comment type="block">/*               Cyrillic_dzhe Ñ CYRILLIC SMALL LETTER DZHE */</comment>
+  <expr><block>{ <expr>0x06b0</expr>, <expr>0x2116</expr> }</block></expr>, <comment type="block">/*                  numerosign â NUMERO SIGN */</comment>
+  <expr><block>{ <expr>0x06b1</expr>, <expr>0x0402</expr> }</block></expr>, <comment type="block">/*                 Serbian_DJE Ð CYRILLIC CAPITAL LETTER DJE */</comment>
+  <expr><block>{ <expr>0x06b2</expr>, <expr>0x0403</expr> }</block></expr>, <comment type="block">/*               Macedonia_GJE Ð CYRILLIC CAPITAL LETTER GJE */</comment>
+  <expr><block>{ <expr>0x06b3</expr>, <expr>0x0401</expr> }</block></expr>, <comment type="block">/*                 Cyrillic_IO Ð CYRILLIC CAPITAL LETTER IO */</comment>
+  <expr><block>{ <expr>0x06b4</expr>, <expr>0x0404</expr> }</block></expr>, <comment type="block">/*                Ukrainian_IE Ð CYRILLIC CAPITAL LETTER UKRAINIAN IE */</comment>
+  <expr><block>{ <expr>0x06b5</expr>, <expr>0x0405</expr> }</block></expr>, <comment type="block">/*               Macedonia_DSE Ð CYRILLIC CAPITAL LETTER DZE */</comment>
+  <expr><block>{ <expr>0x06b6</expr>, <expr>0x0406</expr> }</block></expr>, <comment type="block">/*                 Ukrainian_I Ð CYRILLIC CAPITAL LETTER BYELORUSSIAN-UKRAINIAN I */</comment>
+  <expr><block>{ <expr>0x06b7</expr>, <expr>0x0407</expr> }</block></expr>, <comment type="block">/*                Ukrainian_YI Ð CYRILLIC CAPITAL LETTER YI */</comment>
+  <expr><block>{ <expr>0x06b8</expr>, <expr>0x0408</expr> }</block></expr>, <comment type="block">/*                 Cyrillic_JE Ð CYRILLIC CAPITAL LETTER JE */</comment>
+  <expr><block>{ <expr>0x06b9</expr>, <expr>0x0409</expr> }</block></expr>, <comment type="block">/*                Cyrillic_LJE Ð CYRILLIC CAPITAL LETTER LJE */</comment>
+  <expr><block>{ <expr>0x06ba</expr>, <expr>0x040a</expr> }</block></expr>, <comment type="block">/*                Cyrillic_NJE Ð CYRILLIC CAPITAL LETTER NJE */</comment>
+  <expr><block>{ <expr>0x06bb</expr>, <expr>0x040b</expr> }</block></expr>, <comment type="block">/*                Serbian_TSHE Ð CYRILLIC CAPITAL LETTER TSHE */</comment>
+  <expr><block>{ <expr>0x06bc</expr>, <expr>0x040c</expr> }</block></expr>, <comment type="block">/*               Macedonia_KJE Ð CYRILLIC CAPITAL LETTER KJE */</comment>
+  <expr><block>{ <expr>0x06bd</expr>, <expr>0x0490</expr> }</block></expr>, <comment type="block">/*   Ukrainian_GHE_WITH_UPTURN Ò CYRILLIC CAPITAL LETTER GHE WITH UPTURN */</comment>
+  <expr><block>{ <expr>0x06be</expr>, <expr>0x040e</expr> }</block></expr>, <comment type="block">/*         Byelorussian_SHORTU Ð CYRILLIC CAPITAL LETTER SHORT U */</comment>
+  <expr><block>{ <expr>0x06bf</expr>, <expr>0x040f</expr> }</block></expr>, <comment type="block">/*               Cyrillic_DZHE Ð CYRILLIC CAPITAL LETTER DZHE */</comment>
+  <expr><block>{ <expr>0x06c0</expr>, <expr>0x044e</expr> }</block></expr>, <comment type="block">/*                 Cyrillic_yu Ñ CYRILLIC SMALL LETTER YU */</comment>
+  <expr><block>{ <expr>0x06c1</expr>, <expr>0x0430</expr> }</block></expr>, <comment type="block">/*                  Cyrillic_a Ð° CYRILLIC SMALL LETTER A */</comment>
+  <expr><block>{ <expr>0x06c2</expr>, <expr>0x0431</expr> }</block></expr>, <comment type="block">/*                 Cyrillic_be Ð± CYRILLIC SMALL LETTER BE */</comment>
+  <expr><block>{ <expr>0x06c3</expr>, <expr>0x0446</expr> }</block></expr>, <comment type="block">/*                Cyrillic_tse Ñ CYRILLIC SMALL LETTER TSE */</comment>
+  <expr><block>{ <expr>0x06c4</expr>, <expr>0x0434</expr> }</block></expr>, <comment type="block">/*                 Cyrillic_de Ð´ CYRILLIC SMALL LETTER DE */</comment>
+  <expr><block>{ <expr>0x06c5</expr>, <expr>0x0435</expr> }</block></expr>, <comment type="block">/*                 Cyrillic_ie Ðµ CYRILLIC SMALL LETTER IE */</comment>
+  <expr><block>{ <expr>0x06c6</expr>, <expr>0x0444</expr> }</block></expr>, <comment type="block">/*                 Cyrillic_ef Ñ CYRILLIC SMALL LETTER EF */</comment>
+  <expr><block>{ <expr>0x06c7</expr>, <expr>0x0433</expr> }</block></expr>, <comment type="block">/*                Cyrillic_ghe Ð³ CYRILLIC SMALL LETTER GHE */</comment>
+  <expr><block>{ <expr>0x06c8</expr>, <expr>0x0445</expr> }</block></expr>, <comment type="block">/*                 Cyrillic_ha Ñ CYRILLIC SMALL LETTER HA */</comment>
+  <expr><block>{ <expr>0x06c9</expr>, <expr>0x0438</expr> }</block></expr>, <comment type="block">/*                  Cyrillic_i Ð¸ CYRILLIC SMALL LETTER I */</comment>
+  <expr><block>{ <expr>0x06ca</expr>, <expr>0x0439</expr> }</block></expr>, <comment type="block">/*             Cyrillic_shorti Ð¹ CYRILLIC SMALL LETTER SHORT I */</comment>
+  <expr><block>{ <expr>0x06cb</expr>, <expr>0x043a</expr> }</block></expr>, <comment type="block">/*                 Cyrillic_ka Ðº CYRILLIC SMALL LETTER KA */</comment>
+  <expr><block>{ <expr>0x06cc</expr>, <expr>0x043b</expr> }</block></expr>, <comment type="block">/*                 Cyrillic_el Ð» CYRILLIC SMALL LETTER EL */</comment>
+  <expr><block>{ <expr>0x06cd</expr>, <expr>0x043c</expr> }</block></expr>, <comment type="block">/*                 Cyrillic_em Ð¼ CYRILLIC SMALL LETTER EM */</comment>
+  <expr><block>{ <expr>0x06ce</expr>, <expr>0x043d</expr> }</block></expr>, <comment type="block">/*                 Cyrillic_en Ð½ CYRILLIC SMALL LETTER EN */</comment>
+  <expr><block>{ <expr>0x06cf</expr>, <expr>0x043e</expr> }</block></expr>, <comment type="block">/*                  Cyrillic_o Ð¾ CYRILLIC SMALL LETTER O */</comment>
+  <expr><block>{ <expr>0x06d0</expr>, <expr>0x043f</expr> }</block></expr>, <comment type="block">/*                 Cyrillic_pe Ð¿ CYRILLIC SMALL LETTER PE */</comment>
+  <expr><block>{ <expr>0x06d1</expr>, <expr>0x044f</expr> }</block></expr>, <comment type="block">/*                 Cyrillic_ya Ñ CYRILLIC SMALL LETTER YA */</comment>
+  <expr><block>{ <expr>0x06d2</expr>, <expr>0x0440</expr> }</block></expr>, <comment type="block">/*                 Cyrillic_er Ñ CYRILLIC SMALL LETTER ER */</comment>
+  <expr><block>{ <expr>0x06d3</expr>, <expr>0x0441</expr> }</block></expr>, <comment type="block">/*                 Cyrillic_es Ñ CYRILLIC SMALL LETTER ES */</comment>
+  <expr><block>{ <expr>0x06d4</expr>, <expr>0x0442</expr> }</block></expr>, <comment type="block">/*                 Cyrillic_te Ñ CYRILLIC SMALL LETTER TE */</comment>
+  <expr><block>{ <expr>0x06d5</expr>, <expr>0x0443</expr> }</block></expr>, <comment type="block">/*                  Cyrillic_u Ñ CYRILLIC SMALL LETTER U */</comment>
+  <expr><block>{ <expr>0x06d6</expr>, <expr>0x0436</expr> }</block></expr>, <comment type="block">/*                Cyrillic_zhe Ð¶ CYRILLIC SMALL LETTER ZHE */</comment>
+  <expr><block>{ <expr>0x06d7</expr>, <expr>0x0432</expr> }</block></expr>, <comment type="block">/*                 Cyrillic_ve Ð² CYRILLIC SMALL LETTER VE */</comment>
+  <expr><block>{ <expr>0x06d8</expr>, <expr>0x044c</expr> }</block></expr>, <comment type="block">/*           Cyrillic_softsign Ñ CYRILLIC SMALL LETTER SOFT SIGN */</comment>
+  <expr><block>{ <expr>0x06d9</expr>, <expr>0x044b</expr> }</block></expr>, <comment type="block">/*               Cyrillic_yeru Ñ CYRILLIC SMALL LETTER YERU */</comment>
+  <expr><block>{ <expr>0x06da</expr>, <expr>0x0437</expr> }</block></expr>, <comment type="block">/*                 Cyrillic_ze Ð· CYRILLIC SMALL LETTER ZE */</comment>
+  <expr><block>{ <expr>0x06db</expr>, <expr>0x0448</expr> }</block></expr>, <comment type="block">/*                Cyrillic_sha Ñ CYRILLIC SMALL LETTER SHA */</comment>
+  <expr><block>{ <expr>0x06dc</expr>, <expr>0x044d</expr> }</block></expr>, <comment type="block">/*                  Cyrillic_e Ñ CYRILLIC SMALL LETTER E */</comment>
+  <expr><block>{ <expr>0x06dd</expr>, <expr>0x0449</expr> }</block></expr>, <comment type="block">/*              Cyrillic_shcha Ñ CYRILLIC SMALL LETTER SHCHA */</comment>
+  <expr><block>{ <expr>0x06de</expr>, <expr>0x0447</expr> }</block></expr>, <comment type="block">/*                Cyrillic_che Ñ CYRILLIC SMALL LETTER CHE */</comment>
+  <expr><block>{ <expr>0x06df</expr>, <expr>0x044a</expr> }</block></expr>, <comment type="block">/*           Cyrillic_hardsign Ñ CYRILLIC SMALL LETTER HARD SIGN */</comment>
+  <expr><block>{ <expr>0x06e0</expr>, <expr>0x042e</expr> }</block></expr>, <comment type="block">/*                 Cyrillic_YU Ð® CYRILLIC CAPITAL LETTER YU */</comment>
+  <expr><block>{ <expr>0x06e1</expr>, <expr>0x0410</expr> }</block></expr>, <comment type="block">/*                  Cyrillic_A Ð CYRILLIC CAPITAL LETTER A */</comment>
+  <expr><block>{ <expr>0x06e2</expr>, <expr>0x0411</expr> }</block></expr>, <comment type="block">/*                 Cyrillic_BE Ð CYRILLIC CAPITAL LETTER BE */</comment>
+  <expr><block>{ <expr>0x06e3</expr>, <expr>0x0426</expr> }</block></expr>, <comment type="block">/*                Cyrillic_TSE Ð¦ CYRILLIC CAPITAL LETTER TSE */</comment>
+  <expr><block>{ <expr>0x06e4</expr>, <expr>0x0414</expr> }</block></expr>, <comment type="block">/*                 Cyrillic_DE Ð CYRILLIC CAPITAL LETTER DE */</comment>
+  <expr><block>{ <expr>0x06e5</expr>, <expr>0x0415</expr> }</block></expr>, <comment type="block">/*                 Cyrillic_IE Ð CYRILLIC CAPITAL LETTER IE */</comment>
+  <expr><block>{ <expr>0x06e6</expr>, <expr>0x0424</expr> }</block></expr>, <comment type="block">/*                 Cyrillic_EF Ð¤ CYRILLIC CAPITAL LETTER EF */</comment>
+  <expr><block>{ <expr>0x06e7</expr>, <expr>0x0413</expr> }</block></expr>, <comment type="block">/*                Cyrillic_GHE Ð CYRILLIC CAPITAL LETTER GHE */</comment>
+  <expr><block>{ <expr>0x06e8</expr>, <expr>0x0425</expr> }</block></expr>, <comment type="block">/*                 Cyrillic_HA Ð¥ CYRILLIC CAPITAL LETTER HA */</comment>
+  <expr><block>{ <expr>0x06e9</expr>, <expr>0x0418</expr> }</block></expr>, <comment type="block">/*                  Cyrillic_I Ð CYRILLIC CAPITAL LETTER I */</comment>
+  <expr><block>{ <expr>0x06ea</expr>, <expr>0x0419</expr> }</block></expr>, <comment type="block">/*             Cyrillic_SHORTI Ð CYRILLIC CAPITAL LETTER SHORT I */</comment>
+  <expr><block>{ <expr>0x06eb</expr>, <expr>0x041a</expr> }</block></expr>, <comment type="block">/*                 Cyrillic_KA Ð CYRILLIC CAPITAL LETTER KA */</comment>
+  <expr><block>{ <expr>0x06ec</expr>, <expr>0x041b</expr> }</block></expr>, <comment type="block">/*                 Cyrillic_EL Ð CYRILLIC CAPITAL LETTER EL */</comment>
+  <expr><block>{ <expr>0x06ed</expr>, <expr>0x041c</expr> }</block></expr>, <comment type="block">/*                 Cyrillic_EM Ð CYRILLIC CAPITAL LETTER EM */</comment>
+  <expr><block>{ <expr>0x06ee</expr>, <expr>0x041d</expr> }</block></expr>, <comment type="block">/*                 Cyrillic_EN Ð CYRILLIC CAPITAL LETTER EN */</comment>
+  <expr><block>{ <expr>0x06ef</expr>, <expr>0x041e</expr> }</block></expr>, <comment type="block">/*                  Cyrillic_O Ð CYRILLIC CAPITAL LETTER O */</comment>
+  <expr><block>{ <expr>0x06f0</expr>, <expr>0x041f</expr> }</block></expr>, <comment type="block">/*                 Cyrillic_PE Ð CYRILLIC CAPITAL LETTER PE */</comment>
+  <expr><block>{ <expr>0x06f1</expr>, <expr>0x042f</expr> }</block></expr>, <comment type="block">/*                 Cyrillic_YA Ð¯ CYRILLIC CAPITAL LETTER YA */</comment>
+  <expr><block>{ <expr>0x06f2</expr>, <expr>0x0420</expr> }</block></expr>, <comment type="block">/*                 Cyrillic_ER Ð  CYRILLIC CAPITAL LETTER ER */</comment>
+  <expr><block>{ <expr>0x06f3</expr>, <expr>0x0421</expr> }</block></expr>, <comment type="block">/*                 Cyrillic_ES Ð¡ CYRILLIC CAPITAL LETTER ES */</comment>
+  <expr><block>{ <expr>0x06f4</expr>, <expr>0x0422</expr> }</block></expr>, <comment type="block">/*                 Cyrillic_TE Ð¢ CYRILLIC CAPITAL LETTER TE */</comment>
+  <expr><block>{ <expr>0x06f5</expr>, <expr>0x0423</expr> }</block></expr>, <comment type="block">/*                  Cyrillic_U Ð£ CYRILLIC CAPITAL LETTER U */</comment>
+  <expr><block>{ <expr>0x06f6</expr>, <expr>0x0416</expr> }</block></expr>, <comment type="block">/*                Cyrillic_ZHE Ð CYRILLIC CAPITAL LETTER ZHE */</comment>
+  <expr><block>{ <expr>0x06f7</expr>, <expr>0x0412</expr> }</block></expr>, <comment type="block">/*                 Cyrillic_VE Ð CYRILLIC CAPITAL LETTER VE */</comment>
+  <expr><block>{ <expr>0x06f8</expr>, <expr>0x042c</expr> }</block></expr>, <comment type="block">/*           Cyrillic_SOFTSIGN Ð¬ CYRILLIC CAPITAL LETTER SOFT SIGN */</comment>
+  <expr><block>{ <expr>0x06f9</expr>, <expr>0x042b</expr> }</block></expr>, <comment type="block">/*               Cyrillic_YERU Ð« CYRILLIC CAPITAL LETTER YERU */</comment>
+  <expr><block>{ <expr>0x06fa</expr>, <expr>0x0417</expr> }</block></expr>, <comment type="block">/*                 Cyrillic_ZE Ð CYRILLIC CAPITAL LETTER ZE */</comment>
+  <expr><block>{ <expr>0x06fb</expr>, <expr>0x0428</expr> }</block></expr>, <comment type="block">/*                Cyrillic_SHA Ð¨ CYRILLIC CAPITAL LETTER SHA */</comment>
+  <expr><block>{ <expr>0x06fc</expr>, <expr>0x042d</expr> }</block></expr>, <comment type="block">/*                  Cyrillic_E Ð­ CYRILLIC CAPITAL LETTER E */</comment>
+  <expr><block>{ <expr>0x06fd</expr>, <expr>0x0429</expr> }</block></expr>, <comment type="block">/*              Cyrillic_SHCHA Ð© CYRILLIC CAPITAL LETTER SHCHA */</comment>
+  <expr><block>{ <expr>0x06fe</expr>, <expr>0x0427</expr> }</block></expr>, <comment type="block">/*                Cyrillic_CHE Ð§ CYRILLIC CAPITAL LETTER CHE */</comment>
+  <expr><block>{ <expr>0x06ff</expr>, <expr>0x042a</expr> }</block></expr>, <comment type="block">/*           Cyrillic_HARDSIGN Ðª CYRILLIC CAPITAL LETTER HARD SIGN */</comment>
+  <expr><block>{ <expr>0x07a1</expr>, <expr>0x0386</expr> }</block></expr>, <comment type="block">/*           Greek_ALPHAaccent Î GREEK CAPITAL LETTER ALPHA WITH TONOS */</comment>
+  <expr><block>{ <expr>0x07a2</expr>, <expr>0x0388</expr> }</block></expr>, <comment type="block">/*         Greek_EPSILONaccent Î GREEK CAPITAL LETTER EPSILON WITH TONOS */</comment>
+  <expr><block>{ <expr>0x07a3</expr>, <expr>0x0389</expr> }</block></expr>, <comment type="block">/*             Greek_ETAaccent Î GREEK CAPITAL LETTER ETA WITH TONOS */</comment>
+  <expr><block>{ <expr>0x07a4</expr>, <expr>0x038a</expr> }</block></expr>, <comment type="block">/*            Greek_IOTAaccent Î GREEK CAPITAL LETTER IOTA WITH TONOS */</comment>
+  <expr><block>{ <expr>0x07a5</expr>, <expr>0x03aa</expr> }</block></expr>, <comment type="block">/*         Greek_IOTAdiaeresis Îª GREEK CAPITAL LETTER IOTA WITH DIALYTIKA */</comment>
+  <expr><block>{ <expr>0x07a7</expr>, <expr>0x038c</expr> }</block></expr>, <comment type="block">/*         Greek_OMICRONaccent Î GREEK CAPITAL LETTER OMICRON WITH TONOS */</comment>
+  <expr><block>{ <expr>0x07a8</expr>, <expr>0x038e</expr> }</block></expr>, <comment type="block">/*         Greek_UPSILONaccent Î GREEK CAPITAL LETTER UPSILON WITH TONOS */</comment>
+  <expr><block>{ <expr>0x07a9</expr>, <expr>0x03ab</expr> }</block></expr>, <comment type="block">/*       Greek_UPSILONdieresis Î« GREEK CAPITAL LETTER UPSILON WITH DIALYTIKA */</comment>
+  <expr><block>{ <expr>0x07ab</expr>, <expr>0x038f</expr> }</block></expr>, <comment type="block">/*           Greek_OMEGAaccent Î GREEK CAPITAL LETTER OMEGA WITH TONOS */</comment>
+  <expr><block>{ <expr>0x07ae</expr>, <expr>0x0385</expr> }</block></expr>, <comment type="block">/*        Greek_accentdieresis Î GREEK DIALYTIKA TONOS */</comment>
+  <expr><block>{ <expr>0x07af</expr>, <expr>0x2015</expr> }</block></expr>, <comment type="block">/*              Greek_horizbar â HORIZONTAL BAR */</comment>
+  <expr><block>{ <expr>0x07b1</expr>, <expr>0x03ac</expr> }</block></expr>, <comment type="block">/*           Greek_alphaaccent Î¬ GREEK SMALL LETTER ALPHA WITH TONOS */</comment>
+  <expr><block>{ <expr>0x07b2</expr>, <expr>0x03ad</expr> }</block></expr>, <comment type="block">/*         Greek_epsilonaccent Î­ GREEK SMALL LETTER EPSILON WITH TONOS */</comment>
+  <expr><block>{ <expr>0x07b3</expr>, <expr>0x03ae</expr> }</block></expr>, <comment type="block">/*             Greek_etaaccent Î® GREEK SMALL LETTER ETA WITH TONOS */</comment>
+  <expr><block>{ <expr>0x07b4</expr>, <expr>0x03af</expr> }</block></expr>, <comment type="block">/*            Greek_iotaaccent Î¯ GREEK SMALL LETTER IOTA WITH TONOS */</comment>
+  <expr><block>{ <expr>0x07b5</expr>, <expr>0x03ca</expr> }</block></expr>, <comment type="block">/*          Greek_iotadieresis Ï GREEK SMALL LETTER IOTA WITH DIALYTIKA */</comment>
+  <expr><block>{ <expr>0x07b6</expr>, <expr>0x0390</expr> }</block></expr>, <comment type="block">/*    Greek_iotaaccentdieresis Î GREEK SMALL LETTER IOTA WITH DIALYTIKA AND TONOS */</comment>
+  <expr><block>{ <expr>0x07b7</expr>, <expr>0x03cc</expr> }</block></expr>, <comment type="block">/*         Greek_omicronaccent Ï GREEK SMALL LETTER OMICRON WITH TONOS */</comment>
+  <expr><block>{ <expr>0x07b8</expr>, <expr>0x03cd</expr> }</block></expr>, <comment type="block">/*         Greek_upsilonaccent Ï GREEK SMALL LETTER UPSILON WITH TONOS */</comment>
+  <expr><block>{ <expr>0x07b9</expr>, <expr>0x03cb</expr> }</block></expr>, <comment type="block">/*       Greek_upsilondieresis Ï GREEK SMALL LETTER UPSILON WITH DIALYTIKA */</comment>
+  <expr><block>{ <expr>0x07ba</expr>, <expr>0x03b0</expr> }</block></expr>, <comment type="block">/* Greek_upsilonaccentdieresis Î° GREEK SMALL LETTER UPSILON WITH DIALYTIKA AND TONOS */</comment>
+  <expr><block>{ <expr>0x07bb</expr>, <expr>0x03ce</expr> }</block></expr>, <comment type="block">/*           Greek_omegaaccent Ï GREEK SMALL LETTER OMEGA WITH TONOS */</comment>
+  <expr><block>{ <expr>0x07c1</expr>, <expr>0x0391</expr> }</block></expr>, <comment type="block">/*                 Greek_ALPHA Î GREEK CAPITAL LETTER ALPHA */</comment>
+  <expr><block>{ <expr>0x07c2</expr>, <expr>0x0392</expr> }</block></expr>, <comment type="block">/*                  Greek_BETA Î GREEK CAPITAL LETTER BETA */</comment>
+  <expr><block>{ <expr>0x07c3</expr>, <expr>0x0393</expr> }</block></expr>, <comment type="block">/*                 Greek_GAMMA Î GREEK CAPITAL LETTER GAMMA */</comment>
+  <expr><block>{ <expr>0x07c4</expr>, <expr>0x0394</expr> }</block></expr>, <comment type="block">/*                 Greek_DELTA Î GREEK CAPITAL LETTER DELTA */</comment>
+  <expr><block>{ <expr>0x07c5</expr>, <expr>0x0395</expr> }</block></expr>, <comment type="block">/*               Greek_EPSILON Î GREEK CAPITAL LETTER EPSILON */</comment>
+  <expr><block>{ <expr>0x07c6</expr>, <expr>0x0396</expr> }</block></expr>, <comment type="block">/*                  Greek_ZETA Î GREEK CAPITAL LETTER ZETA */</comment>
+  <expr><block>{ <expr>0x07c7</expr>, <expr>0x0397</expr> }</block></expr>, <comment type="block">/*                   Greek_ETA Î GREEK CAPITAL LETTER ETA */</comment>
+  <expr><block>{ <expr>0x07c8</expr>, <expr>0x0398</expr> }</block></expr>, <comment type="block">/*                 Greek_THETA Î GREEK CAPITAL LETTER THETA */</comment>
+  <expr><block>{ <expr>0x07c9</expr>, <expr>0x0399</expr> }</block></expr>, <comment type="block">/*                  Greek_IOTA Î GREEK CAPITAL LETTER IOTA */</comment>
+  <expr><block>{ <expr>0x07ca</expr>, <expr>0x039a</expr> }</block></expr>, <comment type="block">/*                 Greek_KAPPA Î GREEK CAPITAL LETTER KAPPA */</comment>
+  <expr><block>{ <expr>0x07cb</expr>, <expr>0x039b</expr> }</block></expr>, <comment type="block">/*                Greek_LAMBDA Î GREEK CAPITAL LETTER LAMDA */</comment>
+  <expr><block>{ <expr>0x07cc</expr>, <expr>0x039c</expr> }</block></expr>, <comment type="block">/*                    Greek_MU Î GREEK CAPITAL LETTER MU */</comment>
+  <expr><block>{ <expr>0x07cd</expr>, <expr>0x039d</expr> }</block></expr>, <comment type="block">/*                    Greek_NU Î GREEK CAPITAL LETTER NU */</comment>
+  <expr><block>{ <expr>0x07ce</expr>, <expr>0x039e</expr> }</block></expr>, <comment type="block">/*                    Greek_XI Î GREEK CAPITAL LETTER XI */</comment>
+  <expr><block>{ <expr>0x07cf</expr>, <expr>0x039f</expr> }</block></expr>, <comment type="block">/*               Greek_OMICRON Î GREEK CAPITAL LETTER OMICRON */</comment>
+  <expr><block>{ <expr>0x07d0</expr>, <expr>0x03a0</expr> }</block></expr>, <comment type="block">/*                    Greek_PI Î  GREEK CAPITAL LETTER PI */</comment>
+  <expr><block>{ <expr>0x07d1</expr>, <expr>0x03a1</expr> }</block></expr>, <comment type="block">/*                   Greek_RHO Î¡ GREEK CAPITAL LETTER RHO */</comment>
+  <expr><block>{ <expr>0x07d2</expr>, <expr>0x03a3</expr> }</block></expr>, <comment type="block">/*                 Greek_SIGMA Î£ GREEK CAPITAL LETTER SIGMA */</comment>
+  <expr><block>{ <expr>0x07d4</expr>, <expr>0x03a4</expr> }</block></expr>, <comment type="block">/*                   Greek_TAU Î¤ GREEK CAPITAL LETTER TAU */</comment>
+  <expr><block>{ <expr>0x07d5</expr>, <expr>0x03a5</expr> }</block></expr>, <comment type="block">/*               Greek_UPSILON Î¥ GREEK CAPITAL LETTER UPSILON */</comment>
+  <expr><block>{ <expr>0x07d6</expr>, <expr>0x03a6</expr> }</block></expr>, <comment type="block">/*                   Greek_PHI Î¦ GREEK CAPITAL LETTER PHI */</comment>
+  <expr><block>{ <expr>0x07d7</expr>, <expr>0x03a7</expr> }</block></expr>, <comment type="block">/*                   Greek_CHI Î§ GREEK CAPITAL LETTER CHI */</comment>
+  <expr><block>{ <expr>0x07d8</expr>, <expr>0x03a8</expr> }</block></expr>, <comment type="block">/*                   Greek_PSI Î¨ GREEK CAPITAL LETTER PSI */</comment>
+  <expr><block>{ <expr>0x07d9</expr>, <expr>0x03a9</expr> }</block></expr>, <comment type="block">/*                 Greek_OMEGA Î© GREEK CAPITAL LETTER OMEGA */</comment>
+  <expr><block>{ <expr>0x07e1</expr>, <expr>0x03b1</expr> }</block></expr>, <comment type="block">/*                 Greek_alpha Î± GREEK SMALL LETTER ALPHA */</comment>
+  <expr><block>{ <expr>0x07e2</expr>, <expr>0x03b2</expr> }</block></expr>, <comment type="block">/*                  Greek_beta Î² GREEK SMALL LETTER BETA */</comment>
+  <expr><block>{ <expr>0x07e3</expr>, <expr>0x03b3</expr> }</block></expr>, <comment type="block">/*                 Greek_gamma Î³ GREEK SMALL LETTER GAMMA */</comment>
+  <expr><block>{ <expr>0x07e4</expr>, <expr>0x03b4</expr> }</block></expr>, <comment type="block">/*                 Greek_delta Î´ GREEK SMALL LETTER DELTA */</comment>
+  <expr><block>{ <expr>0x07e5</expr>, <expr>0x03b5</expr> }</block></expr>, <comment type="block">/*               Greek_epsilon Îµ GREEK SMALL LETTER EPSILON */</comment>
+  <expr><block>{ <expr>0x07e6</expr>, <expr>0x03b6</expr> }</block></expr>, <comment type="block">/*                  Greek_zeta Î¶ GREEK SMALL LETTER ZETA */</comment>
+  <expr><block>{ <expr>0x07e7</expr>, <expr>0x03b7</expr> }</block></expr>, <comment type="block">/*                   Greek_eta Î· GREEK SMALL LETTER ETA */</comment>
+  <expr><block>{ <expr>0x07e8</expr>, <expr>0x03b8</expr> }</block></expr>, <comment type="block">/*                 Greek_theta Î¸ GREEK SMALL LETTER THETA */</comment>
+  <expr><block>{ <expr>0x07e9</expr>, <expr>0x03b9</expr> }</block></expr>, <comment type="block">/*                  Greek_iota Î¹ GREEK SMALL LETTER IOTA */</comment>
+  <expr><block>{ <expr>0x07ea</expr>, <expr>0x03ba</expr> }</block></expr>, <comment type="block">/*                 Greek_kappa Îº GREEK SMALL LETTER KAPPA */</comment>
+  <expr><block>{ <expr>0x07eb</expr>, <expr>0x03bb</expr> }</block></expr>, <comment type="block">/*                Greek_lambda Î» GREEK SMALL LETTER LAMDA */</comment>
+  <expr><block>{ <expr>0x07ec</expr>, <expr>0x03bc</expr> }</block></expr>, <comment type="block">/*                    Greek_mu Î¼ GREEK SMALL LETTER MU */</comment>
+  <expr><block>{ <expr>0x07ed</expr>, <expr>0x03bd</expr> }</block></expr>, <comment type="block">/*                    Greek_nu Î½ GREEK SMALL LETTER NU */</comment>
+  <expr><block>{ <expr>0x07ee</expr>, <expr>0x03be</expr> }</block></expr>, <comment type="block">/*                    Greek_xi Î¾ GREEK SMALL LETTER XI */</comment>
+  <expr><block>{ <expr>0x07ef</expr>, <expr>0x03bf</expr> }</block></expr>, <comment type="block">/*               Greek_omicron Î¿ GREEK SMALL LETTER OMICRON */</comment>
+  <expr><block>{ <expr>0x07f0</expr>, <expr>0x03c0</expr> }</block></expr>, <comment type="block">/*                    Greek_pi Ï GREEK SMALL LETTER PI */</comment>
+  <expr><block>{ <expr>0x07f1</expr>, <expr>0x03c1</expr> }</block></expr>, <comment type="block">/*                   Greek_rho Ï GREEK SMALL LETTER RHO */</comment>
+  <expr><block>{ <expr>0x07f2</expr>, <expr>0x03c3</expr> }</block></expr>, <comment type="block">/*                 Greek_sigma Ï GREEK SMALL LETTER SIGMA */</comment>
+  <expr><block>{ <expr>0x07f3</expr>, <expr>0x03c2</expr> }</block></expr>, <comment type="block">/*       Greek_finalsmallsigma Ï GREEK SMALL LETTER FINAL SIGMA */</comment>
+  <expr><block>{ <expr>0x07f4</expr>, <expr>0x03c4</expr> }</block></expr>, <comment type="block">/*                   Greek_tau Ï GREEK SMALL LETTER TAU */</comment>
+  <expr><block>{ <expr>0x07f5</expr>, <expr>0x03c5</expr> }</block></expr>, <comment type="block">/*               Greek_upsilon Ï GREEK SMALL LETTER UPSILON */</comment>
+  <expr><block>{ <expr>0x07f6</expr>, <expr>0x03c6</expr> }</block></expr>, <comment type="block">/*                   Greek_phi Ï GREEK SMALL LETTER PHI */</comment>
+  <expr><block>{ <expr>0x07f7</expr>, <expr>0x03c7</expr> }</block></expr>, <comment type="block">/*                   Greek_chi Ï GREEK SMALL LETTER CHI */</comment>
+  <expr><block>{ <expr>0x07f8</expr>, <expr>0x03c8</expr> }</block></expr>, <comment type="block">/*                   Greek_psi Ï GREEK SMALL LETTER PSI */</comment>
+  <expr><block>{ <expr>0x07f9</expr>, <expr>0x03c9</expr> }</block></expr>, <comment type="block">/*                 Greek_omega Ï GREEK SMALL LETTER OMEGA */</comment>
+  <expr><block>{ <expr>0x08a1</expr>, <expr>0x23b7</expr> }</block></expr>, <comment type="block">/*                 leftradical â· RADICAL SYMBOL BOTTOM */</comment>
+  <expr><block>{ <expr>0x08a2</expr>, <expr>0x250c</expr> }</block></expr>, <comment type="block">/*              topleftradical â BOX DRAWINGS LIGHT DOWN AND RIGHT */</comment>
+  <expr><block>{ <expr>0x08a3</expr>, <expr>0x2500</expr> }</block></expr>, <comment type="block">/*              horizconnector â BOX DRAWINGS LIGHT HORIZONTAL */</comment>
+  <expr><block>{ <expr>0x08a4</expr>, <expr>0x2320</expr> }</block></expr>, <comment type="block">/*                 topintegral â  TOP HALF INTEGRAL */</comment>
+  <expr><block>{ <expr>0x08a5</expr>, <expr>0x2321</expr> }</block></expr>, <comment type="block">/*                 botintegral â¡ BOTTOM HALF INTEGRAL */</comment>
+  <expr><block>{ <expr>0x08a6</expr>, <expr>0x2502</expr> }</block></expr>, <comment type="block">/*               vertconnector â BOX DRAWINGS LIGHT VERTICAL */</comment>
+  <expr><block>{ <expr>0x08a7</expr>, <expr>0x23a1</expr> }</block></expr>, <comment type="block">/*            topleftsqbracket â¡ LEFT SQUARE BRACKET UPPER CORNER */</comment>
+  <expr><block>{ <expr>0x08a8</expr>, <expr>0x23a3</expr> }</block></expr>, <comment type="block">/*            botleftsqbracket â£ LEFT SQUARE BRACKET LOWER CORNER */</comment>
+  <expr><block>{ <expr>0x08a9</expr>, <expr>0x23a4</expr> }</block></expr>, <comment type="block">/*           toprightsqbracket â¤ RIGHT SQUARE BRACKET UPPER CORNER */</comment>
+  <expr><block>{ <expr>0x08aa</expr>, <expr>0x23a6</expr> }</block></expr>, <comment type="block">/*           botrightsqbracket â¦ RIGHT SQUARE BRACKET LOWER CORNER */</comment>
+  <expr><block>{ <expr>0x08ab</expr>, <expr>0x239b</expr> }</block></expr>, <comment type="block">/*               topleftparens â LEFT PARENTHESIS UPPER HOOK */</comment>
+  <expr><block>{ <expr>0x08ac</expr>, <expr>0x239d</expr> }</block></expr>, <comment type="block">/*               botleftparens â LEFT PARENTHESIS LOWER HOOK */</comment>
+  <expr><block>{ <expr>0x08ad</expr>, <expr>0x239e</expr> }</block></expr>, <comment type="block">/*              toprightparens â RIGHT PARENTHESIS UPPER HOOK */</comment>
+  <expr><block>{ <expr>0x08ae</expr>, <expr>0x23a0</expr> }</block></expr>, <comment type="block">/*              botrightparens â  RIGHT PARENTHESIS LOWER HOOK */</comment>
+  <expr><block>{ <expr>0x08af</expr>, <expr>0x23a8</expr> }</block></expr>, <comment type="block">/*        leftmiddlecurlybrace â¨ LEFT CURLY BRACKET MIDDLE PIECE */</comment>
+  <expr><block>{ <expr>0x08b0</expr>, <expr>0x23ac</expr> }</block></expr>, <comment type="block">/*       rightmiddlecurlybrace â¬ RIGHT CURLY BRACKET MIDDLE PIECE */</comment>
+<comment type="block">/*  0x08b1                          topleftsummation ? ??? */</comment>
+<comment type="block">/*  0x08b2                          botleftsummation ? ??? */</comment>
+<comment type="block">/*  0x08b3                 topvertsummationconnector ? ??? */</comment>
+<comment type="block">/*  0x08b4                 botvertsummationconnector ? ??? */</comment>
+<comment type="block">/*  0x08b5                         toprightsummation ? ??? */</comment>
+<comment type="block">/*  0x08b6                         botrightsummation ? ??? */</comment>
+<comment type="block">/*  0x08b7                      rightmiddlesummation ? ??? */</comment>
+  <expr><block>{ <expr>0x08bc</expr>, <expr>0x2264</expr> }</block></expr>, <comment type="block">/*               lessthanequal â¤ LESS-THAN OR EQUAL TO */</comment>
+  <expr><block>{ <expr>0x08bd</expr>, <expr>0x2260</expr> }</block></expr>, <comment type="block">/*                    notequal â  NOT EQUAL TO */</comment>
+  <expr><block>{ <expr>0x08be</expr>, <expr>0x2265</expr> }</block></expr>, <comment type="block">/*            greaterthanequal â¥ GREATER-THAN OR EQUAL TO */</comment>
+  <expr><block>{ <expr>0x08bf</expr>, <expr>0x222b</expr> }</block></expr>, <comment type="block">/*                    integral â« INTEGRAL */</comment>
+  <expr><block>{ <expr>0x08c0</expr>, <expr>0x2234</expr> }</block></expr>, <comment type="block">/*                   therefore â´ THEREFORE */</comment>
+  <expr><block>{ <expr>0x08c1</expr>, <expr>0x221d</expr> }</block></expr>, <comment type="block">/*                   variation â PROPORTIONAL TO */</comment>
+  <expr><block>{ <expr>0x08c2</expr>, <expr>0x221e</expr> }</block></expr>, <comment type="block">/*                    infinity â INFINITY */</comment>
+  <expr><block>{ <expr>0x08c5</expr>, <expr>0x2207</expr> }</block></expr>, <comment type="block">/*                       nabla â NABLA */</comment>
+  <expr><block>{ <expr>0x08c8</expr>, <expr>0x223c</expr> }</block></expr>, <comment type="block">/*                 approximate â¼ TILDE OPERATOR */</comment>
+  <expr><block>{ <expr>0x08c9</expr>, <expr>0x2243</expr> }</block></expr>, <comment type="block">/*                similarequal â ASYMPTOTICALLY EQUAL TO */</comment>
+  <expr><block>{ <expr>0x08cd</expr>, <expr>0x21d4</expr> }</block></expr>, <comment type="block">/*                    ifonlyif â LEFT RIGHT DOUBLE ARROW */</comment>
+  <expr><block>{ <expr>0x08ce</expr>, <expr>0x21d2</expr> }</block></expr>, <comment type="block">/*                     implies â RIGHTWARDS DOUBLE ARROW */</comment>
+  <expr><block>{ <expr>0x08cf</expr>, <expr>0x2261</expr> }</block></expr>, <comment type="block">/*                   identical â¡ IDENTICAL TO */</comment>
+  <expr><block>{ <expr>0x08d6</expr>, <expr>0x221a</expr> }</block></expr>, <comment type="block">/*                     radical â SQUARE ROOT */</comment>
+  <expr><block>{ <expr>0x08da</expr>, <expr>0x2282</expr> }</block></expr>, <comment type="block">/*                  includedin â SUBSET OF */</comment>
+  <expr><block>{ <expr>0x08db</expr>, <expr>0x2283</expr> }</block></expr>, <comment type="block">/*                    includes â SUPERSET OF */</comment>
+  <expr><block>{ <expr>0x08dc</expr>, <expr>0x2229</expr> }</block></expr>, <comment type="block">/*                intersection â© INTERSECTION */</comment>
+  <expr><block>{ <expr>0x08dd</expr>, <expr>0x222a</expr> }</block></expr>, <comment type="block">/*                       union âª UNION */</comment>
+  <expr><block>{ <expr>0x08de</expr>, <expr>0x2227</expr> }</block></expr>, <comment type="block">/*                  logicaland â§ LOGICAL AND */</comment>
+  <expr><block>{ <expr>0x08df</expr>, <expr>0x2228</expr> }</block></expr>, <comment type="block">/*                   logicalor â¨ LOGICAL OR */</comment>
+  <expr><block>{ <expr>0x08ef</expr>, <expr>0x2202</expr> }</block></expr>, <comment type="block">/*           partialderivative â PARTIAL DIFFERENTIAL */</comment>
+  <expr><block>{ <expr>0x08f6</expr>, <expr>0x0192</expr> }</block></expr>, <comment type="block">/*                    function Æ LATIN SMALL LETTER F WITH HOOK */</comment>
+  <expr><block>{ <expr>0x08fb</expr>, <expr>0x2190</expr> }</block></expr>, <comment type="block">/*                   leftarrow â LEFTWARDS ARROW */</comment>
+  <expr><block>{ <expr>0x08fc</expr>, <expr>0x2191</expr> }</block></expr>, <comment type="block">/*                     uparrow â UPWARDS ARROW */</comment>
+  <expr><block>{ <expr>0x08fd</expr>, <expr>0x2192</expr> }</block></expr>, <comment type="block">/*                  rightarrow â RIGHTWARDS ARROW */</comment>
+  <expr><block>{ <expr>0x08fe</expr>, <expr>0x2193</expr> }</block></expr>, <comment type="block">/*                   downarrow â DOWNWARDS ARROW */</comment>
+  <expr><block>{ <expr>0x09df</expr>, <expr>0x2422</expr> }</block></expr>, <comment type="block">/*                       blank â¢ BLANK SYMBOL */</comment>
+  <expr><block>{ <expr>0x09e0</expr>, <expr>0x25c6</expr> }</block></expr>, <comment type="block">/*                soliddiamond â BLACK DIAMOND */</comment>
+  <expr><block>{ <expr>0x09e1</expr>, <expr>0x2592</expr> }</block></expr>, <comment type="block">/*                checkerboard â MEDIUM SHADE */</comment>
+  <expr><block>{ <expr>0x09e2</expr>, <expr>0x2409</expr> }</block></expr>, <comment type="block">/*                          ht â SYMBOL FOR HORIZONTAL TABULATION */</comment>
+  <expr><block>{ <expr>0x09e3</expr>, <expr>0x240c</expr> }</block></expr>, <comment type="block">/*                          ff â SYMBOL FOR FORM FEED */</comment>
+  <expr><block>{ <expr>0x09e4</expr>, <expr>0x240d</expr> }</block></expr>, <comment type="block">/*                          cr â SYMBOL FOR CARRIAGE RETURN */</comment>
+  <expr><block>{ <expr>0x09e5</expr>, <expr>0x240a</expr> }</block></expr>, <comment type="block">/*                          lf â SYMBOL FOR LINE FEED */</comment>
+  <expr><block>{ <expr>0x09e8</expr>, <expr>0x2424</expr> }</block></expr>, <comment type="block">/*                          nl â¤ SYMBOL FOR NEWLINE */</comment>
+  <expr><block>{ <expr>0x09e9</expr>, <expr>0x240b</expr> }</block></expr>, <comment type="block">/*                          vt â SYMBOL FOR VERTICAL TABULATION */</comment>
+  <expr><block>{ <expr>0x09ea</expr>, <expr>0x2518</expr> }</block></expr>, <comment type="block">/*              lowrightcorner â BOX DRAWINGS LIGHT UP AND LEFT */</comment>
+  <expr><block>{ <expr>0x09eb</expr>, <expr>0x2510</expr> }</block></expr>, <comment type="block">/*               uprightcorner â BOX DRAWINGS LIGHT DOWN AND LEFT */</comment>
+  <expr><block>{ <expr>0x09ec</expr>, <expr>0x250c</expr> }</block></expr>, <comment type="block">/*                upleftcorner â BOX DRAWINGS LIGHT DOWN AND RIGHT */</comment>
+  <expr><block>{ <expr>0x09ed</expr>, <expr>0x2514</expr> }</block></expr>, <comment type="block">/*               lowleftcorner â BOX DRAWINGS LIGHT UP AND RIGHT */</comment>
+  <expr><block>{ <expr>0x09ee</expr>, <expr>0x253c</expr> }</block></expr>, <comment type="block">/*               crossinglines â¼ BOX DRAWINGS LIGHT VERTICAL AND HORIZONTAL */</comment>
+  <expr><block>{ <expr>0x09ef</expr>, <expr>0x23ba</expr> }</block></expr>, <comment type="block">/*              horizlinescan1 âº HORIZONTAL SCAN LINE-1 */</comment>
+  <expr><block>{ <expr>0x09f0</expr>, <expr>0x23bb</expr> }</block></expr>, <comment type="block">/*              horizlinescan3 â» HORIZONTAL SCAN LINE-3 */</comment>
+  <expr><block>{ <expr>0x09f1</expr>, <expr>0x2500</expr> }</block></expr>, <comment type="block">/*              horizlinescan5 â BOX DRAWINGS LIGHT HORIZONTAL */</comment>
+  <expr><block>{ <expr>0x09f2</expr>, <expr>0x23bc</expr> }</block></expr>, <comment type="block">/*              horizlinescan7 â¼ HORIZONTAL SCAN LINE-7 */</comment>
+  <expr><block>{ <expr>0x09f3</expr>, <expr>0x23bd</expr> }</block></expr>, <comment type="block">/*              horizlinescan9 â½ HORIZONTAL SCAN LINE-9 */</comment>
+  <expr><block>{ <expr>0x09f4</expr>, <expr>0x251c</expr> }</block></expr>, <comment type="block">/*                       leftt â BOX DRAWINGS LIGHT VERTICAL AND RIGHT */</comment>
+  <expr><block>{ <expr>0x09f5</expr>, <expr>0x2524</expr> }</block></expr>, <comment type="block">/*                      rightt â¤ BOX DRAWINGS LIGHT VERTICAL AND LEFT */</comment>
+  <expr><block>{ <expr>0x09f6</expr>, <expr>0x2534</expr> }</block></expr>, <comment type="block">/*                        bott â´ BOX DRAWINGS LIGHT UP AND HORIZONTAL */</comment>
+  <expr><block>{ <expr>0x09f7</expr>, <expr>0x252c</expr> }</block></expr>, <comment type="block">/*                        topt â¬ BOX DRAWINGS LIGHT DOWN AND HORIZONTAL */</comment>
+  <expr><block>{ <expr>0x09f8</expr>, <expr>0x2502</expr> }</block></expr>, <comment type="block">/*                     vertbar â BOX DRAWINGS LIGHT VERTICAL */</comment>
+  <expr><block>{ <expr>0x0aa1</expr>, <expr>0x2003</expr> }</block></expr>, <comment type="block">/*                     emspace â EM SPACE */</comment>
+  <expr><block>{ <expr>0x0aa2</expr>, <expr>0x2002</expr> }</block></expr>, <comment type="block">/*                     enspace â EN SPACE */</comment>
+  <expr><block>{ <expr>0x0aa3</expr>, <expr>0x2004</expr> }</block></expr>, <comment type="block">/*                    em3space â THREE-PER-EM SPACE */</comment>
+  <expr><block>{ <expr>0x0aa4</expr>, <expr>0x2005</expr> }</block></expr>, <comment type="block">/*                    em4space â FOUR-PER-EM SPACE */</comment>
+  <expr><block>{ <expr>0x0aa5</expr>, <expr>0x2007</expr> }</block></expr>, <comment type="block">/*                  digitspace â FIGURE SPACE */</comment>
+  <expr><block>{ <expr>0x0aa6</expr>, <expr>0x2008</expr> }</block></expr>, <comment type="block">/*                  punctspace â PUNCTUATION SPACE */</comment>
+  <expr><block>{ <expr>0x0aa7</expr>, <expr>0x2009</expr> }</block></expr>, <comment type="block">/*                   thinspace â THIN SPACE */</comment>
+  <expr><block>{ <expr>0x0aa8</expr>, <expr>0x200a</expr> }</block></expr>, <comment type="block">/*                   hairspace â HAIR SPACE */</comment>
+  <expr><block>{ <expr>0x0aa9</expr>, <expr>0x2014</expr> }</block></expr>, <comment type="block">/*                      emdash â EM DASH */</comment>
+  <expr><block>{ <expr>0x0aaa</expr>, <expr>0x2013</expr> }</block></expr>, <comment type="block">/*                      endash â EN DASH */</comment>
+  <expr><block>{ <expr>0x0aac</expr>, <expr>0x2423</expr> }</block></expr>, <comment type="block">/*                 signifblank â£ OPEN BOX */</comment>
+  <expr><block>{ <expr>0x0aae</expr>, <expr>0x2026</expr> }</block></expr>, <comment type="block">/*                    ellipsis â¦ HORIZONTAL ELLIPSIS */</comment>
+  <expr><block>{ <expr>0x0aaf</expr>, <expr>0x2025</expr> }</block></expr>, <comment type="block">/*             doubbaselinedot â¥ TWO DOT LEADER */</comment>
+  <expr><block>{ <expr>0x0ab0</expr>, <expr>0x2153</expr> }</block></expr>, <comment type="block">/*                    onethird â VULGAR FRACTION ONE THIRD */</comment>
+  <expr><block>{ <expr>0x0ab1</expr>, <expr>0x2154</expr> }</block></expr>, <comment type="block">/*                   twothirds â VULGAR FRACTION TWO THIRDS */</comment>
+  <expr><block>{ <expr>0x0ab2</expr>, <expr>0x2155</expr> }</block></expr>, <comment type="block">/*                    onefifth â VULGAR FRACTION ONE FIFTH */</comment>
+  <expr><block>{ <expr>0x0ab3</expr>, <expr>0x2156</expr> }</block></expr>, <comment type="block">/*                   twofifths â VULGAR FRACTION TWO FIFTHS */</comment>
+  <expr><block>{ <expr>0x0ab4</expr>, <expr>0x2157</expr> }</block></expr>, <comment type="block">/*                 threefifths â VULGAR FRACTION THREE FIFTHS */</comment>
+  <expr><block>{ <expr>0x0ab5</expr>, <expr>0x2158</expr> }</block></expr>, <comment type="block">/*                  fourfifths â VULGAR FRACTION FOUR FIFTHS */</comment>
+  <expr><block>{ <expr>0x0ab6</expr>, <expr>0x2159</expr> }</block></expr>, <comment type="block">/*                    onesixth â VULGAR FRACTION ONE SIXTH */</comment>
+  <expr><block>{ <expr>0x0ab7</expr>, <expr>0x215a</expr> }</block></expr>, <comment type="block">/*                  fivesixths â VULGAR FRACTION FIVE SIXTHS */</comment>
+  <expr><block>{ <expr>0x0ab8</expr>, <expr>0x2105</expr> }</block></expr>, <comment type="block">/*                      careof â CARE OF */</comment>
+  <expr><block>{ <expr>0x0abb</expr>, <expr>0x2012</expr> }</block></expr>, <comment type="block">/*                     figdash â FIGURE DASH */</comment>
+  <expr><block>{ <expr>0x0abc</expr>, <expr>0x2329</expr> }</block></expr>, <comment type="block">/*            leftanglebracket â© LEFT-POINTING ANGLE BRACKET */</comment>
+  <expr><block>{ <expr>0x0abd</expr>, <expr>0x002e</expr> }</block></expr>, <comment type="block">/*                decimalpoint . FULL STOP */</comment>
+  <expr><block>{ <expr>0x0abe</expr>, <expr>0x232a</expr> }</block></expr>, <comment type="block">/*           rightanglebracket âª RIGHT-POINTING ANGLE BRACKET */</comment>
+<comment type="block">/*  0x0abf                                    marker ? ??? */</comment>
+  <expr><block>{ <expr>0x0ac3</expr>, <expr>0x215b</expr> }</block></expr>, <comment type="block">/*                   oneeighth â VULGAR FRACTION ONE EIGHTH */</comment>
+  <expr><block>{ <expr>0x0ac4</expr>, <expr>0x215c</expr> }</block></expr>, <comment type="block">/*                threeeighths â VULGAR FRACTION THREE EIGHTHS */</comment>
+  <expr><block>{ <expr>0x0ac5</expr>, <expr>0x215d</expr> }</block></expr>, <comment type="block">/*                 fiveeighths â VULGAR FRACTION FIVE EIGHTHS */</comment>
+  <expr><block>{ <expr>0x0ac6</expr>, <expr>0x215e</expr> }</block></expr>, <comment type="block">/*                seveneighths â VULGAR FRACTION SEVEN EIGHTHS */</comment>
+  <expr><block>{ <expr>0x0ac9</expr>, <expr>0x2122</expr> }</block></expr>, <comment type="block">/*                   trademark â¢ TRADE MARK SIGN */</comment>
+  <expr><block>{ <expr>0x0aca</expr>, <expr>0x2613</expr> }</block></expr>, <comment type="block">/*               signaturemark â SALTIRE */</comment>
+<comment type="block">/*  0x0acb                         trademarkincircle ? ??? */</comment>
+  <expr><block>{ <expr>0x0acc</expr>, <expr>0x25c1</expr> }</block></expr>, <comment type="block">/*            leftopentriangle â WHITE LEFT-POINTING TRIANGLE */</comment>
+  <expr><block>{ <expr>0x0acd</expr>, <expr>0x25b7</expr> }</block></expr>, <comment type="block">/*           rightopentriangle â· WHITE RIGHT-POINTING TRIANGLE */</comment>
+  <expr><block>{ <expr>0x0ace</expr>, <expr>0x25cb</expr> }</block></expr>, <comment type="block">/*                emopencircle â WHITE CIRCLE */</comment>
+  <expr><block>{ <expr>0x0acf</expr>, <expr>0x25af</expr> }</block></expr>, <comment type="block">/*             emopenrectangle â¯ WHITE VERTICAL RECTANGLE */</comment>
+  <expr><block>{ <expr>0x0ad0</expr>, <expr>0x2018</expr> }</block></expr>, <comment type="block">/*         leftsinglequotemark â LEFT SINGLE QUOTATION MARK */</comment>
+  <expr><block>{ <expr>0x0ad1</expr>, <expr>0x2019</expr> }</block></expr>, <comment type="block">/*        rightsinglequotemark â RIGHT SINGLE QUOTATION MARK */</comment>
+  <expr><block>{ <expr>0x0ad2</expr>, <expr>0x201c</expr> }</block></expr>, <comment type="block">/*         leftdoublequotemark â LEFT DOUBLE QUOTATION MARK */</comment>
+  <expr><block>{ <expr>0x0ad3</expr>, <expr>0x201d</expr> }</block></expr>, <comment type="block">/*        rightdoublequotemark â RIGHT DOUBLE QUOTATION MARK */</comment>
+  <expr><block>{ <expr>0x0ad4</expr>, <expr>0x211e</expr> }</block></expr>, <comment type="block">/*                prescription â PRESCRIPTION TAKE */</comment>
+  <expr><block>{ <expr>0x0ad6</expr>, <expr>0x2032</expr> }</block></expr>, <comment type="block">/*                     minutes â² PRIME */</comment>
+  <expr><block>{ <expr>0x0ad7</expr>, <expr>0x2033</expr> }</block></expr>, <comment type="block">/*                     seconds â³ DOUBLE PRIME */</comment>
+  <expr><block>{ <expr>0x0ad9</expr>, <expr>0x271d</expr> }</block></expr>, <comment type="block">/*                  latincross â LATIN CROSS */</comment>
+<comment type="block">/*  0x0ada                                  hexagram ? ??? */</comment>
+  <expr><block>{ <expr>0x0adb</expr>, <expr>0x25ac</expr> }</block></expr>, <comment type="block">/*            filledrectbullet â¬ BLACK RECTANGLE */</comment>
+  <expr><block>{ <expr>0x0adc</expr>, <expr>0x25c0</expr> }</block></expr>, <comment type="block">/*         filledlefttribullet â BLACK LEFT-POINTING TRIANGLE */</comment>
+  <expr><block>{ <expr>0x0add</expr>, <expr>0x25b6</expr> }</block></expr>, <comment type="block">/*        filledrighttribullet â¶ BLACK RIGHT-POINTING TRIANGLE */</comment>
+  <expr><block>{ <expr>0x0ade</expr>, <expr>0x25cf</expr> }</block></expr>, <comment type="block">/*              emfilledcircle â BLACK CIRCLE */</comment>
+  <expr><block>{ <expr>0x0adf</expr>, <expr>0x25ae</expr> }</block></expr>, <comment type="block">/*                emfilledrect â® BLACK VERTICAL RECTANGLE */</comment>
+  <expr><block>{ <expr>0x0ae0</expr>, <expr>0x25e6</expr> }</block></expr>, <comment type="block">/*            enopencircbullet â¦ WHITE BULLET */</comment>
+  <expr><block>{ <expr>0x0ae1</expr>, <expr>0x25ab</expr> }</block></expr>, <comment type="block">/*          enopensquarebullet â« WHITE SMALL SQUARE */</comment>
+  <expr><block>{ <expr>0x0ae2</expr>, <expr>0x25ad</expr> }</block></expr>, <comment type="block">/*              openrectbullet â­ WHITE RECTANGLE */</comment>
+  <expr><block>{ <expr>0x0ae3</expr>, <expr>0x25b3</expr> }</block></expr>, <comment type="block">/*             opentribulletup â³ WHITE UP-POINTING TRIANGLE */</comment>
+  <expr><block>{ <expr>0x0ae4</expr>, <expr>0x25bd</expr> }</block></expr>, <comment type="block">/*           opentribulletdown â½ WHITE DOWN-POINTING TRIANGLE */</comment>
+  <expr><block>{ <expr>0x0ae5</expr>, <expr>0x2606</expr> }</block></expr>, <comment type="block">/*                    openstar â WHITE STAR */</comment>
+  <expr><block>{ <expr>0x0ae6</expr>, <expr>0x2022</expr> }</block></expr>, <comment type="block">/*          enfilledcircbullet â¢ BULLET */</comment>
+  <expr><block>{ <expr>0x0ae7</expr>, <expr>0x25aa</expr> }</block></expr>, <comment type="block">/*            enfilledsqbullet âª BLACK SMALL SQUARE */</comment>
+  <expr><block>{ <expr>0x0ae8</expr>, <expr>0x25b2</expr> }</block></expr>, <comment type="block">/*           filledtribulletup â² BLACK UP-POINTING TRIANGLE */</comment>
+  <expr><block>{ <expr>0x0ae9</expr>, <expr>0x25bc</expr> }</block></expr>, <comment type="block">/*         filledtribulletdown â¼ BLACK DOWN-POINTING TRIANGLE */</comment>
+  <expr><block>{ <expr>0x0aea</expr>, <expr>0x261c</expr> }</block></expr>, <comment type="block">/*                 leftpointer â WHITE LEFT POINTING INDEX */</comment>
+  <expr><block>{ <expr>0x0aeb</expr>, <expr>0x261e</expr> }</block></expr>, <comment type="block">/*                rightpointer â WHITE RIGHT POINTING INDEX */</comment>
+  <expr><block>{ <expr>0x0aec</expr>, <expr>0x2663</expr> }</block></expr>, <comment type="block">/*                        club â£ BLACK CLUB SUIT */</comment>
+  <expr><block>{ <expr>0x0aed</expr>, <expr>0x2666</expr> }</block></expr>, <comment type="block">/*                     diamond â¦ BLACK DIAMOND SUIT */</comment>
+  <expr><block>{ <expr>0x0aee</expr>, <expr>0x2665</expr> }</block></expr>, <comment type="block">/*                       heart â¥ BLACK HEART SUIT */</comment>
+  <expr><block>{ <expr>0x0af0</expr>, <expr>0x2720</expr> }</block></expr>, <comment type="block">/*                maltesecross â  MALTESE CROSS */</comment>
+  <expr><block>{ <expr>0x0af1</expr>, <expr>0x2020</expr> }</block></expr>, <comment type="block">/*                      dagger â  DAGGER */</comment>
+  <expr><block>{ <expr>0x0af2</expr>, <expr>0x2021</expr> }</block></expr>, <comment type="block">/*                doubledagger â¡ DOUBLE DAGGER */</comment>
+  <expr><block>{ <expr>0x0af3</expr>, <expr>0x2713</expr> }</block></expr>, <comment type="block">/*                   checkmark â CHECK MARK */</comment>
+  <expr><block>{ <expr>0x0af4</expr>, <expr>0x2717</expr> }</block></expr>, <comment type="block">/*                 ballotcross â BALLOT X */</comment>
+  <expr><block>{ <expr>0x0af5</expr>, <expr>0x266f</expr> }</block></expr>, <comment type="block">/*                musicalsharp â¯ MUSIC SHARP SIGN */</comment>
+  <expr><block>{ <expr>0x0af6</expr>, <expr>0x266d</expr> }</block></expr>, <comment type="block">/*                 musicalflat â­ MUSIC FLAT SIGN */</comment>
+  <expr><block>{ <expr>0x0af7</expr>, <expr>0x2642</expr> }</block></expr>, <comment type="block">/*                  malesymbol â MALE SIGN */</comment>
+  <expr><block>{ <expr>0x0af8</expr>, <expr>0x2640</expr> }</block></expr>, <comment type="block">/*                femalesymbol â FEMALE SIGN */</comment>
+  <expr><block>{ <expr>0x0af9</expr>, <expr>0x260e</expr> }</block></expr>, <comment type="block">/*                   telephone â BLACK TELEPHONE */</comment>
+  <expr><block>{ <expr>0x0afa</expr>, <expr>0x2315</expr> }</block></expr>, <comment type="block">/*           telephonerecorder â TELEPHONE RECORDER */</comment>
+  <expr><block>{ <expr>0x0afb</expr>, <expr>0x2117</expr> }</block></expr>, <comment type="block">/*         phonographcopyright â SOUND RECORDING COPYRIGHT */</comment>
+  <expr><block>{ <expr>0x0afc</expr>, <expr>0x2038</expr> }</block></expr>, <comment type="block">/*                       caret â¸ CARET */</comment>
+  <expr><block>{ <expr>0x0afd</expr>, <expr>0x201a</expr> }</block></expr>, <comment type="block">/*          singlelowquotemark â SINGLE LOW-9 QUOTATION MARK */</comment>
+  <expr><block>{ <expr>0x0afe</expr>, <expr>0x201e</expr> }</block></expr>, <comment type="block">/*          doublelowquotemark â DOUBLE LOW-9 QUOTATION MARK */</comment>
+<comment type="block">/*  0x0aff                                    cursor ? ??? */</comment>
+  <expr><block>{ <expr>0x0ba3</expr>, <expr>0x003c</expr> }</block></expr>, <comment type="block">/*                   leftcaret &lt; LESS-THAN SIGN */</comment>
+  <expr><block>{ <expr>0x0ba6</expr>, <expr>0x003e</expr> }</block></expr>, <comment type="block">/*                  rightcaret &gt; GREATER-THAN SIGN */</comment>
+  <expr><block>{ <expr>0x0ba8</expr>, <expr>0x2228</expr> }</block></expr>, <comment type="block">/*                   downcaret â¨ LOGICAL OR */</comment>
+  <expr><block>{ <expr>0x0ba9</expr>, <expr>0x2227</expr> }</block></expr>, <comment type="block">/*                     upcaret â§ LOGICAL AND */</comment>
+  <expr><block>{ <expr>0x0bc0</expr>, <expr>0x00af</expr> }</block></expr>, <comment type="block">/*                     overbar Â¯ MACRON */</comment>
+  <expr><block>{ <expr>0x0bc2</expr>, <expr>0x22a5</expr> }</block></expr>, <comment type="block">/*                    downtack â¥ UP TACK */</comment>
+  <expr><block>{ <expr>0x0bc3</expr>, <expr>0x2229</expr> }</block></expr>, <comment type="block">/*                      upshoe â© INTERSECTION */</comment>
+  <expr><block>{ <expr>0x0bc4</expr>, <expr>0x230a</expr> }</block></expr>, <comment type="block">/*                   downstile â LEFT FLOOR */</comment>
+  <expr><block>{ <expr>0x0bc6</expr>, <expr>0x005f</expr> }</block></expr>, <comment type="block">/*                    underbar _ LOW LINE */</comment>
+  <expr><block>{ <expr>0x0bca</expr>, <expr>0x2218</expr> }</block></expr>, <comment type="block">/*                         jot â RING OPERATOR */</comment>
+  <expr><block>{ <expr>0x0bcc</expr>, <expr>0x2395</expr> }</block></expr>, <comment type="block">/*                        quad â APL FUNCTIONAL SYMBOL QUAD */</comment>
+  <expr><block>{ <expr>0x0bce</expr>, <expr>0x22a4</expr> }</block></expr>, <comment type="block">/*                      uptack â¤ DOWN TACK */</comment>
+  <expr><block>{ <expr>0x0bcf</expr>, <expr>0x25cb</expr> }</block></expr>, <comment type="block">/*                      circle â WHITE CIRCLE */</comment>
+  <expr><block>{ <expr>0x0bd3</expr>, <expr>0x2308</expr> }</block></expr>, <comment type="block">/*                     upstile â LEFT CEILING */</comment>
+  <expr><block>{ <expr>0x0bd6</expr>, <expr>0x222a</expr> }</block></expr>, <comment type="block">/*                    downshoe âª UNION */</comment>
+  <expr><block>{ <expr>0x0bd8</expr>, <expr>0x2283</expr> }</block></expr>, <comment type="block">/*                   rightshoe â SUPERSET OF */</comment>
+  <expr><block>{ <expr>0x0bda</expr>, <expr>0x2282</expr> }</block></expr>, <comment type="block">/*                    leftshoe â SUBSET OF */</comment>
+  <expr><block>{ <expr>0x0bdc</expr>, <expr>0x22a2</expr> }</block></expr>, <comment type="block">/*                    lefttack â¢ RIGHT TACK */</comment>
+  <expr><block>{ <expr>0x0bfc</expr>, <expr>0x22a3</expr> }</block></expr>, <comment type="block">/*                   righttack â£ LEFT TACK */</comment>
+  <expr><block>{ <expr>0x0cdf</expr>, <expr>0x2017</expr> }</block></expr>, <comment type="block">/*        hebrew_doublelowline â DOUBLE LOW LINE */</comment>
+  <expr><block>{ <expr>0x0ce0</expr>, <expr>0x05d0</expr> }</block></expr>, <comment type="block">/*                hebrew_aleph × HEBREW LETTER ALEF */</comment>
+  <expr><block>{ <expr>0x0ce1</expr>, <expr>0x05d1</expr> }</block></expr>, <comment type="block">/*                  hebrew_bet × HEBREW LETTER BET */</comment>
+  <expr><block>{ <expr>0x0ce2</expr>, <expr>0x05d2</expr> }</block></expr>, <comment type="block">/*                hebrew_gimel × HEBREW LETTER GIMEL */</comment>
+  <expr><block>{ <expr>0x0ce3</expr>, <expr>0x05d3</expr> }</block></expr>, <comment type="block">/*                hebrew_dalet × HEBREW LETTER DALET */</comment>
+  <expr><block>{ <expr>0x0ce4</expr>, <expr>0x05d4</expr> }</block></expr>, <comment type="block">/*                   hebrew_he × HEBREW LETTER HE */</comment>
+  <expr><block>{ <expr>0x0ce5</expr>, <expr>0x05d5</expr> }</block></expr>, <comment type="block">/*                  hebrew_waw × HEBREW LETTER VAV */</comment>
+  <expr><block>{ <expr>0x0ce6</expr>, <expr>0x05d6</expr> }</block></expr>, <comment type="block">/*                 hebrew_zain × HEBREW LETTER ZAYIN */</comment>
+  <expr><block>{ <expr>0x0ce7</expr>, <expr>0x05d7</expr> }</block></expr>, <comment type="block">/*                 hebrew_chet × HEBREW LETTER HET */</comment>
+  <expr><block>{ <expr>0x0ce8</expr>, <expr>0x05d8</expr> }</block></expr>, <comment type="block">/*                  hebrew_tet × HEBREW LETTER TET */</comment>
+  <expr><block>{ <expr>0x0ce9</expr>, <expr>0x05d9</expr> }</block></expr>, <comment type="block">/*                  hebrew_yod × HEBREW LETTER YOD */</comment>
+  <expr><block>{ <expr>0x0cea</expr>, <expr>0x05da</expr> }</block></expr>, <comment type="block">/*            hebrew_finalkaph × HEBREW LETTER FINAL KAF */</comment>
+  <expr><block>{ <expr>0x0ceb</expr>, <expr>0x05db</expr> }</block></expr>, <comment type="block">/*                 hebrew_kaph × HEBREW LETTER KAF */</comment>
+  <expr><block>{ <expr>0x0cec</expr>, <expr>0x05dc</expr> }</block></expr>, <comment type="block">/*                hebrew_lamed × HEBREW LETTER LAMED */</comment>
+  <expr><block>{ <expr>0x0ced</expr>, <expr>0x05dd</expr> }</block></expr>, <comment type="block">/*             hebrew_finalmem × HEBREW LETTER FINAL MEM */</comment>
+  <expr><block>{ <expr>0x0cee</expr>, <expr>0x05de</expr> }</block></expr>, <comment type="block">/*                  hebrew_mem × HEBREW LETTER MEM */</comment>
+  <expr><block>{ <expr>0x0cef</expr>, <expr>0x05df</expr> }</block></expr>, <comment type="block">/*             hebrew_finalnun × HEBREW LETTER FINAL NUN */</comment>
+  <expr><block>{ <expr>0x0cf0</expr>, <expr>0x05e0</expr> }</block></expr>, <comment type="block">/*                  hebrew_nun ×  HEBREW LETTER NUN */</comment>
+  <expr><block>{ <expr>0x0cf1</expr>, <expr>0x05e1</expr> }</block></expr>, <comment type="block">/*               hebrew_samech ×¡ HEBREW LETTER SAMEKH */</comment>
+  <expr><block>{ <expr>0x0cf2</expr>, <expr>0x05e2</expr> }</block></expr>, <comment type="block">/*                 hebrew_ayin ×¢ HEBREW LETTER AYIN */</comment>
+  <expr><block>{ <expr>0x0cf3</expr>, <expr>0x05e3</expr> }</block></expr>, <comment type="block">/*              hebrew_finalpe ×£ HEBREW LETTER FINAL PE */</comment>
+  <expr><block>{ <expr>0x0cf4</expr>, <expr>0x05e4</expr> }</block></expr>, <comment type="block">/*                   hebrew_pe ×¤ HEBREW LETTER PE */</comment>
+  <expr><block>{ <expr>0x0cf5</expr>, <expr>0x05e5</expr> }</block></expr>, <comment type="block">/*            hebrew_finalzade ×¥ HEBREW LETTER FINAL TSADI */</comment>
+  <expr><block>{ <expr>0x0cf6</expr>, <expr>0x05e6</expr> }</block></expr>, <comment type="block">/*                 hebrew_zade ×¦ HEBREW LETTER TSADI */</comment>
+  <expr><block>{ <expr>0x0cf7</expr>, <expr>0x05e7</expr> }</block></expr>, <comment type="block">/*                 hebrew_qoph ×§ HEBREW LETTER QOF */</comment>
+  <expr><block>{ <expr>0x0cf8</expr>, <expr>0x05e8</expr> }</block></expr>, <comment type="block">/*                 hebrew_resh ×¨ HEBREW LETTER RESH */</comment>
+  <expr><block>{ <expr>0x0cf9</expr>, <expr>0x05e9</expr> }</block></expr>, <comment type="block">/*                 hebrew_shin ×© HEBREW LETTER SHIN */</comment>
+  <expr><block>{ <expr>0x0cfa</expr>, <expr>0x05ea</expr> }</block></expr>, <comment type="block">/*                  hebrew_taw ×ª HEBREW LETTER TAV */</comment>
+  <expr><block>{ <expr>0x0da1</expr>, <expr>0x0e01</expr> }</block></expr>, <comment type="block">/*                  Thai_kokai à¸ THAI CHARACTER KO KAI */</comment>
+  <expr><block>{ <expr>0x0da2</expr>, <expr>0x0e02</expr> }</block></expr>, <comment type="block">/*                Thai_khokhai à¸ THAI CHARACTER KHO KHAI */</comment>
+  <expr><block>{ <expr>0x0da3</expr>, <expr>0x0e03</expr> }</block></expr>, <comment type="block">/*               Thai_khokhuat à¸ THAI CHARACTER KHO KHUAT */</comment>
+  <expr><block>{ <expr>0x0da4</expr>, <expr>0x0e04</expr> }</block></expr>, <comment type="block">/*               Thai_khokhwai à¸ THAI CHARACTER KHO KHWAI */</comment>
+  <expr><block>{ <expr>0x0da5</expr>, <expr>0x0e05</expr> }</block></expr>, <comment type="block">/*                Thai_khokhon à¸ THAI CHARACTER KHO KHON */</comment>
+  <expr><block>{ <expr>0x0da6</expr>, <expr>0x0e06</expr> }</block></expr>, <comment type="block">/*             Thai_khorakhang à¸ THAI CHARACTER KHO RAKHANG */</comment>
+  <expr><block>{ <expr>0x0da7</expr>, <expr>0x0e07</expr> }</block></expr>, <comment type="block">/*                 Thai_ngongu à¸ THAI CHARACTER NGO NGU */</comment>
+  <expr><block>{ <expr>0x0da8</expr>, <expr>0x0e08</expr> }</block></expr>, <comment type="block">/*                Thai_chochan à¸ THAI CHARACTER CHO CHAN */</comment>
+  <expr><block>{ <expr>0x0da9</expr>, <expr>0x0e09</expr> }</block></expr>, <comment type="block">/*               Thai_choching à¸ THAI CHARACTER CHO CHING */</comment>
+  <expr><block>{ <expr>0x0daa</expr>, <expr>0x0e0a</expr> }</block></expr>, <comment type="block">/*               Thai_chochang à¸ THAI CHARACTER CHO CHANG */</comment>
+  <expr><block>{ <expr>0x0dab</expr>, <expr>0x0e0b</expr> }</block></expr>, <comment type="block">/*                   Thai_soso à¸ THAI CHARACTER SO SO */</comment>
+  <expr><block>{ <expr>0x0dac</expr>, <expr>0x0e0c</expr> }</block></expr>, <comment type="block">/*                Thai_chochoe à¸ THAI CHARACTER CHO CHOE */</comment>
+  <expr><block>{ <expr>0x0dad</expr>, <expr>0x0e0d</expr> }</block></expr>, <comment type="block">/*                 Thai_yoying à¸ THAI CHARACTER YO YING */</comment>
+  <expr><block>{ <expr>0x0dae</expr>, <expr>0x0e0e</expr> }</block></expr>, <comment type="block">/*                Thai_dochada à¸ THAI CHARACTER DO CHADA */</comment>
+  <expr><block>{ <expr>0x0daf</expr>, <expr>0x0e0f</expr> }</block></expr>, <comment type="block">/*                Thai_topatak à¸ THAI CHARACTER TO PATAK */</comment>
+  <expr><block>{ <expr>0x0db0</expr>, <expr>0x0e10</expr> }</block></expr>, <comment type="block">/*                Thai_thothan à¸ THAI CHARACTER THO THAN */</comment>
+  <expr><block>{ <expr>0x0db1</expr>, <expr>0x0e11</expr> }</block></expr>, <comment type="block">/*          Thai_thonangmontho à¸ THAI CHARACTER THO NANGMONTHO */</comment>
+  <expr><block>{ <expr>0x0db2</expr>, <expr>0x0e12</expr> }</block></expr>, <comment type="block">/*             Thai_thophuthao à¸ THAI CHARACTER THO PHUTHAO */</comment>
+  <expr><block>{ <expr>0x0db3</expr>, <expr>0x0e13</expr> }</block></expr>, <comment type="block">/*                  Thai_nonen à¸ THAI CHARACTER NO NEN */</comment>
+  <expr><block>{ <expr>0x0db4</expr>, <expr>0x0e14</expr> }</block></expr>, <comment type="block">/*                  Thai_dodek à¸ THAI CHARACTER DO DEK */</comment>
+  <expr><block>{ <expr>0x0db5</expr>, <expr>0x0e15</expr> }</block></expr>, <comment type="block">/*                  Thai_totao à¸ THAI CHARACTER TO TAO */</comment>
+  <expr><block>{ <expr>0x0db6</expr>, <expr>0x0e16</expr> }</block></expr>, <comment type="block">/*               Thai_thothung à¸ THAI CHARACTER THO THUNG */</comment>
+  <expr><block>{ <expr>0x0db7</expr>, <expr>0x0e17</expr> }</block></expr>, <comment type="block">/*              Thai_thothahan à¸ THAI CHARACTER THO THAHAN */</comment>
+  <expr><block>{ <expr>0x0db8</expr>, <expr>0x0e18</expr> }</block></expr>, <comment type="block">/*               Thai_thothong à¸ THAI CHARACTER THO THONG */</comment>
+  <expr><block>{ <expr>0x0db9</expr>, <expr>0x0e19</expr> }</block></expr>, <comment type="block">/*                   Thai_nonu à¸ THAI CHARACTER NO NU */</comment>
+  <expr><block>{ <expr>0x0dba</expr>, <expr>0x0e1a</expr> }</block></expr>, <comment type="block">/*               Thai_bobaimai à¸ THAI CHARACTER BO BAIMAI */</comment>
+  <expr><block>{ <expr>0x0dbb</expr>, <expr>0x0e1b</expr> }</block></expr>, <comment type="block">/*                  Thai_popla à¸ THAI CHARACTER PO PLA */</comment>
+  <expr><block>{ <expr>0x0dbc</expr>, <expr>0x0e1c</expr> }</block></expr>, <comment type="block">/*               Thai_phophung à¸ THAI CHARACTER PHO PHUNG */</comment>
+  <expr><block>{ <expr>0x0dbd</expr>, <expr>0x0e1d</expr> }</block></expr>, <comment type="block">/*                   Thai_fofa à¸ THAI CHARACTER FO FA */</comment>
+  <expr><block>{ <expr>0x0dbe</expr>, <expr>0x0e1e</expr> }</block></expr>, <comment type="block">/*                Thai_phophan à¸ THAI CHARACTER PHO PHAN */</comment>
+  <expr><block>{ <expr>0x0dbf</expr>, <expr>0x0e1f</expr> }</block></expr>, <comment type="block">/*                  Thai_fofan à¸ THAI CHARACTER FO FAN */</comment>
+  <expr><block>{ <expr>0x0dc0</expr>, <expr>0x0e20</expr> }</block></expr>, <comment type="block">/*             Thai_phosamphao à¸  THAI CHARACTER PHO SAMPHAO */</comment>
+  <expr><block>{ <expr>0x0dc1</expr>, <expr>0x0e21</expr> }</block></expr>, <comment type="block">/*                   Thai_moma à¸¡ THAI CHARACTER MO MA */</comment>
+  <expr><block>{ <expr>0x0dc2</expr>, <expr>0x0e22</expr> }</block></expr>, <comment type="block">/*                  Thai_yoyak à¸¢ THAI CHARACTER YO YAK */</comment>
+  <expr><block>{ <expr>0x0dc3</expr>, <expr>0x0e23</expr> }</block></expr>, <comment type="block">/*                  Thai_rorua à¸£ THAI CHARACTER RO RUA */</comment>
+  <expr><block>{ <expr>0x0dc4</expr>, <expr>0x0e24</expr> }</block></expr>, <comment type="block">/*                     Thai_ru à¸¤ THAI CHARACTER RU */</comment>
+  <expr><block>{ <expr>0x0dc5</expr>, <expr>0x0e25</expr> }</block></expr>, <comment type="block">/*                 Thai_loling à¸¥ THAI CHARACTER LO LING */</comment>
+  <expr><block>{ <expr>0x0dc6</expr>, <expr>0x0e26</expr> }</block></expr>, <comment type="block">/*                     Thai_lu à¸¦ THAI CHARACTER LU */</comment>
+  <expr><block>{ <expr>0x0dc7</expr>, <expr>0x0e27</expr> }</block></expr>, <comment type="block">/*                 Thai_wowaen à¸§ THAI CHARACTER WO WAEN */</comment>
+  <expr><block>{ <expr>0x0dc8</expr>, <expr>0x0e28</expr> }</block></expr>, <comment type="block">/*                 Thai_sosala à¸¨ THAI CHARACTER SO SALA */</comment>
+  <expr><block>{ <expr>0x0dc9</expr>, <expr>0x0e29</expr> }</block></expr>, <comment type="block">/*                 Thai_sorusi à¸© THAI CHARACTER SO RUSI */</comment>
+  <expr><block>{ <expr>0x0dca</expr>, <expr>0x0e2a</expr> }</block></expr>, <comment type="block">/*                  Thai_sosua à¸ª THAI CHARACTER SO SUA */</comment>
+  <expr><block>{ <expr>0x0dcb</expr>, <expr>0x0e2b</expr> }</block></expr>, <comment type="block">/*                  Thai_hohip à¸« THAI CHARACTER HO HIP */</comment>
+  <expr><block>{ <expr>0x0dcc</expr>, <expr>0x0e2c</expr> }</block></expr>, <comment type="block">/*                Thai_lochula à¸¬ THAI CHARACTER LO CHULA */</comment>
+  <expr><block>{ <expr>0x0dcd</expr>, <expr>0x0e2d</expr> }</block></expr>, <comment type="block">/*                   Thai_oang à¸­ THAI CHARACTER O ANG */</comment>
+  <expr><block>{ <expr>0x0dce</expr>, <expr>0x0e2e</expr> }</block></expr>, <comment type="block">/*               Thai_honokhuk à¸® THAI CHARACTER HO NOKHUK */</comment>
+  <expr><block>{ <expr>0x0dcf</expr>, <expr>0x0e2f</expr> }</block></expr>, <comment type="block">/*              Thai_paiyannoi à¸¯ THAI CHARACTER PAIYANNOI */</comment>
+  <expr><block>{ <expr>0x0dd0</expr>, <expr>0x0e30</expr> }</block></expr>, <comment type="block">/*                  Thai_saraa à¸° THAI CHARACTER SARA A */</comment>
+  <expr><block>{ <expr>0x0dd1</expr>, <expr>0x0e31</expr> }</block></expr>, <comment type="block">/*             Thai_maihanakat à¸± THAI CHARACTER MAI HAN-AKAT */</comment>
+  <expr><block>{ <expr>0x0dd2</expr>, <expr>0x0e32</expr> }</block></expr>, <comment type="block">/*                 Thai_saraaa à¸² THAI CHARACTER SARA AA */</comment>
+  <expr><block>{ <expr>0x0dd3</expr>, <expr>0x0e33</expr> }</block></expr>, <comment type="block">/*                 Thai_saraam à¸³ THAI CHARACTER SARA AM */</comment>
+  <expr><block>{ <expr>0x0dd4</expr>, <expr>0x0e34</expr> }</block></expr>, <comment type="block">/*                  Thai_sarai à¸´ THAI CHARACTER SARA I */</comment>
+  <expr><block>{ <expr>0x0dd5</expr>, <expr>0x0e35</expr> }</block></expr>, <comment type="block">/*                 Thai_saraii à¸µ THAI CHARACTER SARA II */</comment>
+  <expr><block>{ <expr>0x0dd6</expr>, <expr>0x0e36</expr> }</block></expr>, <comment type="block">/*                 Thai_saraue à¸¶ THAI CHARACTER SARA UE */</comment>
+  <expr><block>{ <expr>0x0dd7</expr>, <expr>0x0e37</expr> }</block></expr>, <comment type="block">/*                Thai_sarauee à¸· THAI CHARACTER SARA UEE */</comment>
+  <expr><block>{ <expr>0x0dd8</expr>, <expr>0x0e38</expr> }</block></expr>, <comment type="block">/*                  Thai_sarau à¸¸ THAI CHARACTER SARA U */</comment>
+  <expr><block>{ <expr>0x0dd9</expr>, <expr>0x0e39</expr> }</block></expr>, <comment type="block">/*                 Thai_sarauu à¸¹ THAI CHARACTER SARA UU */</comment>
+  <expr><block>{ <expr>0x0dda</expr>, <expr>0x0e3a</expr> }</block></expr>, <comment type="block">/*                Thai_phinthu à¸º THAI CHARACTER PHINTHU */</comment>
+  <expr><block>{ <expr>0x0dde</expr>, <expr>0x0e3e</expr> }</block></expr>, <comment type="block">/*      Thai_maihanakat_maitho à¸¾ ??? */</comment>
+  <expr><block>{ <expr>0x0ddf</expr>, <expr>0x0e3f</expr> }</block></expr>, <comment type="block">/*                   Thai_baht à¸¿ THAI CURRENCY SYMBOL BAHT */</comment>
+  <expr><block>{ <expr>0x0de0</expr>, <expr>0x0e40</expr> }</block></expr>, <comment type="block">/*                  Thai_sarae à¹ THAI CHARACTER SARA E */</comment>
+  <expr><block>{ <expr>0x0de1</expr>, <expr>0x0e41</expr> }</block></expr>, <comment type="block">/*                 Thai_saraae à¹ THAI CHARACTER SARA AE */</comment>
+  <expr><block>{ <expr>0x0de2</expr>, <expr>0x0e42</expr> }</block></expr>, <comment type="block">/*                  Thai_sarao à¹ THAI CHARACTER SARA O */</comment>
+  <expr><block>{ <expr>0x0de3</expr>, <expr>0x0e43</expr> }</block></expr>, <comment type="block">/*          Thai_saraaimaimuan à¹ THAI CHARACTER SARA AI MAIMUAN */</comment>
+  <expr><block>{ <expr>0x0de4</expr>, <expr>0x0e44</expr> }</block></expr>, <comment type="block">/*         Thai_saraaimaimalai à¹ THAI CHARACTER SARA AI MAIMALAI */</comment>
+  <expr><block>{ <expr>0x0de5</expr>, <expr>0x0e45</expr> }</block></expr>, <comment type="block">/*            Thai_lakkhangyao à¹ THAI CHARACTER LAKKHANGYAO */</comment>
+  <expr><block>{ <expr>0x0de6</expr>, <expr>0x0e46</expr> }</block></expr>, <comment type="block">/*               Thai_maiyamok à¹ THAI CHARACTER MAIYAMOK */</comment>
+  <expr><block>{ <expr>0x0de7</expr>, <expr>0x0e47</expr> }</block></expr>, <comment type="block">/*              Thai_maitaikhu à¹ THAI CHARACTER MAITAIKHU */</comment>
+  <expr><block>{ <expr>0x0de8</expr>, <expr>0x0e48</expr> }</block></expr>, <comment type="block">/*                  Thai_maiek à¹ THAI CHARACTER MAI EK */</comment>
+  <expr><block>{ <expr>0x0de9</expr>, <expr>0x0e49</expr> }</block></expr>, <comment type="block">/*                 Thai_maitho à¹ THAI CHARACTER MAI THO */</comment>
+  <expr><block>{ <expr>0x0dea</expr>, <expr>0x0e4a</expr> }</block></expr>, <comment type="block">/*                 Thai_maitri à¹ THAI CHARACTER MAI TRI */</comment>
+  <expr><block>{ <expr>0x0deb</expr>, <expr>0x0e4b</expr> }</block></expr>, <comment type="block">/*            Thai_maichattawa à¹ THAI CHARACTER MAI CHATTAWA */</comment>
+  <expr><block>{ <expr>0x0dec</expr>, <expr>0x0e4c</expr> }</block></expr>, <comment type="block">/*            Thai_thanthakhat à¹ THAI CHARACTER THANTHAKHAT */</comment>
+  <expr><block>{ <expr>0x0ded</expr>, <expr>0x0e4d</expr> }</block></expr>, <comment type="block">/*               Thai_nikhahit à¹ THAI CHARACTER NIKHAHIT */</comment>
+  <expr><block>{ <expr>0x0df0</expr>, <expr>0x0e50</expr> }</block></expr>, <comment type="block">/*                 Thai_leksun à¹ THAI DIGIT ZERO */</comment>
+  <expr><block>{ <expr>0x0df1</expr>, <expr>0x0e51</expr> }</block></expr>, <comment type="block">/*                Thai_leknung à¹ THAI DIGIT ONE */</comment>
+  <expr><block>{ <expr>0x0df2</expr>, <expr>0x0e52</expr> }</block></expr>, <comment type="block">/*                Thai_leksong à¹ THAI DIGIT TWO */</comment>
+  <expr><block>{ <expr>0x0df3</expr>, <expr>0x0e53</expr> }</block></expr>, <comment type="block">/*                 Thai_leksam à¹ THAI DIGIT THREE */</comment>
+  <expr><block>{ <expr>0x0df4</expr>, <expr>0x0e54</expr> }</block></expr>, <comment type="block">/*                  Thai_leksi à¹ THAI DIGIT FOUR */</comment>
+  <expr><block>{ <expr>0x0df5</expr>, <expr>0x0e55</expr> }</block></expr>, <comment type="block">/*                  Thai_lekha à¹ THAI DIGIT FIVE */</comment>
+  <expr><block>{ <expr>0x0df6</expr>, <expr>0x0e56</expr> }</block></expr>, <comment type="block">/*                 Thai_lekhok à¹ THAI DIGIT SIX */</comment>
+  <expr><block>{ <expr>0x0df7</expr>, <expr>0x0e57</expr> }</block></expr>, <comment type="block">/*                Thai_lekchet à¹ THAI DIGIT SEVEN */</comment>
+  <expr><block>{ <expr>0x0df8</expr>, <expr>0x0e58</expr> }</block></expr>, <comment type="block">/*                Thai_lekpaet à¹ THAI DIGIT EIGHT */</comment>
+  <expr><block>{ <expr>0x0df9</expr>, <expr>0x0e59</expr> }</block></expr>, <comment type="block">/*                 Thai_lekkao à¹ THAI DIGIT NINE */</comment>
+  <expr><block>{ <expr>0x0ea1</expr>, <expr>0x3131</expr> }</block></expr>, <comment type="block">/*               Hangul_Kiyeog ã± HANGUL LETTER KIYEOK */</comment>
+  <expr><block>{ <expr>0x0ea2</expr>, <expr>0x3132</expr> }</block></expr>, <comment type="block">/*          Hangul_SsangKiyeog ã² HANGUL LETTER SSANGKIYEOK */</comment>
+  <expr><block>{ <expr>0x0ea3</expr>, <expr>0x3133</expr> }</block></expr>, <comment type="block">/*           Hangul_KiyeogSios ã³ HANGUL LETTER KIYEOK-SIOS */</comment>
+  <expr><block>{ <expr>0x0ea4</expr>, <expr>0x3134</expr> }</block></expr>, <comment type="block">/*                Hangul_Nieun ã´ HANGUL LETTER NIEUN */</comment>
+  <expr><block>{ <expr>0x0ea5</expr>, <expr>0x3135</expr> }</block></expr>, <comment type="block">/*           Hangul_NieunJieuj ãµ HANGUL LETTER NIEUN-CIEUC */</comment>
+  <expr><block>{ <expr>0x0ea6</expr>, <expr>0x3136</expr> }</block></expr>, <comment type="block">/*           Hangul_NieunHieuh ã¶ HANGUL LETTER NIEUN-HIEUH */</comment>
+  <expr><block>{ <expr>0x0ea7</expr>, <expr>0x3137</expr> }</block></expr>, <comment type="block">/*               Hangul_Dikeud ã· HANGUL LETTER TIKEUT */</comment>
+  <expr><block>{ <expr>0x0ea8</expr>, <expr>0x3138</expr> }</block></expr>, <comment type="block">/*          Hangul_SsangDikeud ã¸ HANGUL LETTER SSANGTIKEUT */</comment>
+  <expr><block>{ <expr>0x0ea9</expr>, <expr>0x3139</expr> }</block></expr>, <comment type="block">/*                Hangul_Rieul ã¹ HANGUL LETTER RIEUL */</comment>
+  <expr><block>{ <expr>0x0eaa</expr>, <expr>0x313a</expr> }</block></expr>, <comment type="block">/*          Hangul_RieulKiyeog ãº HANGUL LETTER RIEUL-KIYEOK */</comment>
+  <expr><block>{ <expr>0x0eab</expr>, <expr>0x313b</expr> }</block></expr>, <comment type="block">/*           Hangul_RieulMieum ã» HANGUL LETTER RIEUL-MIEUM */</comment>
+  <expr><block>{ <expr>0x0eac</expr>, <expr>0x313c</expr> }</block></expr>, <comment type="block">/*           Hangul_RieulPieub ã¼ HANGUL LETTER RIEUL-PIEUP */</comment>
+  <expr><block>{ <expr>0x0ead</expr>, <expr>0x313d</expr> }</block></expr>, <comment type="block">/*            Hangul_RieulSios ã½ HANGUL LETTER RIEUL-SIOS */</comment>
+  <expr><block>{ <expr>0x0eae</expr>, <expr>0x313e</expr> }</block></expr>, <comment type="block">/*           Hangul_RieulTieut ã¾ HANGUL LETTER RIEUL-THIEUTH */</comment>
+  <expr><block>{ <expr>0x0eaf</expr>, <expr>0x313f</expr> }</block></expr>, <comment type="block">/*          Hangul_RieulPhieuf ã¿ HANGUL LETTER RIEUL-PHIEUPH */</comment>
+  <expr><block>{ <expr>0x0eb0</expr>, <expr>0x3140</expr> }</block></expr>, <comment type="block">/*           Hangul_RieulHieuh ã HANGUL LETTER RIEUL-HIEUH */</comment>
+  <expr><block>{ <expr>0x0eb1</expr>, <expr>0x3141</expr> }</block></expr>, <comment type="block">/*                Hangul_Mieum ã HANGUL LETTER MIEUM */</comment>
+  <expr><block>{ <expr>0x0eb2</expr>, <expr>0x3142</expr> }</block></expr>, <comment type="block">/*                Hangul_Pieub ã HANGUL LETTER PIEUP */</comment>
+  <expr><block>{ <expr>0x0eb3</expr>, <expr>0x3143</expr> }</block></expr>, <comment type="block">/*           Hangul_SsangPieub ã HANGUL LETTER SSANGPIEUP */</comment>
+  <expr><block>{ <expr>0x0eb4</expr>, <expr>0x3144</expr> }</block></expr>, <comment type="block">/*            Hangul_PieubSios ã HANGUL LETTER PIEUP-SIOS */</comment>
+  <expr><block>{ <expr>0x0eb5</expr>, <expr>0x3145</expr> }</block></expr>, <comment type="block">/*                 Hangul_Sios ã HANGUL LETTER SIOS */</comment>
+  <expr><block>{ <expr>0x0eb6</expr>, <expr>0x3146</expr> }</block></expr>, <comment type="block">/*            Hangul_SsangSios ã HANGUL LETTER SSANGSIOS */</comment>
+  <expr><block>{ <expr>0x0eb7</expr>, <expr>0x3147</expr> }</block></expr>, <comment type="block">/*                Hangul_Ieung ã HANGUL LETTER IEUNG */</comment>
+  <expr><block>{ <expr>0x0eb8</expr>, <expr>0x3148</expr> }</block></expr>, <comment type="block">/*                Hangul_Jieuj ã HANGUL LETTER CIEUC */</comment>
+  <expr><block>{ <expr>0x0eb9</expr>, <expr>0x3149</expr> }</block></expr>, <comment type="block">/*           Hangul_SsangJieuj ã HANGUL LETTER SSANGCIEUC */</comment>
+  <expr><block>{ <expr>0x0eba</expr>, <expr>0x314a</expr> }</block></expr>, <comment type="block">/*                Hangul_Cieuc ã HANGUL LETTER CHIEUCH */</comment>
+  <expr><block>{ <expr>0x0ebb</expr>, <expr>0x314b</expr> }</block></expr>, <comment type="block">/*               Hangul_Khieuq ã HANGUL LETTER KHIEUKH */</comment>
+  <expr><block>{ <expr>0x0ebc</expr>, <expr>0x314c</expr> }</block></expr>, <comment type="block">/*                Hangul_Tieut ã HANGUL LETTER THIEUTH */</comment>
+  <expr><block>{ <expr>0x0ebd</expr>, <expr>0x314d</expr> }</block></expr>, <comment type="block">/*               Hangul_Phieuf ã HANGUL LETTER PHIEUPH */</comment>
+  <expr><block>{ <expr>0x0ebe</expr>, <expr>0x314e</expr> }</block></expr>, <comment type="block">/*                Hangul_Hieuh ã HANGUL LETTER HIEUH */</comment>
+  <expr><block>{ <expr>0x0ebf</expr>, <expr>0x314f</expr> }</block></expr>, <comment type="block">/*                    Hangul_A ã HANGUL LETTER A */</comment>
+  <expr><block>{ <expr>0x0ec0</expr>, <expr>0x3150</expr> }</block></expr>, <comment type="block">/*                   Hangul_AE ã HANGUL LETTER AE */</comment>
+  <expr><block>{ <expr>0x0ec1</expr>, <expr>0x3151</expr> }</block></expr>, <comment type="block">/*                   Hangul_YA ã HANGUL LETTER YA */</comment>
+  <expr><block>{ <expr>0x0ec2</expr>, <expr>0x3152</expr> }</block></expr>, <comment type="block">/*                  Hangul_YAE ã HANGUL LETTER YAE */</comment>
+  <expr><block>{ <expr>0x0ec3</expr>, <expr>0x3153</expr> }</block></expr>, <comment type="block">/*                   Hangul_EO ã HANGUL LETTER EO */</comment>
+  <expr><block>{ <expr>0x0ec4</expr>, <expr>0x3154</expr> }</block></expr>, <comment type="block">/*                    Hangul_E ã HANGUL LETTER E */</comment>
+  <expr><block>{ <expr>0x0ec5</expr>, <expr>0x3155</expr> }</block></expr>, <comment type="block">/*                  Hangul_YEO ã HANGUL LETTER YEO */</comment>
+  <expr><block>{ <expr>0x0ec6</expr>, <expr>0x3156</expr> }</block></expr>, <comment type="block">/*                   Hangul_YE ã HANGUL LETTER YE */</comment>
+  <expr><block>{ <expr>0x0ec7</expr>, <expr>0x3157</expr> }</block></expr>, <comment type="block">/*                    Hangul_O ã HANGUL LETTER O */</comment>
+  <expr><block>{ <expr>0x0ec8</expr>, <expr>0x3158</expr> }</block></expr>, <comment type="block">/*                   Hangul_WA ã HANGUL LETTER WA */</comment>
+  <expr><block>{ <expr>0x0ec9</expr>, <expr>0x3159</expr> }</block></expr>, <comment type="block">/*                  Hangul_WAE ã HANGUL LETTER WAE */</comment>
+  <expr><block>{ <expr>0x0eca</expr>, <expr>0x315a</expr> }</block></expr>, <comment type="block">/*                   Hangul_OE ã HANGUL LETTER OE */</comment>
+  <expr><block>{ <expr>0x0ecb</expr>, <expr>0x315b</expr> }</block></expr>, <comment type="block">/*                   Hangul_YO ã HANGUL LETTER YO */</comment>
+  <expr><block>{ <expr>0x0ecc</expr>, <expr>0x315c</expr> }</block></expr>, <comment type="block">/*                    Hangul_U ã HANGUL LETTER U */</comment>
+  <expr><block>{ <expr>0x0ecd</expr>, <expr>0x315d</expr> }</block></expr>, <comment type="block">/*                  Hangul_WEO ã HANGUL LETTER WEO */</comment>
+  <expr><block>{ <expr>0x0ece</expr>, <expr>0x315e</expr> }</block></expr>, <comment type="block">/*                   Hangul_WE ã HANGUL LETTER WE */</comment>
+  <expr><block>{ <expr>0x0ecf</expr>, <expr>0x315f</expr> }</block></expr>, <comment type="block">/*                   Hangul_WI ã HANGUL LETTER WI */</comment>
+  <expr><block>{ <expr>0x0ed0</expr>, <expr>0x3160</expr> }</block></expr>, <comment type="block">/*                   Hangul_YU ã  HANGUL LETTER YU */</comment>
+  <expr><block>{ <expr>0x0ed1</expr>, <expr>0x3161</expr> }</block></expr>, <comment type="block">/*                   Hangul_EU ã¡ HANGUL LETTER EU */</comment>
+  <expr><block>{ <expr>0x0ed2</expr>, <expr>0x3162</expr> }</block></expr>, <comment type="block">/*                   Hangul_YI ã¢ HANGUL LETTER YI */</comment>
+  <expr><block>{ <expr>0x0ed3</expr>, <expr>0x3163</expr> }</block></expr>, <comment type="block">/*                    Hangul_I ã£ HANGUL LETTER I */</comment>
+  <expr><block>{ <expr>0x0ed4</expr>, <expr>0x11a8</expr> }</block></expr>, <comment type="block">/*             Hangul_J_Kiyeog á¨ HANGUL JONGSEONG KIYEOK */</comment>
+  <expr><block>{ <expr>0x0ed5</expr>, <expr>0x11a9</expr> }</block></expr>, <comment type="block">/*        Hangul_J_SsangKiyeog á© HANGUL JONGSEONG SSANGKIYEOK */</comment>
+  <expr><block>{ <expr>0x0ed6</expr>, <expr>0x11aa</expr> }</block></expr>, <comment type="block">/*         Hangul_J_KiyeogSios áª HANGUL JONGSEONG KIYEOK-SIOS */</comment>
+  <expr><block>{ <expr>0x0ed7</expr>, <expr>0x11ab</expr> }</block></expr>, <comment type="block">/*              Hangul_J_Nieun á« HANGUL JONGSEONG NIEUN */</comment>
+  <expr><block>{ <expr>0x0ed8</expr>, <expr>0x11ac</expr> }</block></expr>, <comment type="block">/*         Hangul_J_NieunJieuj á¬ HANGUL JONGSEONG NIEUN-CIEUC */</comment>
+  <expr><block>{ <expr>0x0ed9</expr>, <expr>0x11ad</expr> }</block></expr>, <comment type="block">/*         Hangul_J_NieunHieuh á­ HANGUL JONGSEONG NIEUN-HIEUH */</comment>
+  <expr><block>{ <expr>0x0eda</expr>, <expr>0x11ae</expr> }</block></expr>, <comment type="block">/*             Hangul_J_Dikeud á® HANGUL JONGSEONG TIKEUT */</comment>
+  <expr><block>{ <expr>0x0edb</expr>, <expr>0x11af</expr> }</block></expr>, <comment type="block">/*              Hangul_J_Rieul á¯ HANGUL JONGSEONG RIEUL */</comment>
+  <expr><block>{ <expr>0x0edc</expr>, <expr>0x11b0</expr> }</block></expr>, <comment type="block">/*        Hangul_J_RieulKiyeog á° HANGUL JONGSEONG RIEUL-KIYEOK */</comment>
+  <expr><block>{ <expr>0x0edd</expr>, <expr>0x11b1</expr> }</block></expr>, <comment type="block">/*         Hangul_J_RieulMieum á± HANGUL JONGSEONG RIEUL-MIEUM */</comment>
+  <expr><block>{ <expr>0x0ede</expr>, <expr>0x11b2</expr> }</block></expr>, <comment type="block">/*         Hangul_J_RieulPieub á² HANGUL JONGSEONG RIEUL-PIEUP */</comment>
+  <expr><block>{ <expr>0x0edf</expr>, <expr>0x11b3</expr> }</block></expr>, <comment type="block">/*          Hangul_J_RieulSios á³ HANGUL JONGSEONG RIEUL-SIOS */</comment>
+  <expr><block>{ <expr>0x0ee0</expr>, <expr>0x11b4</expr> }</block></expr>, <comment type="block">/*         Hangul_J_RieulTieut á´ HANGUL JONGSEONG RIEUL-THIEUTH */</comment>
+  <expr><block>{ <expr>0x0ee1</expr>, <expr>0x11b5</expr> }</block></expr>, <comment type="block">/*        Hangul_J_RieulPhieuf áµ HANGUL JONGSEONG RIEUL-PHIEUPH */</comment>
+  <expr><block>{ <expr>0x0ee2</expr>, <expr>0x11b6</expr> }</block></expr>, <comment type="block">/*         Hangul_J_RieulHieuh á¶ HANGUL JONGSEONG RIEUL-HIEUH */</comment>
+  <expr><block>{ <expr>0x0ee3</expr>, <expr>0x11b7</expr> }</block></expr>, <comment type="block">/*              Hangul_J_Mieum á· HANGUL JONGSEONG MIEUM */</comment>
+  <expr><block>{ <expr>0x0ee4</expr>, <expr>0x11b8</expr> }</block></expr>, <comment type="block">/*              Hangul_J_Pieub á¸ HANGUL JONGSEONG PIEUP */</comment>
+  <expr><block>{ <expr>0x0ee5</expr>, <expr>0x11b9</expr> }</block></expr>, <comment type="block">/*          Hangul_J_PieubSios á¹ HANGUL JONGSEONG PIEUP-SIOS */</comment>
+  <expr><block>{ <expr>0x0ee6</expr>, <expr>0x11ba</expr> }</block></expr>, <comment type="block">/*               Hangul_J_Sios áº HANGUL JONGSEONG SIOS */</comment>
+  <expr><block>{ <expr>0x0ee7</expr>, <expr>0x11bb</expr> }</block></expr>, <comment type="block">/*          Hangul_J_SsangSios á» HANGUL JONGSEONG SSANGSIOS */</comment>
+  <expr><block>{ <expr>0x0ee8</expr>, <expr>0x11bc</expr> }</block></expr>, <comment type="block">/*              Hangul_J_Ieung á¼ HANGUL JONGSEONG IEUNG */</comment>
+  <expr><block>{ <expr>0x0ee9</expr>, <expr>0x11bd</expr> }</block></expr>, <comment type="block">/*              Hangul_J_Jieuj á½ HANGUL JONGSEONG CIEUC */</comment>
+  <expr><block>{ <expr>0x0eea</expr>, <expr>0x11be</expr> }</block></expr>, <comment type="block">/*              Hangul_J_Cieuc á¾ HANGUL JONGSEONG CHIEUCH */</comment>
+  <expr><block>{ <expr>0x0eeb</expr>, <expr>0x11bf</expr> }</block></expr>, <comment type="block">/*             Hangul_J_Khieuq á¿ HANGUL JONGSEONG KHIEUKH */</comment>
+  <expr><block>{ <expr>0x0eec</expr>, <expr>0x11c0</expr> }</block></expr>, <comment type="block">/*              Hangul_J_Tieut á HANGUL JONGSEONG THIEUTH */</comment>
+  <expr><block>{ <expr>0x0eed</expr>, <expr>0x11c1</expr> }</block></expr>, <comment type="block">/*             Hangul_J_Phieuf á HANGUL JONGSEONG PHIEUPH */</comment>
+  <expr><block>{ <expr>0x0eee</expr>, <expr>0x11c2</expr> }</block></expr>, <comment type="block">/*              Hangul_J_Hieuh á HANGUL JONGSEONG HIEUH */</comment>
+  <expr><block>{ <expr>0x0eef</expr>, <expr>0x316d</expr> }</block></expr>, <comment type="block">/*     Hangul_RieulYeorinHieuh ã­ HANGUL LETTER RIEUL-YEORINHIEUH */</comment>
+  <expr><block>{ <expr>0x0ef0</expr>, <expr>0x3171</expr> }</block></expr>, <comment type="block">/*    Hangul_SunkyeongeumMieum ã± HANGUL LETTER KAPYEOUNMIEUM */</comment>
+  <expr><block>{ <expr>0x0ef1</expr>, <expr>0x3178</expr> }</block></expr>, <comment type="block">/*    Hangul_SunkyeongeumPieub ã¸ HANGUL LETTER KAPYEOUNPIEUP */</comment>
+  <expr><block>{ <expr>0x0ef2</expr>, <expr>0x317f</expr> }</block></expr>, <comment type="block">/*              Hangul_PanSios ã¿ HANGUL LETTER PANSIOS */</comment>
+  <expr><block>{ <expr>0x0ef3</expr>, <expr>0x3181</expr> }</block></expr>, <comment type="block">/*    Hangul_KkogjiDalrinIeung ã HANGUL LETTER YESIEUNG */</comment>
+  <expr><block>{ <expr>0x0ef4</expr>, <expr>0x3184</expr> }</block></expr>, <comment type="block">/*   Hangul_SunkyeongeumPhieuf ã HANGUL LETTER KAPYEOUNPHIEUPH */</comment>
+  <expr><block>{ <expr>0x0ef5</expr>, <expr>0x3186</expr> }</block></expr>, <comment type="block">/*          Hangul_YeorinHieuh ã HANGUL LETTER YEORINHIEUH */</comment>
+  <expr><block>{ <expr>0x0ef6</expr>, <expr>0x318d</expr> }</block></expr>, <comment type="block">/*                Hangul_AraeA ã HANGUL LETTER ARAEA */</comment>
+  <expr><block>{ <expr>0x0ef7</expr>, <expr>0x318e</expr> }</block></expr>, <comment type="block">/*               Hangul_AraeAE ã HANGUL LETTER ARAEAE */</comment>
+  <expr><block>{ <expr>0x0ef8</expr>, <expr>0x11eb</expr> }</block></expr>, <comment type="block">/*            Hangul_J_PanSios á« HANGUL JONGSEONG PANSIOS */</comment>
+  <expr><block>{ <expr>0x0ef9</expr>, <expr>0x11f0</expr> }</block></expr>, <comment type="block">/*  Hangul_J_KkogjiDalrinIeung á° HANGUL JONGSEONG YESIEUNG */</comment>
+  <expr><block>{ <expr>0x0efa</expr>, <expr>0x11f9</expr> }</block></expr>, <comment type="block">/*        Hangul_J_YeorinHieuh á¹ HANGUL JONGSEONG YEORINHIEUH */</comment>
+  <expr><block>{ <expr>0x0eff</expr>, <expr>0x20a9</expr> }</block></expr>, <comment type="block">/*                  Korean_Won â© WON SIGN */</comment>
+  <expr><block>{ <expr>0x13a4</expr>, <expr>0x20ac</expr> }</block></expr>, <comment type="block">/*                        Euro â¬ EURO SIGN */</comment>
+  <expr><block>{ <expr>0x13bc</expr>, <expr>0x0152</expr> }</block></expr>, <comment type="block">/*                          OE Å LATIN CAPITAL LIGATURE OE */</comment>
+  <expr><block>{ <expr>0x13bd</expr>, <expr>0x0153</expr> }</block></expr>, <comment type="block">/*                          oe Å LATIN SMALL LIGATURE OE */</comment>
+  <expr><block>{ <expr>0x13be</expr>, <expr>0x0178</expr> }</block></expr>, <comment type="block">/*                  Ydiaeresis Å¸ LATIN CAPITAL LETTER Y WITH DIAERESIS */</comment>
+  <expr><block>{ <expr>0x20a0</expr>, <expr>0x20a0</expr> }</block></expr>, <comment type="block">/*                     EcuSign â  EURO-CURRENCY SIGN */</comment>
+  <expr><block>{ <expr>0x20a1</expr>, <expr>0x20a1</expr> }</block></expr>, <comment type="block">/*                   ColonSign â¡ COLON SIGN */</comment>
+  <expr><block>{ <expr>0x20a2</expr>, <expr>0x20a2</expr> }</block></expr>, <comment type="block">/*                CruzeiroSign â¢ CRUZEIRO SIGN */</comment>
+  <expr><block>{ <expr>0x20a3</expr>, <expr>0x20a3</expr> }</block></expr>, <comment type="block">/*                  FFrancSign â£ FRENCH FRANC SIGN */</comment>
+  <expr><block>{ <expr>0x20a4</expr>, <expr>0x20a4</expr> }</block></expr>, <comment type="block">/*                    LiraSign â¤ LIRA SIGN */</comment>
+  <expr><block>{ <expr>0x20a5</expr>, <expr>0x20a5</expr> }</block></expr>, <comment type="block">/*                    MillSign â¥ MILL SIGN */</comment>
+  <expr><block>{ <expr>0x20a6</expr>, <expr>0x20a6</expr> }</block></expr>, <comment type="block">/*                   NairaSign â¦ NAIRA SIGN */</comment>
+  <expr><block>{ <expr>0x20a7</expr>, <expr>0x20a7</expr> }</block></expr>, <comment type="block">/*                  PesetaSign â§ PESETA SIGN */</comment>
+  <expr><block>{ <expr>0x20a8</expr>, <expr>0x20a8</expr> }</block></expr>, <comment type="block">/*                   RupeeSign â¨ RUPEE SIGN */</comment>
+  <expr><block>{ <expr>0x20a9</expr>, <expr>0x20a9</expr> }</block></expr>, <comment type="block">/*                     WonSign â© WON SIGN */</comment>
+  <expr><block>{ <expr>0x20aa</expr>, <expr>0x20aa</expr> }</block></expr>, <comment type="block">/*               NewSheqelSign âª NEW SHEQEL SIGN */</comment>
+  <expr><block>{ <expr>0x20ab</expr>, <expr>0x20ab</expr> }</block></expr>, <comment type="block">/*                    DongSign â« DONG SIGN */</comment>
+  <expr><block>{ <expr>0x20ac</expr>, <expr>0x20ac</expr> }</block></expr>, <comment type="block">/*                    EuroSign â¬ EURO SIGN */</comment>
+}</block></expr>;</expr_stmt>
+
+<function><type><name>VISIBLE</name>
+<name>long</name></type> <name>keysym2ucs</name><parameter_list>(<param><decl><type><name>KeySym</name></type> <name>keysym</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>int</name></type> <name>min</name> =<init> <expr>0</expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>int</name></type> <name>max</name> =<init> <expr><call><name>sizeof</name><argument_list>(<argument><expr><name>keysymtab</name></expr></argument>)</argument_list></call> / <call><name>sizeof</name><argument_list>(<argument>struct <expr><name>codepair</name></expr></argument>)</argument_list></call> - 1</expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>int</name></type> <name>mid</name></decl>;</decl_stmt>
+
+    <comment type="block">/* first check for Latin-1 characters (1:1 mapping) */</comment>
+    <if>if <condition>(<expr>(<name>keysym</name> &gt;= 0x0020 &amp;&amp; <name>keysym</name> &lt;= 0x007e) ||
+        (<name>keysym</name> &gt;= 0x00a0 &amp;&amp; <name>keysym</name> &lt;= 0x00ff)</expr>)</condition><then>
+        <return>return <expr><name>keysym</name></expr>;</return></then></if>
+
+    <comment type="block">/* also check for directly encoded 24-bit UCS characters */</comment>
+    <if>if <condition>(<expr>(<name>keysym</name> &amp; 0xff000000) == 0x01000000</expr>)</condition><then>
+	<return>return <expr><name>keysym</name> &amp; 0x00ffffff</expr>;</return></then></if>
+
+    <comment type="block">/* binary search in table */</comment>
+    <while>while <condition>(<expr><name>max</name> &gt;= <name>min</name></expr>)</condition> <block>{
+	<expr_stmt><expr><name>mid</name> = (<name>min</name> + <name>max</name>) / 2</expr>;</expr_stmt>
+	<if>if <condition>(<expr><name><name>keysymtab</name><index>[<expr><name>mid</name></expr>]</index></name>.<name>keysym</name> &lt; <name>keysym</name></expr>)</condition><then>
+	    <expr_stmt><expr><name>min</name> = <name>mid</name> + 1</expr>;</expr_stmt></then>
+	<else>else <if>if <condition>(<expr><name><name>keysymtab</name><index>[<expr><name>mid</name></expr>]</index></name>.<name>keysym</name> &gt; <name>keysym</name></expr>)</condition><then>
+	    <expr_stmt><expr><name>max</name> = <name>mid</name> - 1</expr>;</expr_stmt></then>
+	<else>else <block>{
+	    <comment type="block">/* found it */</comment>
+	    <return>return <expr><name><name>keysymtab</name><index>[<expr><name>mid</name></expr>]</index></name>.<name>ucs</name></expr>;</return>
+	}</block></else></if></else></if>
+    }</block></while>
+
+    <comment type="block">/* no matching Unicode value found */</comment>
+    <return>return <expr>-1</expr>;</return>
+}</block></function>
+</unit>

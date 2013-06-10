@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit language="Java" dir="" filename="HibernateUtils.java"><package>package <name>in980</name>.<name>rgms</name>.<name>utils</name>;</package>
+
+<import>import <name>org</name>.<name>hibernate</name>.<name>SessionFactory</name>;</import>
+<import>import <name>org</name>.<name>hibernate</name>.<name>cfg</name>.<name>AnnotationConfiguration</name>;</import>
+<import>import <name>org</name>.<name>hibernate</name>.<name>cfg</name>.<name>Configuration</name>;</import>
+
+<class><specifier>public</specifier> class <name>HibernateUtils</name> <block>{
+	
+	<decl_stmt><decl><type><specifier>public</specifier> <name>static</name> <specifier>final</specifier> <name>SessionFactory</name></type> <name>sessionFactory</name></decl>;</decl_stmt>
+	
+	<expr_stmt><expr><name>static</name><block>{
+		<expr><name>sessionFactory</name> = new <call><name>AnnotationConfiguration</name><argument_list>()</argument_list></call>.<call><name>configure</name><argument_list>()</argument_list></call>.<call><name>buildSessionFactory</name><argument_list>()</argument_list></call></expr>;
+	}</block>
+	
+	public <name>static</name> <name>SessionFactory</name> <call><name>getSessionFactory</name><argument_list>()</argument_list></call><block>{
+		<return>return <expr><name>sessionFactory</name></expr>;</return></block></expr></expr_stmt>
+	}</block></class>
+
+}
+</unit>

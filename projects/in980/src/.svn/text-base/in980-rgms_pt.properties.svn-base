@@ -1,0 +1,80 @@
+app.nome=IN980-RGMS
+
+#Labels Links Paginas
+lbl.cadastraNovaLinhaPesquisa = Cadastrar Nova Linha de Pesquisa
+lbl.listaTodasLinhasPesquisa = Lista Todas as Linhas de Pesquisa
+lbl.cadastraNovoMembro = Cadastrar Novo Membro
+lbl.listaTodosMembros = Lista Todos os Membros
+lbl.cadastraNovoArtigoPeriodico = Cadastrar Novo Artigo em Periodico ou Revista
+lbl.cadastraNovoArtigoConferencia = Cadastrar Novo Artigo em Conferencia
+lbl.cadastraNovDissertacaoMestrado = Cadastrar Nova Dissertacao de Mestrado
+lbl.cadastraNovTeseDoutorado = Cadastrar Nova Tese de Doutorado
+lbl.listaTodasPublicacoes = Lista Todas Publicacoes
+lbl.relMembrosPorGrupo = Membros por Grupo
+lbl.paginaPrincipal = Pag. Principal
+
+#Labels Form Pagina
+lbl.form.titulo = Titulo
+lbl.form.id = ID
+lbl.form.ano = Ano
+lbl.form.nome = Nome
+lbl.form.email = E-mail
+lbl.form.fone = Fone
+lbl.form.universidade = Universidade
+lbl.form.website = Website
+lbl.form.situacao = Situação
+lbl.form.estudante = Estudante
+lbl.form.professor = Professor
+lbl.form.pesquisador = Pesquisador
+lbl.form.ativo = Ativo
+lbl.form.inativo = Inativo
+lbl.form.tipoParticipacao = Tipo de Participacao
+lbl.form.membros = Membros
+lbl.form.publicacoes = Publicações
+lbl.form.autoresMembros = Autores Membros
+lbl.form.autoresNaoMembros Autores Não Membros
+lbl.form.arquivo = Arquivo
+lbl.form.mes = Mes
+lbl.form.escola = Escola
+lbl.form.journal = Journal
+lbl.form.numero = Numnero
+lbl.form.pagina = Paginas
+lbl.form.volume = Volume
+lbl.form.conferencia = Conferência
+lbl.form.descricao = Descrição
+lbl.form.descricaoDetalhada = Descrição Detalhada
+lbl.form.links = Links Relacionados
+lbl.form.financiadores = Financiadores
+lbl.form.login = Usuario
+lbl.form.senha = Senha
+
+#Labels Botoes Pagina
+lbl.btn.excluir = Excluir
+lbl.btn.atualizar = Atualizar
+lbl.btn.enviar =  Enviar
+lbl.btn.buscar =  Buscar
+lbl.btn.cancelar =  Cancelar
+
+#Labels Info Pagina
+lbl.info.membros = .::Membros::.
+lbl.info.publicacoes = .::Publicacoes::.
+lbl.info.linhaPesquisa = .::Linha de Pesquisa::.
+lbl.info.relatorios = .::Relatorios::.
+
+#Labels Top MSG Page
+lbl.toppage.bemVindoPaginaMembro = Bem vindo a Pagina do(a)` {0}
+lbl.toppage.listagemArtigos = Listagem de  Artigos/Teses/Dissertacoes do Grupo IN980 - RGMS
+lbl.toppage.listagemMembros = Listagem de  Membros do Grupo IN980 - RGMS
+lbl.toppage.listagemMembrosPorGrupo = Listagem de  Membros por Grupo IN980 - RGMS
+lbl.toppage.cadastroMembro = Cadastro de Membros IN980 - RGMS
+lbl.toppage.cadastroTeseDoutorado = Cadastra Tese Doutorado IN980 - RGMS
+lbl.toppage.cadastroDissertacaoMestrado = Cadastra Dissertacao Mestrado IN980 - RGMS
+lbl.toppage.cadastroArtigoRevista = Cadastra Artigo Revista IN980 - RGMS - RGMS
+lbl.toppage.cadastroArtigoConferencia = Cadastra Artigo Conferencia IN980 - RGMS
+lbl.toppage.cadastroLinhaPesquisa = Cadastra de Linha de Pesquisa IN980 - RGMS
+lbl.toppage.listagemLinhaPesquisa = Listagem de Linha de Pesquisa IN980 - RGMS
+
+#Mensagens
+msg.bemVindo = Bem Vindo ao IN980 - RGMS
+msg.separePorVirgula = Separe o nome dos autores por virgula.
+

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit language="Java" dir="" filename="TipoMembro.java"><package>package <name>in980</name>.<name>rgms</name>.<name>domain</name>;</package>
+
+public <enum>enum <name>TipoMembro</name> <block>{
+	<expr><call><name>PROFESSOR</name> <argument_list>(<argument><expr>1</expr></argument>, <argument><expr>"Professor"</expr></argument>)</argument_list></call></expr>,
+	<expr><call><name>ESTUDANTE</name><argument_list>(<argument><expr>2</expr></argument>, <argument><expr>"Estudante"</expr></argument>)</argument_list></call></expr>,
+	<expr><call><name>PESQUISADOR</name><argument_list>(<argument><expr>3</expr></argument>, <argument><expr>"Pesquisador"</expr></argument>)</argument_list></call></expr></block>;</enum>
+		
+	
+	<decl_stmt><decl><type><specifier>private</specifier> <name>int</name></type> <name>id</name></decl>;</decl_stmt>
+	
+	<decl_stmt><decl><type><specifier>private</specifier> <name>String</name></type> <name>descricao</name></decl>;</decl_stmt>
+	
+	private <expr_stmt><expr><call><name>TipoMembro</name><argument_list>(<argument><expr><name>int</name> <name>id</name></expr></argument>, <argument><expr><name>String</name> <name>descricao</name></expr></argument>)</argument_list></call> <block>{
+		<expr><name>this</name>.<name>id</name> = <name>id</name></expr>;
+		<expr><name>this</name>.<name>descricao</name> = <name>descricao</name></expr>;
+	}</block>
+
+	public <name>int</name> <call><name>getId</name><argument_list>()</argument_list></call> <block>{
+		<return>return <expr><name>id</name></expr>;</return></block></expr></expr_stmt>
+	}
+
+	<function><type><specifier>public</specifier> <name>void</name></type> <name>setId</name><parameter_list>(<param><decl><type><name>int</name></type> <name>id</name></decl></param>)</parameter_list> <block>{
+		<expr_stmt><expr><name>this</name>.<name>id</name> = <name>id</name></expr>;</expr_stmt>
+	}</block></function>
+
+	<function><type><specifier>public</specifier> <name>String</name></type> <name>getDescricao</name><parameter_list>()</parameter_list> <block>{
+		<return>return <expr><name>descricao</name></expr>;</return>
+	}</block></function>
+
+	<function><type><specifier>public</specifier> <name>void</name></type> <name>setDescricao</name><parameter_list>(<param><decl><type><name>String</name></type> <name>descricao</name></decl></param>)</parameter_list> <block>{
+		<expr_stmt><expr><name>this</name>.<name>descricao</name> = <name>descricao</name></expr>;</expr_stmt>
+	}</block></function>
+}
+</unit>

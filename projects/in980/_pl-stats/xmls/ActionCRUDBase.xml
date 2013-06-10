@@ -1,0 +1,13 @@
+<unit language="Java" dir="" filename="ActionCRUDBase.java"><package>package <name>in980</name>.<name>rgms</name>.<name>presentation</name>.<name>actions</name>;</package>
+
+
+
+<class type="interface"><specifier>public</specifier> interface <name>ActionCRUDBase</name> <block>{
+	
+	<function_decl><type><specifier>public</specifier> <name>String</name></type> <name>insert</name><parameter_list>()</parameter_list>;</function_decl>
+	<function_decl><type><specifier>public</specifier> <name>String</name></type> <name>update</name><parameter_list>()</parameter_list>;</function_decl>
+	<function_decl><type><specifier>public</specifier> <name>String</name></type> <name>delete</name><parameter_list>()</parameter_list>;</function_decl>
+	<function_decl><type><specifier>public</specifier> <name>String</name></type> <name>listAll</name><parameter_list>()</parameter_list>;</function_decl>
+
+}</block></class>
+</unit>

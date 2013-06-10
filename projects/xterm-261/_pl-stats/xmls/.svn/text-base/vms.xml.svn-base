@@ -1,0 +1,726 @@
+<unit xmlns="http://www.sdml.info/srcML/src" xmlns:cpp="http://www.sdml.info/srcML/cpp" language="C" dir="" filename="vms.c"><comment type="block">/* $XTermId: vms.c,v 1.12 2010/06/13 17:46:27 tom Exp $ */</comment>
+
+<comment type="block">/*  vms.c
+ *
+ * This module contains the VMS version of the routine SPAWN (from the module
+ * MAIN.C) and the routines that do IO to the pseudo terminal.
+ *
+ * Modification History:
+ * Stephan Jansen 1-Mar-1990  Original version
+ * Hal R. Brand   5-Sep-1990  Added code to propagate DECW$DISPLAY
+ * Aaron Leonard 11-Sep-1990  Fix string descriptor lengths
+ * Stephan Jansen 2-Dec-1991  Modify to use new Pseudo terminal drivers
+ *                            (patterned after photo.c by Forrest A. Kenney)
+ * Patrick Mahan  7-Jan-1991  Removed reference to &lt;dvidef.h&gt; from VMS.C
+ *			      Forced device type to be VT102 since that is
+ *			      what we are emulating.
+ */</comment>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;libdef.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;lnmdef.h&gt;</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdio.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;string.h&gt;</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"xterm.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"data.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"vms.h"</cpp:file></cpp:include>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>PTD</name>$C_SEND_XON		0</cpp:define>	<comment type="block">/* Pseudo Terminal Driver event      */</comment>
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>PTD</name>$C_SEND_BELL		1</cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>PTD</name>$C_SEND_XOFF 	2</cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>PTD</name>$C_STOP_OUTPUT	3</cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>PTD</name>$C_RESUME_OUTPUT 	4</cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>PTD</name>$C_CHAR_CHANGED 	5</cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>PTD</name>$C_ABORT_OUTPUT 	6</cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>PTD</name>$C_START_READ 	7</cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>PTD</name>$C_MIDDLE_READ 	8</cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>PTD</name>$C_END_READ 		9</cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>PTD</name>$C_ENABLE_READ 	10</cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>PTD</name>$C_DISABLE_READ 	11</cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>PTD</name>$C_MAX_EVENTS 	12</cpp:define>
+
+<cpp:define>#<cpp:directive>define</cpp:directive>	<name>BUFFERS</name>		        6</cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive>	<name>PAGE</name>			512</cpp:define>
+
+<typedef>typedef <type><struct>struct	<name>tt_buffer</name>
+<block>{
+<decl_stmt><decl><type><name>unsigned</name> <name>int</name></type>	<name>flink</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>unsigned</name> <name>int</name></type>	<name>blink</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>short</name>	<name>int</name></type>	<name>status</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>short</name>	<name>int</name></type>	<name>length</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>char</name></type>		<name><name>data</name><index>[<expr><name>VMS_TERM_BUFFER_SIZE</name></expr>]</index></name></decl>;</decl_stmt>
+}</block></struct></type> <name>TT_BUF_STRUCT</name>;</typedef>
+
+<decl_stmt><decl><type><name>TT_BUF_STRUCT</name>		*</type><name>tt_w_buff</name></decl>;</decl_stmt>
+<decl_stmt><decl><type>struct	<name>q_head</name></type>		 <name>_align</name>(<name>QUADWORD</name>)	<name>buffer_queue</name> =<init> <expr>(0,0)</expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type>struct	<name>q_head</name></type>		 <name>_align</name>(<name>QUADWORD</name>)	<name>read_queue</name> =<init> <expr>(0,0)</expr></init></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>static</name> <name>char</name></type>          <name><name>tt_name</name><index>[<expr>64</expr>]</index></name></decl>;</decl_stmt>
+<expr_stmt><expr><name>static</name> $<call><name>DESCRIPTOR</name>   <argument_list>(<argument><expr><name>tt_name_desc</name></expr></argument>, <argument><expr>&amp;<name>tt_name</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<decl_stmt><decl><type><name>static</name> <name>char</name></type>          <name><name>ws_name</name><index>[<expr>64</expr>]</index></name></decl>;</decl_stmt>
+<expr_stmt><expr><name>static</name> $<call><name>DESCRIPTOR</name>   <argument_list>(<argument><expr><name>ws_name_desc</name></expr></argument>, <argument><expr>&amp;<name>ws_name</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<decl_stmt><decl><type><name>static</name> struct</type>        <name>tt_char</name> <block>{
+   <decl_stmt><decl><type><name>char</name></type>        <name>class</name></decl>;</decl_stmt>
+   <decl_stmt><decl><type><name>char</name></type>        <name>type</name></decl>;</decl_stmt>
+   <decl_stmt><decl><type><name>short</name> <name>int</name></type>   <name>page_width</name></decl>;</decl_stmt>
+   <decl_stmt><decl><type><name>char</name></type>        <name><name>characteristics</name><index>[<expr>3</expr>]</index></name></decl>;</decl_stmt>
+   <decl_stmt><decl><type><name>char</name></type>        <name>length</name></decl>;</decl_stmt>
+   <decl_stmt><decl><type><name>int</name></type>         <name>extended</name></decl>;</decl_stmt>
+ }</block></decl></decl_stmt> <expr_stmt><expr><name>tt_mode</name></expr>, <expr><name>tt_chars</name></expr>, <expr><name>orig_tt_chars</name></expr>;</expr_stmt>
+
+<struct>struct <name>mem_region</name>
+<block>{
+  <decl_stmt><decl><type><name>TT_BUF_STRUCT</name> *</type><name>start</name></decl>;</decl_stmt>
+  <decl_stmt><decl><type><name>TT_BUF_STRUCT</name> *</type><name>end</name></decl>;</decl_stmt>
+}</block> <decl><name>ret_addr</name></decl>;</struct>
+
+<decl_stmt><decl><type><name>int</name></type> <name>read_stopped</name> =<init> <expr><name>False</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>write_stopped</name> =<init> <expr><name>False</name></expr></init></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>int</name></type> <name>tt_width</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>tt_length</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>tt_changed</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>int</name></type> <name>tt_pasting</name>=<init><expr><name>False</name></expr></init></decl>;</decl_stmt>         <comment type="block">/* drm */</comment>
+<decl_stmt><decl><type><name>int</name></type> <name>tt_new_output</name>=<init><expr><name>False</name></expr></init></decl>;</decl_stmt>      <comment type="block">/* Cleared by flushlog(), set whenever something new
+   goes to the screen through tt_write */</comment>
+
+<function_decl><type><name>int</name></type> <name>trnlnm</name><parameter_list>(<param><decl><type><name>char</name> *</type><name>in</name></decl></param>,<param><decl><type><name>int</name></type> <name>id</name></decl></param>,<param><decl><type><name>char</name> *</type><name>out</name></decl></param>)</parameter_list>;</function_decl>
+<function_decl><type><name>int</name></type> <name>tt_write</name><parameter_list>(<param><decl><type><name>char</name> *</type><name>tt_write_buf</name></decl></param>,<param><decl><type><name>int</name></type> <name>size</name></decl></param>)</parameter_list>;</function_decl>
+<function_decl><type><name>void</name></type> <name>spawn</name> <parameter_list>(<param><decl><type><name>void</name></type></decl></param>)</parameter_list>;</function_decl>
+
+<function_decl><type><name>static</name> <name>void</name></type> <name>tt_echo_ast</name><parameter_list>(<param><decl><type><name>TT_BUF_STRUCT</name> *</type><name>buff_addr</name></decl></param>)</parameter_list>;</function_decl>
+<function_decl><type><name>static</name> <name>void</name></type> <name>tt_read_ast</name><parameter_list>(<param><decl><type><name>TT_BUF_STRUCT</name> *</type><name>buff_addr</name></decl></param>)</parameter_list>;</function_decl>
+
+<comment type="block">/*
+static void tt_start_read(void);
+*/</comment>
+<function_decl><type><name>void</name></type> <name>tt_start_read</name><parameter_list>(<param><decl><type><name>void</name></type></decl></param>)</parameter_list>;</function_decl>
+<function_decl><type><name>int</name></type> <name>tt_read</name><parameter_list>(<param><decl><type><name>char</name> *</type><name>buffer</name></decl></param>)</parameter_list>;</function_decl>
+<function_decl><type><name>static</name> <name>void</name></type> <name>send_xon</name><parameter_list>(<param><decl><type><name>void</name></type></decl></param>)</parameter_list>;</function_decl>
+<function_decl><type><name>static</name> <name>void</name></type> <name>send_xoff</name><parameter_list>(<param><decl><type><name>void</name></type></decl></param>)</parameter_list>;</function_decl>
+<function_decl><type><name>static</name> <name>void</name></type> <name>send_bell</name><parameter_list>(<param><decl><type><name>void</name></type></decl></param>)</parameter_list>;</function_decl>
+<function_decl><type><name>static</name> <name>void</name></type> <name>char_change</name><parameter_list>(<param><decl><type><name>void</name></type></decl></param>)</parameter_list>;</function_decl>
+<function_decl><type><name>static</name> <name>void</name></type> <name>freeBuff</name> <parameter_list>(<param><decl><type><name>TT_BUF_STRUCT</name> *</type><name>buff_addr</name></decl></param>)</parameter_list>;</function_decl>
+<function_decl><type><name>TT_BUF_STRUCT</name> *</type><name>getBuff</name><parameter_list>(<param><decl><type><name>void</name></type></decl></param>)</parameter_list>;</function_decl>
+<function_decl><type><name>static</name> <name>void</name></type> <name>CloseDown</name><parameter_list>(<param><decl><type><name>int</name></type> <name>exit_status</name></decl></param>)</parameter_list>;</function_decl>
+<function_decl><type><name>static</name> <name>void</name></type> <name>mbx_read_ast</name><parameter_list>(<param><decl><type><name>void</name></type></decl></param>)</parameter_list>;</function_decl>
+<function_decl><type><name>static</name> <name>void</name></type> <name>mbx_read</name><parameter_list>(<param><decl><type><name>void</name></type></decl></param>)</parameter_list>;</function_decl>
+
+
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>DESCRIPTOR</name>(name,string) struct dsc$descriptor_s name = \
+{ strlen(string), DSC$K_DTYPE_T, DSC$K_CLASS_S, string }</cpp:define>
+
+<function><type><name>int</name></type> <name>trnlnm</name><parameter_list>(<param><decl><type><name>char</name> *</type><name>in</name></decl></param>, <param><decl><type><name>int</name></type> <name>id</name></decl></param>, <param><decl><type><name>char</name> *</type><name>out</name></decl></param>)</parameter_list>
+<block>{
+  <decl_stmt><decl><type><name>int</name></type> <name>status</name>, <name>num</name>, <name>len</name>, <name>attr</name> =<init> <expr><name>LNM</name>$<name>M_CASE_BLIND</name></expr>, <expr><name>foo</name> = <name>id</name></expr></init></decl>;</decl_stmt>
+  <decl_stmt><decl><type><name>short</name></type> <name>outlen</name></decl>;</decl_stmt>
+  <struct>struct <name>itemlist</name>
+    <block>{
+      <decl_stmt><decl><type><name>short</name></type> <name>buffer_length</name></decl>;</decl_stmt>
+      <decl_stmt><decl><type><name>short</name></type> <name>item_code</name></decl>;</decl_stmt>
+      <decl_stmt><decl><type><name>char</name>  *</type><name>buffer_addr</name></decl>;</decl_stmt>
+      <decl_stmt><decl><type><name>int</name>   *</type><name>return_length</name></decl>;</decl_stmt>
+    }</block> <decl><name><name>itmlst</name><index>[]</index></name> =<init>
+      <expr><block>{
+	<expr>4</expr>  , <expr><name>LNM</name>$<name>_INDEX</name></expr>    , <expr>&amp;<name>foo</name></expr>, <expr>0</expr>,
+	<expr>255</expr>, <expr><name>LNM</name>$<name>_STRING</name></expr>   , <expr><name>out</name></expr> , <expr>&amp;<name>outlen</name></expr>,
+	<expr>4</expr>  , <expr><name>LNM</name>$<name>_MAX_INDEX</name></expr>, <expr>&amp;<name>num</name></expr>, <expr>&amp;<name>len</name></expr>,
+	<expr>0</expr>  , <expr>0</expr>
+	}</block></expr></init></decl>;</struct>
+  <expr_stmt><expr><call><name>DESCRIPTOR</name><argument_list>(<argument><expr><name>lognam</name></expr></argument>,<argument><expr><name>in</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+  <expr_stmt><expr><call><name>DESCRIPTOR</name><argument_list>(<argument><expr><name>tabnam</name></expr></argument>,<argument><expr>"LNM$DCL_LOGICAL"</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+  <expr_stmt><expr><name>status</name> = <name>sys</name>$<call><name>trnlnm</name><argument_list>(<argument><expr>&amp;<name>attr</name></expr></argument>,<argument><expr>&amp;<name>tabnam</name></expr></argument>,<argument><expr>&amp;<name>lognam</name></expr></argument>,<argument><expr>0</expr></argument>,<argument><expr><name>itmlst</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+  <if>if<condition>(<expr><name>status</name> != <name>SS</name>$<name>_NORMAL</name></expr>)</condition><then> <return>return<expr>(-1)</expr>;</return></then></if>   <comment type="block">/* error status */</comment>
+  <expr_stmt><expr><name><name>out</name><index>[<expr><name>outlen</name></expr>]</index></name> = 0</expr>;</expr_stmt>         <comment type="block">/* terminate the output string */</comment>
+  <return>return<expr>(++<name>num</name>)</expr>;</return>         <comment type="block">/* return number of translations */</comment>
+}</block></function>
+
+<decl_stmt><decl><type><name>static</name> <name>int</name></type>           <name>pty</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>static</name> <name>int</name></type>           <name>Xsocket</name></decl>;</decl_stmt>
+
+<function><type><name>void</name></type> <name>spawn</name> <parameter_list>(<param><decl><type><name>void</name></type></decl></param>)</parameter_list>
+<block>{
+  <decl_stmt><decl><type><name>int</name></type>                  <name>status</name></decl>;</decl_stmt>
+  <expr_stmt><expr><name>static</name> $<call><name>DESCRIPTOR</name>   <argument_list>(<argument><expr><name>dtime</name></expr></argument>, <argument><expr>"0 00:00:00.01"</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+  <decl_stmt><decl><type><name>static</name> <name>int</name></type>           <name><name>delta</name><index>[<expr>2</expr>]</index></name></decl>;</decl_stmt>
+  <decl_stmt><decl><type><name>register</name> <name>TScreen</name>     *</type><name>screen</name> =<init> <expr><call><name>TScreenOf</name><argument_list>(<argument><expr><name>term</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+  <decl_stmt><decl><type><name>static</name> struct <name>IOSB</name></type>   <name>iosb</name></decl>;</decl_stmt>
+  <decl_stmt><decl><type><name>static</name> <name>unsigned</name> <name>int</name></type>  <name>flags</name></decl>;</decl_stmt>
+  <decl_stmt><decl><type><name>static</name> <name>unsigned</name> <name>int</name></type>  <name>uic</name></decl>;</decl_stmt>
+  <decl_stmt><decl><type><name>static</name> <name>char</name></type>          <name><name>imagename</name><index>[<expr>64</expr>]</index></name></decl>;</decl_stmt>
+  <decl_stmt><decl><type><name>static</name> <name>int</name></type>           <name>privs</name></decl>;</decl_stmt>
+  <expr_stmt><expr><name>static</name> $<call><name>DESCRIPTOR</name><argument_list>(<argument><expr><name>device</name></expr></argument>, <argument><expr>"FTA0:"</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+  <decl_stmt><decl><type><name>static</name> <name>int</name></type>           <name>type</name></decl>;</decl_stmt>
+  <decl_stmt><decl><type><name>static</name> <name>int</name></type>           <name>class</name></decl>;</decl_stmt>
+  <decl_stmt><decl><type><name>static</name> <name>int</name></type>           <name>devdepend</name></decl>;</decl_stmt>
+  <decl_stmt><decl><type><name>static</name> <name>int</name></type>           <name>mem_size</name></decl>;</decl_stmt>
+  <decl_stmt><decl><type><name>int</name></type>                  <name>i</name></decl>;</decl_stmt>
+
+  <comment type="block">/* if pid and mbx_chan are nonzero then close them in CloseDown() */</comment>
+  <expr_stmt><expr><name>pid</name> = 0</expr>;</expr_stmt>
+  <expr_stmt><expr><name>mbx_chan</name> = 0</expr>;</expr_stmt>
+
+  <expr_stmt><expr><name>status</name> = <name>SYS</name>$<call><name>EXPREG</name> <argument_list>(<argument><expr><name>BUFFERS</name></expr></argument>, <argument><expr>&amp;<name>ret_addr</name></expr></argument>, <argument><expr>0</expr></argument>, <argument><expr>0</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+  <if>if<condition>(<expr>!(<name>status</name> &amp; <name>SS</name>$<name>_NORMAL</name>)</expr>)</condition><then> <expr_stmt><expr><name>lib</name>$<call><name>signal</name><argument_list>(<argument><expr><name>status</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+
+  <expr_stmt><expr><name>tt_w_buff</name> = (<name>char</name> *)<name>ret_addr</name>.<name>end</name> - <name>PAGE</name> + 1</expr>;</expr_stmt>
+
+  <comment type="block">/* use one buffer for writing, the reset go in the free buffer queue */</comment>
+  <for>for(<init><expr><name>i</name>=0</expr>;</init> <condition><expr><name>i</name> &lt; <name>BUFFERS</name>-1</expr>;</condition> <incr><expr><name>i</name>++</expr></incr>)
+    <block>{
+      <expr_stmt><expr><call><name>freeBuff</name><argument_list>(<argument><expr>(<name>char</name> *)<name>ret_addr</name>.<name>start</name> +<name>i</name>*<name>PAGE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></for>
+
+  <comment type="block">/* avoid double MapWindow requests, for wm's that care... */</comment>
+  <expr_stmt><expr><call><name>XtSetMappedWhenManaged</name><argument_list>( <argument><expr><name>screen</name>-&gt;<name>TekEmu</name> ? <call><name>XtParent</name><argument_list>(<argument><expr><name>tekWidget</name></expr></argument>)</argument_list></call> :
+			 <call><name>XtParent</name><argument_list>(<argument><expr><name>term</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name>False</name></expr></argument> )</argument_list></call></expr>;</expr_stmt>
+  <comment type="block">/* Realize the Tek or VT widget, depending on which mode we're in.
+     If VT mode, this calls VTRealize (the widget's Realize proc) */</comment>
+  <expr_stmt><expr><call><name>XtRealizeWidget</name> <argument_list>(<argument><expr><name>screen</name>-&gt;<name>TekEmu</name> ? <call><name>XtParent</name><argument_list>(<argument><expr><name>tekWidget</name></expr></argument>)</argument_list></call> :
+		   <call><name>XtParent</name><argument_list>(<argument><expr><name>term</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+  <comment type="block">/* get the default device characteristics of the pseudo terminal */</comment>
+
+  <expr_stmt><expr><name><name>itemlist</name><index>[<expr>0</expr>]</index></name>.<name>buflen</name>      = 4</expr>;</expr_stmt>
+  <expr_stmt><expr><name><name>itemlist</name><index>[<expr>0</expr>]</index></name>.<name>code</name>        = <name>DVI</name>$<name>_DEVTYPE</name></expr>;</expr_stmt>
+  <expr_stmt><expr><name><name>itemlist</name><index>[<expr>0</expr>]</index></name>.<name>buffer</name>      = &amp;<name>type</name></expr>;</expr_stmt>
+  <expr_stmt><expr><name><name>itemlist</name><index>[<expr>0</expr>]</index></name>.<name>return_addr</name> = &amp;<name>tt_name_desc</name>.<name>dsc</name>$<name>w_length</name></expr>;</expr_stmt>
+
+  <expr_stmt><expr><name><name>itemlist</name><index>[<expr>1</expr>]</index></name>.<name>buflen</name>      = 4</expr>;</expr_stmt>
+  <expr_stmt><expr><name><name>itemlist</name><index>[<expr>1</expr>]</index></name>.<name>code</name>        = <name>DVI</name>$<name>_DEVCLASS</name></expr>;</expr_stmt>
+  <expr_stmt><expr><name><name>itemlist</name><index>[<expr>1</expr>]</index></name>.<name>buffer</name>      = &amp;<name>class</name></expr>;</expr_stmt>
+  <expr_stmt><expr><name><name>itemlist</name><index>[<expr>1</expr>]</index></name>.<name>return_addr</name> = &amp;<name>tt_name_desc</name>.<name>dsc</name>$<name>w_length</name></expr>;</expr_stmt>
+
+  <expr_stmt><expr><name><name>itemlist</name><index>[<expr>2</expr>]</index></name>.<name>buflen</name>      = 4</expr>;</expr_stmt>
+  <expr_stmt><expr><name><name>itemlist</name><index>[<expr>2</expr>]</index></name>.<name>code</name>        = <name>DVI</name>$<name>_DEVDEPEND</name></expr>;</expr_stmt>
+  <expr_stmt><expr><name><name>itemlist</name><index>[<expr>2</expr>]</index></name>.<name>buffer</name>      = &amp;<name>devdepend</name></expr>;</expr_stmt>
+  <expr_stmt><expr><name><name>itemlist</name><index>[<expr>2</expr>]</index></name>.<name>return_addr</name> = &amp;<name>tt_name_desc</name>.<name>dsc</name>$<name>w_length</name></expr>;</expr_stmt>
+
+  <expr_stmt><expr><name><name>itemlist</name><index>[<expr>3</expr>]</index></name>.<name>buflen</name>      = 4</expr>;</expr_stmt>
+  <expr_stmt><expr><name><name>itemlist</name><index>[<expr>3</expr>]</index></name>.<name>code</name>        = <name>DVI</name>$<name>_DEVDEPEND2</name></expr>;</expr_stmt>
+  <expr_stmt><expr><name><name>itemlist</name><index>[<expr>3</expr>]</index></name>.<name>buffer</name>      = &amp;<name>tt_chars</name>.<name>extended</name></expr>;</expr_stmt>
+  <expr_stmt><expr><name><name>itemlist</name><index>[<expr>3</expr>]</index></name>.<name>return_addr</name> = &amp;<name>tt_name_desc</name>.<name>dsc</name>$<name>w_length</name></expr>;</expr_stmt>
+
+  <expr_stmt><expr><name><name>itemlist</name><index>[<expr>4</expr>]</index></name>.<name>buflen</name>      = 0</expr>;</expr_stmt>
+  <expr_stmt><expr><name><name>itemlist</name><index>[<expr>4</expr>]</index></name>.<name>code</name>        = 0</expr>;</expr_stmt>
+
+
+  <expr_stmt><expr><name>status</name> = <name>sys</name>$<call><name>getdviw</name><argument_list>(<argument><expr>0</expr></argument>,<argument><expr>0</expr></argument>,<argument><expr>&amp;<name>device</name></expr></argument>,<argument><expr>&amp;<name>itemlist</name></expr></argument>,<argument><expr>&amp;<name>iosb</name></expr></argument>,<argument><expr>0</expr></argument>,<argument><expr>0</expr></argument>,<argument><expr>0</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+  <if>if<condition>(<expr>!(<name>status</name> &amp; <name>SS</name>$<name>_NORMAL</name>)</expr>)</condition><then> <expr_stmt><expr><name>lib</name>$<call><name>signal</name><argument_list>(<argument><expr><name>status</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+  <if>if<condition>(<expr>!(<name>iosb</name>.<name>status</name> &amp; <name>SS</name>$<name>_NORMAL</name>)</expr>)</condition><then> <expr_stmt><expr><name>lib</name>$<call><name>signal</name><argument_list>(<argument><expr><name>iosb</name>.<name>status</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+
+  <expr_stmt><expr><name>tt_chars</name>.<name>type</name>        = <name>DT</name>$<name>_VT102</name></expr>;</expr_stmt> <comment type="block">/* XTerm supports VT102 mode */</comment>
+  <expr_stmt><expr><name>tt_chars</name>.<name>class</name>       = <name>class</name></expr>;</expr_stmt>
+  <expr_stmt><expr><name>tt_chars</name>.<name>page_width</name>  = <name>screen</name>-&gt;<name>max_col</name>+1</expr>;</expr_stmt>
+  <expr_stmt><expr><name>tt_chars</name>.<name>length</name>      = <name>screen</name>-&gt;<name>max_row</name>+1</expr>;</expr_stmt>
+
+  <comment type="block">/* copy the default char's along with the created window size */</comment>
+
+  <expr_stmt><expr><call><name>bcopy</name><argument_list>(<argument><expr>&amp;<name>devdepend</name></expr></argument>, <argument><expr>&amp;<name>tt_chars</name>.<name>characteristics</name></expr></argument>, <argument><expr>3</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+  <expr_stmt><expr><name>tt_chars</name>.<name>extended</name> |= <name>TT2</name>$<name>M_ANSICRT</name> | <name>TT2</name>$<name>M_AVO</name> | <name>TT2</name>$<name>M_DECCRT</name></expr>;</expr_stmt>
+
+
+  <comment type="block">/* create the pseudo terminal with the proper char's */</comment>
+  <expr_stmt><expr><name>status</name> = <name>ptd</name>$<call><name>create</name><argument_list>(<argument><expr>&amp;<name>tt_chan</name></expr></argument>,<argument><expr>0</expr></argument>,<argument><expr>&amp;<name>tt_chars</name></expr></argument>,<argument><expr>12</expr></argument>,<argument><expr>0</expr></argument>,<argument><expr>0</expr></argument>,<argument><expr>0</expr></argument>,<argument><expr>&amp;<name>ret_addr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+  <if>if<condition>(<expr>!(<name>status</name> &amp; <name>SS</name>$<name>_NORMAL</name>)</expr>)</condition><then> <expr_stmt><expr><name>lib</name>$<call><name>signal</name><argument_list>(<argument><expr><name>status</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+
+
+  <comment type="block">/* get the device name of the Pseudo Terminal */</comment>
+
+  <expr_stmt><expr><name><name>itemlist</name><index>[<expr>0</expr>]</index></name>.<name>buflen</name>      = 64</expr>;</expr_stmt>
+  <expr_stmt><expr><name><name>itemlist</name><index>[<expr>0</expr>]</index></name>.<name>code</name>        = <name>DVI</name>$<name>_DEVNAM</name></expr>;</expr_stmt>
+  <expr_stmt><expr><name><name>itemlist</name><index>[<expr>0</expr>]</index></name>.<name>buffer</name>      = &amp;<name>tt_name</name></expr>;</expr_stmt>
+  <expr_stmt><expr><name><name>itemlist</name><index>[<expr>0</expr>]</index></name>.<name>return_addr</name> = &amp;<name>tt_name_desc</name>.<name>dsc</name>$<name>w_length</name></expr>;</expr_stmt>
+
+  <comment type="block">/* terminate the list */</comment>
+  <expr_stmt><expr><name><name>itemlist</name><index>[<expr>1</expr>]</index></name>.<name>buflen</name>      = 0</expr>;</expr_stmt>
+  <expr_stmt><expr><name><name>itemlist</name><index>[<expr>1</expr>]</index></name>.<name>code</name>        = 0</expr>;</expr_stmt>
+
+  <expr_stmt><expr><name>status</name> = <name>sys</name>$<call><name>getdviw</name><argument_list>(<argument><expr>0</expr></argument>,<argument><expr><name>tt_chan</name></expr></argument>,<argument><expr>0</expr></argument>,<argument><expr>&amp;<name>itemlist</name></expr></argument>,<argument><expr>&amp;<name>iosb</name></expr></argument>,<argument><expr>0</expr></argument>,<argument><expr>0</expr></argument>,<argument><expr>0</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+  <if>if<condition>(<expr>!(<name>status</name> &amp; <name>SS</name>$<name>_NORMAL</name>)</expr>)</condition><then> <expr_stmt><expr><call><name>CloseDown</name><argument_list>(<argument><expr><name>status</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+  <if>if<condition>(<expr>!(<name>iosb</name>.<name>status</name> &amp; <name>SS</name>$<name>_NORMAL</name>)</expr>)</condition><then> <expr_stmt><expr><call><name>CloseDown</name><argument_list>(<argument><expr><name>iosb</name>.<name>status</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+
+  <comment type="block">/*
+   * set up AST's for XON, XOFF, BELL and characteristics change.
+   */</comment>
+
+  <expr_stmt><expr><name>status</name> = <name>ptd</name>$<call><name>set_event_notification</name><argument_list>(<argument><expr><name>tt_chan</name></expr></argument>,<argument><expr>&amp;<name>send_xon</name></expr></argument>,<argument><expr>0</expr></argument>,<argument><expr>0</expr></argument>,<argument><expr><name>PTD</name>$<name>C_SEND_XON</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+  <if>if<condition>(<expr>!(<name>status</name> &amp; <name>SS</name>$<name>_NORMAL</name>)</expr>)</condition><then> <expr_stmt><expr><call><name>CloseDown</name><argument_list>(<argument><expr><name>status</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+
+  <expr_stmt><expr><name>status</name> = <name>ptd</name>$<call><name>set_event_notification</name><argument_list>(<argument><expr><name>tt_chan</name></expr></argument>,<argument><expr>&amp;<name>send_xoff</name></expr></argument>,<argument><expr>0</expr></argument>,<argument><expr>0</expr></argument>,<argument><expr><name>PTD</name>$<name>C_SEND_XOFF</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+  <if>if<condition>(<expr>!(<name>status</name> &amp; <name>SS</name>$<name>_NORMAL</name>)</expr>)</condition><then> <expr_stmt><expr><call><name>CloseDown</name><argument_list>(<argument><expr><name>status</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+
+  <expr_stmt><expr><name>status</name> = <name>ptd</name>$<call><name>set_event_notification</name><argument_list>(<argument><expr><name>tt_chan</name></expr></argument>,<argument><expr>&amp;<name>send_bell</name></expr></argument>,<argument><expr>0</expr></argument>,<argument><expr>0</expr></argument>,<argument><expr><name>PTD</name>$<name>C_SEND_BELL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+  <if>if<condition>(<expr>!(<name>status</name> &amp; <name>SS</name>$<name>_NORMAL</name>)</expr>)</condition><then> <expr_stmt><expr><call><name>CloseDown</name><argument_list>(<argument><expr><name>status</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+
+  <expr_stmt><expr><name>status</name> = <name>ptd</name>$<call><name>set_event_notification</name><argument_list>(<argument><expr><name>tt_chan</name></expr></argument>,<argument><expr>&amp;<name>char_change</name></expr></argument>,<argument><expr>0</expr></argument>,<argument><expr>0</expr></argument>,<argument><expr><name>PTD</name>$<name>C_CHAR_CHANGED</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+  <if>if<condition>(<expr>!(<name>status</name> &amp; <name>SS</name>$<name>_NORMAL</name>)</expr>)</condition><then> <expr_stmt><expr><call><name>CloseDown</name><argument_list>(<argument><expr><name>status</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+
+  <comment type="block">/* create a mailbox for the detached process to detect hangup */</comment>
+
+  <expr_stmt><expr><name>status</name> = <name>sys</name>$<call><name>crembx</name><argument_list>(<argument><expr>0</expr></argument>,<argument><expr>&amp;<name>mbx_chan</name></expr></argument>,<argument><expr><name>ACC</name>$<name>K_TERMLEN</name></expr></argument>,<argument><expr>0</expr></argument>,<argument><expr>255</expr></argument>,<argument><expr>0</expr></argument>,<argument><expr>0</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+  <if>if<condition>(<expr>!(<name>status</name> &amp; <name>SS</name>$<name>_NORMAL</name>)</expr>)</condition><then> <expr_stmt><expr><call><name>CloseDown</name><argument_list>(<argument><expr><name>status</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+
+
+  <comment type="block">/*
+   * get the device unit number for created process completion
+   * status to be sent to.
+   */</comment>
+
+  <expr_stmt><expr><name><name>itemlist</name><index>[<expr>0</expr>]</index></name>.<name>buflen</name>      = 4</expr>;</expr_stmt>
+  <expr_stmt><expr><name><name>itemlist</name><index>[<expr>0</expr>]</index></name>.<name>code</name>        = <name>DVI</name>$<name>_UNIT</name></expr>;</expr_stmt>
+  <expr_stmt><expr><name><name>itemlist</name><index>[<expr>0</expr>]</index></name>.<name>buffer</name>      = &amp;<name>mbxunit</name></expr>;</expr_stmt>
+  <expr_stmt><expr><name><name>itemlist</name><index>[<expr>0</expr>]</index></name>.<name>return_addr</name> = 0</expr>;</expr_stmt>
+
+  <comment type="block">/* terminate the list */</comment>
+  <expr_stmt><expr><name><name>itemlist</name><index>[<expr>1</expr>]</index></name>.<name>buflen</name>      = 0</expr>;</expr_stmt>
+  <expr_stmt><expr><name><name>itemlist</name><index>[<expr>1</expr>]</index></name>.<name>code</name>        = 0</expr>;</expr_stmt>
+
+  <expr_stmt><expr><name>status</name> = <name>sys</name>$<call><name>getdviw</name><argument_list>(<argument><expr>0</expr></argument>,<argument><expr><name>mbx_chan</name></expr></argument>,<argument><expr>0</expr></argument>,<argument><expr>&amp;<name>itemlist</name></expr></argument>,<argument><expr>&amp;<name>iosb</name></expr></argument>,<argument><expr>0</expr></argument>,<argument><expr>0</expr></argument>,<argument><expr>0</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+  <if>if<condition>(<expr>!(<name>status</name> &amp; <name>SS</name>$<name>_NORMAL</name>)</expr>)</condition><then> <expr_stmt><expr><call><name>CloseDown</name><argument_list>(<argument><expr><name>status</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+  <if>if<condition>(<expr>!(<name>iosb</name>.<name>status</name> &amp; <name>SS</name>$<name>_NORMAL</name>)</expr>)</condition><then> <expr_stmt><expr><call><name>CloseDown</name><argument_list>(<argument><expr><name>iosb</name>.<name>status</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+
+
+  <expr_stmt><expr><call><name>tt_start_read</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+
+  <comment type="block">/*
+   * find the current process's UIC so that it can be used in the
+   * call to sys$creprc
+   */</comment>
+  <expr_stmt><expr><name><name>itemlist</name><index>[<expr>0</expr>]</index></name>.<name>buflen</name> = 4</expr>;</expr_stmt>
+  <expr_stmt><expr><name><name>itemlist</name><index>[<expr>0</expr>]</index></name>.<name>code</name> = <name>JPI</name>$<name>_UIC</name></expr>;</expr_stmt>
+  <expr_stmt><expr><name><name>itemlist</name><index>[<expr>0</expr>]</index></name>.<name>buffer</name> = &amp;<name>uic</name></expr>;</expr_stmt>
+  <expr_stmt><expr><name><name>itemlist</name><index>[<expr>0</expr>]</index></name>.<name>return_addr</name> = 0</expr>;</expr_stmt>
+
+  <comment type="block">/* terminate the list */</comment>
+  <expr_stmt><expr><name><name>itemlist</name><index>[<expr>1</expr>]</index></name>.<name>buflen</name>      = 0</expr>;</expr_stmt>
+  <expr_stmt><expr><name><name>itemlist</name><index>[<expr>1</expr>]</index></name>.<name>code</name>        = 0</expr>;</expr_stmt>
+
+  <expr_stmt><expr><name>status</name> = <name>sys</name>$<call><name>getjpiw</name><argument_list>(<argument><expr>0</expr></argument>,<argument><expr>0</expr></argument>,<argument><expr>0</expr></argument>,<argument><expr>&amp;<name>itemlist</name></expr></argument>,<argument><expr>0</expr></argument>,<argument><expr>0</expr></argument>,<argument><expr>0</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+  <if>if<condition>(<expr>!(<name>status</name> &amp; <name>SS</name>$<name>_NORMAL</name>)</expr>)</condition><then> <expr_stmt><expr><call><name>CloseDown</name><argument_list>(<argument><expr><name>status</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+
+  <comment type="block">/* Complete a descriptor for the WS (DECW$DISPLAY) device */</comment>
+
+  <expr_stmt><expr><call><name>trnlnm</name><argument_list>(<argument><expr>"DECW$DISPLAY"</expr></argument>,<argument><expr>0</expr></argument>,<argument><expr><name>ws_name</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+  <expr_stmt><expr><name>ws_name_desc</name>.<name>dsc</name>$<name>w_length</name> = <call><name>strlen</name><argument_list>(<argument><expr><name>ws_name</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+  <comment type="block">/* create the process */</comment>
+  <comment type="block">/*  Set sys$error to be the WS (DECW$DISPLAY) device. LOGINOUT  */</comment>
+  <comment type="block">/*  has special code for DECWINDOWS that will:                  */</comment>
+  <comment type="block">/*    1) do a DEFINE/JOB DECW$DISPLAY 'f$trnlnm(sys$error)'     */</comment>
+  <comment type="block">/*    2) then redefine SYS$ERROR to match SYS$OUTPUT!           */</comment>
+  <comment type="block">/*  This will propogate DECW$DISPLAY to the XTERM process!!!    */</comment>
+  <comment type="block">/*  Thanks go to Joel M Snyder who posted this info to INFO-VAX */</comment>
+
+  <expr_stmt><expr><name>flags</name> = <name>PRC</name>$<name>M_INTER</name> | <name>PRC</name>$<name>M_NOPASSWORD</name> | <name>PRC</name>$<name>M_DETACH</name></expr>;</expr_stmt>
+  <expr_stmt><expr><name>status</name> = <name>sys</name>$<call><name>creprc</name><argument_list>(<argument><expr>&amp;<name>pid</name></expr></argument>,<argument><expr>&amp;<name>image</name></expr></argument>,<argument><expr>&amp;<name>tt_name_desc</name></expr></argument>,<argument><expr>&amp;<name>tt_name_desc</name></expr></argument>,
+		      <argument><expr>&amp;<name>ws_name_desc</name></expr></argument>,<argument><expr>0</expr></argument>,<argument><expr>0</expr></argument>,<argument><expr>0</expr></argument>,<argument><expr>4</expr></argument>,<argument><expr><name>uic</name></expr></argument>,<argument><expr><name>mbxunit</name></expr></argument>,<argument><expr><name>flags</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+  <if>if<condition>(<expr>!(<name>status</name> &amp; <name>SS</name>$<name>_NORMAL</name>)</expr>)</condition><then> <expr_stmt><expr><call><name>CloseDown</name><argument_list>(<argument><expr><name>status</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+
+
+  <comment type="block">/* hang a read on the mailbox waiting for completion */</comment>
+  <expr_stmt><expr><call><name>mbx_read</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+
+
+<comment type="block">/* set time value and schedule a periodic wakeup (every 1/100 of a second)
+ * this is used to prevent the controlling process from using up all the
+ * CPU.  The controlling process will hibernate at strategic points in
+ * the program when it is just waiting for input.
+ */</comment>
+
+  <expr_stmt><expr><name>status</name> = <name>sys</name>$<call><name>bintim</name><argument_list>(<argument><expr>&amp;<name>dtime</name></expr></argument>,<argument><expr>&amp;<name>delta</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+  <if>if <condition>(<expr>!(<name>status</name> &amp; <name>SS</name>$<name>_NORMAL</name>)</expr>)</condition><then> <expr_stmt><expr><call><name>CloseDown</name><argument_list>(<argument><expr><name>status</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+
+  <expr_stmt><expr><name>status</name> = <name>sys</name>$<call><name>schdwk</name><argument_list>(<argument><expr>0</expr></argument>,<argument><expr>0</expr></argument>,<argument><expr>&amp;<name>delta</name></expr></argument>,<argument><expr>&amp;<name>delta</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+  <if>if <condition>(<expr>!(<name>status</name> &amp; <name>SS</name>$<name>_NORMAL</name>)</expr>)</condition><then> <expr_stmt><expr><call><name>CloseDown</name><argument_list>(<argument><expr><name>status</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+
+
+  <comment type="block">/*
+   * This is rather funky, but it saves me from having to totally
+   * rewrite some parts of the code (namely in_put in module CHARPROC.C)
+   */</comment>
+  <expr_stmt><expr><name>pty</name> = 1</expr>;</expr_stmt>
+  <expr_stmt><expr><name>screen</name>-&gt;<name>respond</name> = <name>pty</name></expr>;</expr_stmt>
+  <expr_stmt><expr><name>pty_mask</name> = 1 &lt;&lt; <name>pty</name></expr>;</expr_stmt>
+  <expr_stmt><expr><name>Select_mask</name> = <name>pty_mask</name></expr>;</expr_stmt>
+  <expr_stmt><expr><name>X_mask</name> = 1 &lt;&lt; <name>Xsocket</name></expr>;</expr_stmt>
+
+}</block></function>
+
+
+<comment type="block">/*
+ * This routine handles completion of write with echo.  It takes the
+ * echo buffer and puts it on the read queue.  It will then be processed
+ * by the routine tt_read.  If the echo buffer is empty, it is put back
+ * on the free buffer queue.
+ */</comment>
+
+<function><type><name>static</name> <name>void</name></type> <name>tt_echo_ast</name><parameter_list>(<param><decl><type><name>TT_BUF_STRUCT</name> *</type><name>buff_addr</name></decl></param>)</parameter_list>
+<block>{
+  <decl_stmt><decl><type><name>int</name></type> <name>status</name></decl>;</decl_stmt>
+
+  <if>if <condition>(<expr><name>buff_addr</name>-&gt;<name>length</name> != 0</expr>)</condition><then>
+    <block>{
+      <expr_stmt><expr><name>status</name> = <name>LIB</name>$<call><name>INSQTI</name><argument_list>(<argument><expr><name>buff_addr</name></expr></argument>, <argument><expr>&amp;<name>read_queue</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+      <if>if<condition>(<expr>(<name>status</name> != <name>SS</name>$<name>_NORMAL</name>) &amp;&amp; (<name>status</name> != <name>LIB</name>$<name>_ONEENTQUE</name>)</expr>)</condition><then>
+	<block>{
+	  <expr_stmt><expr><call><name>CloseDown</name><argument_list>(<argument><expr><name>status</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	}</block></then></if>
+    }</block></then>
+  <else>else
+    <block>{
+      <expr_stmt><expr><call><name>freeBuff</name><argument_list>(<argument><expr><name>buff_addr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></else></if>
+}</block></function>
+
+
+<comment type="block">/*
+ * This routine writes to the pseudo terminal.  If there is a free
+ * buffer then write with an echo buffer completing asyncronously, else
+ * write syncronously using the buffer reserved for writing.  All errors
+ *  are fatal, except DATAOVERUN and DATALOST,these errors can be ignored.
+
+ CAREFUL! Whatever calls this must NOT pass more than VMS_TERM_BUFFER_SIZE
+ bytes at a time.  This definition has been moved to VMS.H
+
+ */</comment>
+
+<function><type><name>int</name></type> <name>tt_write</name><parameter_list>(<param><decl><type><name>char</name> *</type><name>tt_write_buf</name></decl></param>, <param><decl><type><name>int</name></type> <name>size</name></decl></param>)</parameter_list>
+<block>{
+  <decl_stmt><decl><type><name>int</name></type> <name>status</name></decl>;</decl_stmt>
+  <decl_stmt><decl><type><name>TT_BUF_STRUCT</name> *</type><name>echoBuff</name></decl>;</decl_stmt>
+
+  <comment type="block">/* if writing stopped, return 0 until Xon */</comment>
+  <if>if<condition>(<expr><name>write_stopped</name></expr>)</condition><then> <return>return <expr>(0)</expr>;</return></then></if>
+
+  <expr_stmt><expr><call><name>memmove</name><argument_list>(<argument><expr>&amp;<name>tt_w_buff</name>-&gt;<name>data</name></expr></argument>,<argument><expr><name>tt_write_buf</name></expr></argument>,<argument><expr><name>size</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+  <expr_stmt><expr><name>echoBuff</name> = <call><name>getBuff</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+  <if>if <condition>(<expr><name>echoBuff</name> != <name>LIB</name>$<name>_QUEWASEMP</name></expr>)</condition><then>
+    <block>{
+      <expr_stmt><expr><name>status</name> = <name>PTD</name>$<call><name>WRITE</name> <argument_list>(<argument><expr><name>tt_chan</name></expr></argument>, <argument><expr>&amp;<name>tt_echo_ast</name></expr></argument>, <argument><expr><name>echoBuff</name></expr></argument>,
+			  <argument><expr>&amp;<name>tt_w_buff</name>-&gt;<name>status</name></expr></argument>, <argument><expr><name>size</name></expr></argument>,
+			  <argument><expr>&amp;<name>echoBuff</name>-&gt;<name>status</name></expr></argument>, <argument><expr><name>VMS_TERM_BUFFER_SIZE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></then>
+  <else>else
+    <block>{
+      <expr_stmt><expr><name>status</name> = <name>PTD</name>$<call><name>WRITE</name> <argument_list>(<argument><expr><name>tt_chan</name></expr></argument>, <argument><expr>0</expr></argument>, <argument><expr>0</expr></argument>, <argument><expr>&amp;<name>tt_w_buff</name>-&gt;<name>status</name></expr></argument>, <argument><expr><name>size</name></expr></argument>, <argument><expr>0</expr></argument>, <argument><expr>0</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></else></if>
+  <if>if <condition>(<expr><name>status</name> &amp; <name>SS</name>$<name>_NORMAL</name></expr>)</condition><then>
+    <block>{
+      <if>if <condition>(<expr>(<name>tt_w_buff</name>-&gt;<name>status</name> != <name>SS</name>$<name>_NORMAL</name>) &amp;&amp;
+	  (<name>tt_w_buff</name>-&gt;<name>status</name> != <name>SS</name>$<name>_DATAOVERUN</name>) &amp;&amp;
+	  (<name>tt_w_buff</name>-&gt;<name>status</name> != <name>SS</name>$<name>_DATALOST</name>)</expr>)</condition><then>
+	<block>{
+	  <expr_stmt><expr><call><name>CloseDown</name><argument_list>(<argument><expr><name>tt_w_buff</name>-&gt;<name>status</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	}</block></then></if>
+    }</block></then>
+  <else>else
+    <block>{
+      <expr_stmt><expr><call><name>CloseDown</name><argument_list>(<argument><expr><name>status</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></else></if>
+
+  <return>return<expr>(<name>size</name>)</expr>;</return>
+}</block></function>
+
+
+<comment type="block">/*
+ * This routine is called when a read to the pseudo terminal completes.
+ * Put the newly read buffer onto the read queue.  It will be processed
+ * and freed in the routine tt_read.
+ */</comment>
+
+<function><type><name>static</name> <name>void</name></type> <name>tt_read_ast</name><parameter_list>(<param><decl><type><name>TT_BUF_STRUCT</name> *</type><name>buff_addr</name></decl></param>)</parameter_list>
+<block>{
+  <decl_stmt><decl><type><name>int</name></type> <name>status</name></decl>;</decl_stmt>
+
+  <if>if <condition>(<expr><name>buff_addr</name>-&gt;<name>status</name> &amp; <name>SS</name>$<name>_NORMAL</name></expr>)</condition><then>
+    <block>{
+      <expr_stmt><expr><name>status</name> = <name>LIB</name>$<call><name>INSQTI</name><argument_list>(<argument><expr><name>buff_addr</name></expr></argument>, <argument><expr>&amp;<name>read_queue</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+      <if>if <condition>(<expr>(<name>status</name> != <name>SS</name>$<name>_NORMAL</name>) &amp;&amp; (<name>status</name> != <name>LIB</name>$<name>_ONEENTQUE</name>)</expr>)</condition><then>
+	<block>{
+	  <expr_stmt><expr><call><name>CloseDown</name><argument_list>(<argument><expr><name>status</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	}</block></then></if>
+    }</block></then>
+  <else>else
+    <expr_stmt><expr><call><name>CloseDown</name><argument_list>(<argument><expr><name>buff_addr</name>-&gt;<name>status</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></else></if>
+
+  <expr_stmt><expr><call><name>tt_start_read</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+  <expr_stmt><expr><name>sys</name>$<call><name>wake</name><argument_list>(<argument><expr>0</expr></argument>,<argument><expr>0</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+  <return>return;</return>
+}</block></function>
+
+
+<comment type="block">/*
+ * If there is a free buffer on the buffer queue then Start a read from
+ * the pseudo terminal, otherwise set a flag, the reading will be restarted
+ * in the routine freeBuff when a buffer is freed.
+ */</comment>
+
+<function><type><name>void</name></type> <name>tt_start_read</name><parameter_list>(<param><decl><type><name>void</name></type></decl></param>)</parameter_list>
+<block>{
+  <decl_stmt><decl><type><name>int</name></type> <name>status</name></decl>;</decl_stmt>
+  <decl_stmt><decl><type><name>static</name> <name>int</name></type> <name>size</name></decl>;</decl_stmt>
+  <decl_stmt><decl><type><name>TT_BUF_STRUCT</name> *</type><name>buff_addr</name></decl>;</decl_stmt>
+
+  <expr_stmt><expr><name>buff_addr</name> = <call><name>getBuff</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+  <if>if <condition>(<expr><name>buff_addr</name> != <name>LIB</name>$<name>_QUEWASEMP</name></expr>)</condition><then>
+    <block>{
+      <if>if<condition>(<expr>!<name>tt_pasting</name></expr>)</condition><then><block>{
+      <expr_stmt><expr><name>status</name> = <name>PTD</name>$<call><name>READ</name> <argument_list>(<argument><expr>0</expr></argument>, <argument><expr><name>tt_chan</name></expr></argument>, <argument><expr>&amp;<name>tt_read_ast</name></expr></argument>, <argument><expr><name>buff_addr</name></expr></argument>,
+			 <argument><expr>&amp;<name>buff_addr</name>-&gt;<name>status</name></expr></argument>, <argument><expr><name>VMS_TERM_BUFFER_SIZE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+      <if>if <condition>(<expr>(<name>status</name> &amp; <name>SS</name>$<name>_NORMAL</name>) != <name>SS</name>$<name>_NORMAL</name></expr>)</condition><then>
+	<block>{
+	  <expr_stmt><expr><call><name>CloseDown</name><argument_list>(<argument><expr><name>status</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	}</block></then></if>
+      }</block></then></if>
+      }</block></then>
+  <else>else
+    <block>{
+      <expr_stmt><expr><name>read_stopped</name> = <name>True</name></expr>;</expr_stmt>
+    }</block></else></if>
+  <return>return;</return>
+}</block></function>
+
+
+<comment type="block">/*
+ * Get data from the pseudo terminal.  Return the data from the first item
+ * on the read queue, and put that buffer back onto the free buffer queue.
+ * Return the length or zero if the read queue is empty.
+ *
+ */</comment>
+
+<function><type><name>int</name></type> <name>tt_read</name><parameter_list>(<param><decl><type><name>char</name> *</type><name>buffer</name></decl></param>)</parameter_list>
+<block>{
+  <decl_stmt><decl><type><name>TT_BUF_STRUCT</name> *</type><name>read_buff</name></decl>;</decl_stmt>
+  <decl_stmt><decl><type><name>int</name></type> <name>status</name></decl>;</decl_stmt>
+  <decl_stmt><decl><type><name>int</name></type> <name>len</name></decl>;</decl_stmt>
+
+   <expr_stmt><expr><name>status</name> = <name>LIB</name>$<call><name>REMQHI</name><argument_list>(<argument><expr>&amp;<name>read_queue</name></expr></argument>, <argument><expr>&amp;<name>read_buff</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+   <if>if<condition>(<expr><name>status</name> == <name>LIB</name>$<name>_QUEWASEMP</name></expr>)</condition><then><block>{
+     <return>return<expr>(0)</expr>;</return>
+   }</block></then>
+   <else>else <if>if <condition>(<expr><name>status</name> &amp; <name>SS</name>$<name>_NORMAL</name></expr>)</condition><then>
+     <block>{
+       <expr_stmt><expr><name>len</name> = <name>read_buff</name>-&gt;<name>length</name></expr>;</expr_stmt>
+       <expr_stmt><expr><call><name>memmove</name><argument_list>(<argument><expr><name>buffer</name></expr></argument>,<argument><expr>&amp;<name>read_buff</name>-&gt;<name>data</name></expr></argument>,<argument><expr><name>len</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+       <expr_stmt><expr><call><name>freeBuff</name><argument_list>(<argument><expr><name>read_buff</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+       <expr_stmt><expr><name>tt_new_output</name>=<name>True</name></expr>;</expr_stmt> <comment type="block">/* DRM something will be written */</comment>
+     }</block></then>
+   <else>else
+     <expr_stmt><expr><call><name>CloseDown</name><argument_list>(<argument><expr><name>status</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></else></if></else></if>
+
+   <return>return<expr>(<name>len</name>)</expr>;</return>
+}</block></function>
+
+
+<comment type="block">/*
+ * if xon then it is safe to start writing again.
+ */</comment>
+
+<function><type><name>static</name> <name>void</name></type> <name>send_xon</name><parameter_list>(<param><decl><type><name>void</name></type></decl></param>)</parameter_list>
+<block>{
+  <expr_stmt><expr><name>write_stopped</name> = <name>False</name></expr>;</expr_stmt>
+}</block></function>
+
+
+<comment type="block">/*
+ * If Xoff then stop writing to the pseudo terminal until you get Xon.
+ */</comment>
+<function><type><name>static</name> <name>void</name></type> <name>send_xoff</name><parameter_list>(<param><decl><type><name>void</name></type></decl></param>)</parameter_list>
+<block>{
+  <expr_stmt><expr><name>write_stopped</name> = <name>True</name></expr>;</expr_stmt>
+}</block></function>
+
+
+
+<comment type="block">/*
+ * Beep the terminal to let the user know data will be lost because
+ * of too much data.
+ */</comment>
+
+<function><type><name>static</name> <name>void</name></type> <name>send_bell</name><parameter_list>(<param><decl><type><name>void</name></type></decl></param>)</parameter_list>
+<block>{
+   <expr_stmt><expr><call><name>Bell</name><argument_list>(<argument><expr><name>term</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+}</block></function>
+
+<comment type="block">/*
+ * if the pseudo terminal's characteristics change, check to see if the
+ * page size changed.  If it did, resize the widget, otherwise, ignore
+ * it!  This routine just gets the new term dimensions and sets a flag
+ * to indicate the term chars have changed.  The widget gets resized in
+ * the routine in_put in the module CHARPROC.C.  You cant resize the
+ * widget in this routine because this is an AST and X is not reenterent.
+ */</comment>
+
+<function><type><name>static</name> <name>void</name></type> <name>char_change</name><parameter_list>(<param><decl><type><name>void</name></type></decl></param>)</parameter_list>
+<block>{
+  <decl_stmt><decl><type><name>int</name></type> <name>status</name></decl>;</decl_stmt>
+
+  <comment type="block">/*
+   * Dont do anything if in Tek mode
+   */</comment>
+
+  <if>if<condition>(<expr>!(<call><name>TScreenOf</name><argument_list>(<argument><expr><name>term</name></expr></argument>)</argument_list></call>-&gt;<name>TekEmu</name>)</expr>)</condition><then>
+    <block>{
+      <expr_stmt><expr><name>status</name> = <name>sys</name>$<call><name>qiow</name><argument_list>(<argument><expr>0</expr></argument>,<argument><expr><name>tt_chan</name></expr></argument>,<argument><expr><name>IO</name>$<name>_SENSEMODE</name></expr></argument>,<argument><expr>0</expr></argument>,<argument><expr>0</expr></argument>,<argument><expr>0</expr></argument>,<argument><expr>&amp;<name>tt_mode</name></expr></argument>,<argument><expr>8</expr></argument>,<argument><expr>0</expr></argument>,<argument><expr>0</expr></argument>,<argument><expr>0</expr></argument>,<argument><expr>0</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+      <if>if<condition>(<expr>!(<name>status</name> &amp; <name>SS</name>$<name>_NORMAL</name>)</expr>)</condition><then> <expr_stmt><expr><call><name>CloseDown</name><argument_list>(<argument><expr><name>status</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+
+      <if>if<condition>(<expr>(<call><name>TScreenOf</name><argument_list>(<argument><expr><name>term</name></expr></argument>)</argument_list></call>-&gt;<name>max_row</name> != <name>tt_mode</name>.<name>length</name>) ||
+	 (<call><name>TScreenOf</name><argument_list>(<argument><expr><name>term</name></expr></argument>)</argument_list></call>-&gt;<name>max_col</name> != <name>tt_mode</name>.<name>page_width</name>)</expr>)</condition><then>
+	<block>{
+	  <expr_stmt><expr><name>tt_length</name> = <name>tt_mode</name>.<name>length</name></expr>;</expr_stmt>
+	  <expr_stmt><expr><name>tt_width</name> =  <name>tt_mode</name>.<name>page_width</name></expr>;</expr_stmt>
+
+	  <expr_stmt><expr><name>tt_changed</name> = <name>True</name></expr>;</expr_stmt>
+
+	}</block></then></if>
+    }</block></then></if>
+}</block></function>
+
+
+<comment type="block">/*
+ * Put a free buffer back onto the buffer queue.  If reading was
+ * stopped for lack of free buffers, start reading again.
+ */</comment>
+
+<function><type><name>static</name> <name>void</name></type> <name>freeBuff</name> <parameter_list>(<param><decl><type><name>TT_BUF_STRUCT</name> *</type><name>buff_addr</name></decl></param>)</parameter_list>
+<block>{
+  <decl_stmt><decl><type><name>int</name></type> <name>ast_stat</name></decl>;</decl_stmt>
+  <decl_stmt><decl><type><name>int</name></type> <name>status</name></decl>;</decl_stmt>
+
+  <expr_stmt><expr><name>ast_stat</name> = <name>SYS</name>$<call><name>SETAST</name><argument_list>(<argument><expr>0</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+  <if>if <condition>(<expr>!<name>read_stopped</name></expr>)</condition><then>
+    <block>{
+      <expr_stmt><expr><name>LIB</name>$<call><name>INSQHI</name><argument_list>(<argument><expr><name>buff_addr</name></expr></argument>, <argument><expr>&amp;<name>buffer_queue</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></then>
+  <else>else
+    <block>{
+      <expr_stmt><expr><name>status</name> = <name>PTD</name>$<call><name>READ</name> <argument_list>(<argument><expr>0</expr></argument>, <argument><expr><name>tt_chan</name></expr></argument>, <argument><expr>&amp;<name>tt_read_ast</name></expr></argument>, <argument><expr><name>buff_addr</name></expr></argument>,
+			 <argument><expr>&amp;<name>buff_addr</name>-&gt;<name>status</name></expr></argument>, <argument><expr><name>VMS_TERM_BUFFER_SIZE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+      <if>if <condition>(<expr><name>status</name> &amp; <name>SS</name>$<name>_NORMAL</name></expr>)</condition><then>
+	<block>{
+	  <expr_stmt><expr><name>read_stopped</name> = <name>False</name></expr>;</expr_stmt>
+	}</block></then>
+      <else>else
+	<block>{
+	  <expr_stmt><expr><call><name>CloseDown</name><argument_list>(<argument><expr><name>status</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	}</block></else></if>
+    }</block></else></if>
+  <if>if <condition>(<expr><name>ast_stat</name> == <name>SS</name>$<name>_WASSET</name></expr>)</condition><then> <expr_stmt><expr><name>ast_stat</name> = <name>SYS</name>$<call><name>SETAST</name><argument_list>(<argument><expr>1</expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+}</block></function>
+
+
+<comment type="block">/*
+ * return a free buffer from the buffer queue.
+ */</comment>
+
+<function><type><name>TT_BUF_STRUCT</name> *</type><name>getBuff</name><parameter_list>(<param><decl><type><name>void</name></type></decl></param>)</parameter_list>
+<block>{
+  <decl_stmt><decl><type><name>int</name></type> <name>status</name></decl>;</decl_stmt>
+  <decl_stmt><decl><type><name>TT_BUF_STRUCT</name> *</type><name>buff_addr</name></decl>;</decl_stmt>
+
+  <expr_stmt><expr><name>status</name> = <name>LIB</name>$<call><name>REMQHI</name><argument_list>(<argument><expr>&amp;<name>buffer_queue</name></expr></argument>, <argument><expr>&amp;<name>buff_addr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+  <if>if <condition>(<expr><name>status</name> &amp; <name>SS</name>$<name>_NORMAL</name></expr>)</condition><then>
+    <block>{
+      <return>return<expr>(<name>buff_addr</name>)</expr>;</return>
+    }</block></then>
+  <else>else
+    <block>{
+      <return>return<expr>(<name>status</name>)</expr>;</return>
+    }</block></else></if>
+}</block></function>
+
+
+<comment type="block">/*
+ * Close down and exit.  Kill the detached process (if it still
+ * exists), deassign mailbox channell (if assigned), cancel any
+ * waiting IO to the pseudo terminal and delete it, exit with any
+ * status information.
+ */</comment>
+
+<function><type><name>static</name> <name>void</name></type> <name>CloseDown</name><parameter_list>(<param><decl><type><name>int</name></type> <name>exit_status</name></decl></param>)</parameter_list>
+<block>{
+  <decl_stmt><decl><type><name>int</name></type> <name>status</name></decl>;</decl_stmt>
+
+  <comment type="block">/* if process has not terminated, do so now! */</comment>
+  <if>if<condition>(<expr><name>pid</name> != 0</expr>)</condition><then>
+    <block>{
+      <expr_stmt><expr><name>status</name> = <name>sys</name>$<call><name>forcex</name><argument_list>(<argument><expr>&amp;<name>pid</name></expr></argument>,<argument><expr>0</expr></argument>,<argument><expr>0</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+      <if>if<condition>(<expr>!(<name>status</name> &amp; <name>SS</name>$<name>_NORMAL</name>)</expr>)</condition><then> <expr_stmt><expr><name>lib</name>$<call><name>signal</name><argument_list>(<argument><expr><name>status</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+    }</block></then></if>
+
+  <comment type="block">/* if mbx_chan is assigned, deassign it */</comment>
+  <if>if<condition>(<expr><name>mbx_chan</name> != 0</expr>)</condition><then>
+    <block>{
+      <expr_stmt><expr><name>sys</name>$<call><name>dassgn</name><argument_list>(<argument><expr><name>mbx_chan</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></then></if>
+
+  <comment type="block">/* cancel pseudo terminal IO requests */</comment>
+  <expr_stmt><expr><name>status</name> = <name>ptd</name>$<call><name>cancel</name><argument_list>(<argument><expr><name>tt_chan</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+  <if>if<condition>(<expr>!(<name>status</name> &amp; <name>SS</name>$<name>_NORMAL</name>)</expr>)</condition><then> <expr_stmt><expr><name>lib</name>$<call><name>signal</name><argument_list>(<argument><expr><name>status</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+
+  <comment type="block">/* delete pseudo terminal */</comment>
+  <expr_stmt><expr><name>status</name> = <name>ptd</name>$<call><name>delete</name><argument_list>(<argument><expr><name>tt_chan</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+  <if>if<condition>(<expr>!(<name>status</name> &amp; <name>SS</name>$<name>_NORMAL</name>)</expr>)</condition><then> <expr_stmt><expr><name>lib</name>$<call><name>signal</name><argument_list>(<argument><expr><name>status</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+
+  <if>if<condition>(<expr>!(<name>exit_status</name> &amp; <name>SS</name>$<name>_NORMAL</name>)</expr>)</condition><then> <expr_stmt><expr><name>lib</name>$<call><name>signal</name><argument_list>(<argument><expr><name>exit_status</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+
+  <expr_stmt><expr><call><name>exit</name><argument_list>(<argument><expr>1</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+}</block></function>
+
+
+<comment type="block">/*
+ * This routine gets called when the detached process terminates (for
+ * whatever reason).  The mailbox buffer has final exit status.  Close
+ * down and exit.
+ */</comment>
+
+<function><type><name>static</name> <name>void</name></type> <name>mbx_read_ast</name><parameter_list>(<param><decl><type><name>void</name></type></decl></param>)</parameter_list>
+<block>{
+  <decl_stmt><decl><type><name>int</name></type> <name>status</name></decl>;</decl_stmt>
+
+  <expr_stmt><expr><name>pid</name> = 0</expr>;</expr_stmt>
+
+  <expr_stmt><expr><name>status</name> = <name>mbx_read_iosb</name>.<name>status</name></expr>;</expr_stmt>
+  <if>if <condition>(<expr>!(<name>status</name> &amp; <name>SS</name>$<name>_NORMAL</name>)</expr>)</condition><then> <expr_stmt><expr><call><name>CloseDown</name><argument_list>(<argument><expr><name>status</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+
+  <expr_stmt><expr><name>status</name> = (<name>unsigned</name> <name>long</name> <name>int</name>) <name>mbx_buf</name>.<name>acc</name>$<name>l_finalsts</name></expr>;</expr_stmt>
+  <if>if <condition>(<expr>!(<name>status</name> &amp; <name>SS</name>$<name>_NORMAL</name>)</expr>)</condition><then> <expr_stmt><expr><call><name>CloseDown</name><argument_list>(<argument><expr><name>status</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+
+  <expr_stmt><expr><call><name>CloseDown</name><argument_list>(<argument><expr>1</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+}</block></function>
+
+
+<comment type="block">/*
+ * This routine starts a read on the mailbox associated with the detached
+ * process.  The AST routine gets called when the detached process terminates.
+ */</comment>
+
+<function><type><name>static</name> <name>void</name></type> <name>mbx_read</name><parameter_list>(<param><decl><type><name>void</name></type></decl></param>)</parameter_list>
+<block>{
+<decl_stmt><decl><type><name>int</name></type> <name>status</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>static</name> <name>int</name></type> <name>size</name></decl>;</decl_stmt>
+
+   <expr_stmt><expr><name>size</name> = <name>ACC</name>$<name>K_TERMLEN</name></expr>;</expr_stmt>
+   <expr_stmt><expr><name>status</name> = <name>sys</name>$<call><name>qio</name><argument_list>(<argument><expr>0</expr></argument>,<argument><expr><name>mbx_chan</name></expr></argument>,
+          <argument><expr><name>IO</name>$<name>_READVBLK</name></expr></argument>,
+          <argument><expr>&amp;<name>mbx_read_iosb</name></expr></argument>,
+          <argument><expr>&amp;<name>mbx_read_ast</name></expr></argument>,
+          <argument><expr>0</expr></argument>,
+          <argument><expr>&amp;<name>mbx_buf</name></expr></argument>,
+          <argument><expr><name>size</name></expr></argument>,<argument><expr>0</expr></argument>,<argument><expr>0</expr></argument>,<argument><expr>0</expr></argument>,<argument><expr>0</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+   <if>if <condition>(<expr>!(<name>status</name> &amp; <name>SS</name>$<name>_NORMAL</name>)</expr>)</condition><then> <expr_stmt><expr><call><name>CloseDown</name><argument_list>(<argument><expr><name>status</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+
+   <return>return;</return>
+}</block></function>
+</unit>

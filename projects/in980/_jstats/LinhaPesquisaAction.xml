@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit language="Java" dir="" filename="LinhaPesquisaAction.java"><package>package <name>in980</name>.<name>rgms</name>.<name>presentation</name>.<name>actions</name>;</package>
+
+<import>import <name>in980</name>.<name>rgms</name>.<name>domain</name>.<name>LinhaPesquisa</name>;</import>
+<import>import <name>in980</name>.<name>rgms</name>.<name>domain</name>.<name>Membro</name>;</import>
+<import>import <name>in980</name>.<name>rgms</name>.<name>domain</name>.<name>Publicacao</name>;</import>
+<import>import <name>in980</name>.<name>rgms</name>.<name>persistence</name>.<name>LinhaPesquisaDAO</name>;</import>
+<import>import <name>in980</name>.<name>rgms</name>.<name>persistence</name>.<name>MembroDAO</name>;</import>
+<import>import <name>in980</name>.<name>rgms</name>.<name>persistence</name>.<name>PublicacaoDAO</name>;</import>
+
+<import>import <name>java</name>.<name>util</name>.<name>List</name>;</import>
+<import>import <name>java</name>.<name>util</name>.<name>Set</name>;</import>
+
+<import>import <name>org</name>.<name>apache</name>.<name>struts2</name>.<name>convention</name>.<name>annotation</name>.<name>Action</name>;</import>
+<import>import <name>org</name>.<name>apache</name>.<name>struts2</name>.<name>convention</name>.<name>annotation</name>.<name>Result</name>;</import>
+
+<class><specifier>public</specifier> class <name>LinhaPesquisaAction</name> <super><implements>implements <name>ActionCRUDBase</name></implements></super> <block>{
+
+	<decl_stmt><decl><type><specifier>private</specifier> <name>LinhaPesquisa</name></type> <name>linhaPesquisa</name></decl>;</decl_stmt>
+	private <expr_stmt><expr><name>List</name>&lt;<name>LinhaPesquisa</name>&gt; <name>linhasPesquisa</name></expr>;</expr_stmt>
+
+	<decl_stmt><decl><type><specifier>private</specifier> <name>String</name></type> <name>msg</name></decl>;</decl_stmt>
+
+	@<expr_stmt><expr><name><name><name>Override</name></name></name>
+	@<call><name>Action</name><argument_list>(<argument><expr><name>value</name> = "excluirLinhaPesquisa"</expr></argument>, <argument><expr><name>results</name> = <block>{ @<expr><call><name>Result</name><argument_list>(<argument><expr><name>name</name> = "success"</expr></argument>, <argument><expr><name>type</name> = "redirectAction"</expr></argument>, <argument><expr><name>params</name> = <block>{
+			<expr>"actionName"</expr>, <expr>"listarTodasLinhasPesquisa"</expr> }</block></expr></argument>)</argument_list></call></expr> }</block></expr></argument>)</argument_list></call>
+	public <name>String</name> <call><name>delete</name><argument_list>()</argument_list></call> <block>{
+		<try>try <block>{
+			<expr_stmt><expr>new <call><name>LinhaPesquisaDAO</name><argument_list>()</argument_list></call>.<call><name>excluir</name><argument_list>(<argument><expr><name>linhaPesquisa</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+			<expr_stmt><expr><call><name>setMsg</name><argument_list>(<argument><expr>"Membro : " + <call><name><name>linhaPesquisa</name>.<name>getDescricao</name></name><argument_list>()</argument_list></call>
+					+ " excluido com sucesso."</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt/></block></try>}</block></expr></expr_stmt> <catch>catch (<param><decl><type><name>Exception</name></type> <name>e</name></decl></param>) <block>{
+			<expr_stmt><expr><call><name><name>e</name>.<name>printStackTrace</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+			<expr_stmt><expr><call><name>setMsg</name><argument_list>(<argument><expr>"Erro ao excluir a Linha de Pesquisa: " + <call><name><name>e</name>.<name>getMessage</name></name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		}</block></catch>
+		<return>return <expr>"success"</expr>;</return>
+
+	}</block></class>
+
+	@<expr_stmt><expr><name><name><name>Override</name></name></name>
+	@<call><name>Action</name><argument_list>(<argument><expr><name>value</name> = "inserirLinhaPesquisa"</expr></argument>, <argument><expr><name>results</name> = <block>{ @<expr><call><name>Result</name><argument_list>(<argument><expr><name>location</name> = "/cadastro_linha_pesquisa.jsp"</expr></argument>, <argument><expr><name>name</name> = "success"</expr></argument>)</argument_list></call></expr> }</block></expr></argument>)</argument_list></call>
+	public <name>String</name> <call><name>insert</name><argument_list>()</argument_list></call> <block>{
+		<try>try <block>{
+			<expr_stmt><expr><call><name><name>linhaPesquisa</name>.<name>validateToPersist</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+			<if>if <condition>(<expr><name>linhaPesquisa</name> != <name>null</name> &amp;&amp; <call><name><name>linhaPesquisa</name>.<name>getID</name></name><argument_list>()</argument_list></call> != <name>null</name></expr>)</condition><then> <block>{
+				<expr_stmt><expr>new <call><name>LinhaPesquisaDAO</name><argument_list>()</argument_list></call>.<call><name>atualizar</name><argument_list>(<argument><expr><name>linhaPesquisa</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+			<expr_stmt/></block></then></if></block></try>}</block></expr></expr_stmt> <else>else <block>{
+				<expr_stmt><expr>new <call><name>LinhaPesquisaDAO</name><argument_list>()</argument_list></call>.<call><name>inserir</name><argument_list>(<argument><expr><name>linhaPesquisa</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+			}</block>
+			<expr_stmt><expr><call><name>setMsg</name><argument_list>(<argument><expr>"Linha de Pesquisa Inserida Com Sucesso"</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		</else>} <catch>catch (<param><decl><type><name>Exception</name></type> <name>e</name></decl></param>) <block>{
+			<expr_stmt><expr><call><name><name>e</name>.<name>printStackTrace</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+			<expr_stmt><expr><call><name>setMsg</name><argument_list>(<argument><expr>"Erro ao Cadastrar a Linha de Pesquisa: " + <call><name><name>e</name>.<name>getMessage</name></name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		}</block></catch>
+		<return>return <expr>"success"</expr>;</return>
+	}
+
+	@<expr_stmt><expr><call><name>Action</name><argument_list>(<argument><expr><name>value</name> = "buscarLinhasPesquisa"</expr></argument>, <argument><expr><name>results</name> = <block>{ @<expr><call><name>Result</name><argument_list>(<argument><expr><name>location</name> = "/lista_linhas_pesquisas.jsp"</expr></argument>, <argument><expr><name>name</name> = "success"</expr></argument>)</argument_list></call></expr> }</block></expr></argument>)</argument_list></call>
+	public <name>String</name> <call><name>searchByDescription</name><argument_list>()</argument_list></call> <block>{
+		<try>try <block>{
+			<expr_stmt><expr><name>linhasPesquisa</name> = new <call><name>LinhaPesquisaDAO</name><argument_list>()</argument_list></call>.<call><name>buscar</name><argument_list>(<argument><expr><name>linhaPesquisa</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt/></block></try>}</block></expr></expr_stmt> <catch>catch (<param><decl><type><name>Exception</name></type> <name>e</name></decl></param>) <block>{
+			<expr_stmt><expr><call><name><name>e</name>.<name>printStackTrace</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+		}</block></catch>
+		<return>return <expr>"success"</expr>;</return>
+	}
+
+	@<expr_stmt><expr><name><name><name>Override</name></name></name>
+	@<call><name>Action</name><argument_list>(<argument><expr><name>value</name> = "listarTodasLinhasPesquisa"</expr></argument>, <argument><expr><name>results</name> = <block>{ @<expr><call><name>Result</name><argument_list>(<argument><expr><name>location</name> = "/lista_linha_pesquisa.jsp"</expr></argument>, <argument><expr><name>name</name> = "success"</expr></argument>)</argument_list></call></expr> }</block></expr></argument>)</argument_list></call>
+	public <name>String</name> <call><name>listAll</name><argument_list>()</argument_list></call> <block>{
+		<expr><name>linhasPesquisa</name> = new <call><name>LinhaPesquisaDAO</name><argument_list>()</argument_list></call>.<call><name>listaTodos</name><argument_list>()</argument_list></call></expr>;
+		<return>return <expr>"success"</expr>;</return></block></expr></expr_stmt>
+	}
+
+	<function><type><specifier>public</specifier> <name>String</name></type> <name>update</name><parameter_list>()</parameter_list> <block>{
+		<return>return <expr><name>null</name></expr>;</return>
+	}</block></function>
+
+	@<expr_stmt><expr><call><name>Action</name><argument_list>(<argument><expr><name>value</name> = "mostrarLinhaPesquisa"</expr></argument>, <argument><expr><name>results</name> = <block>{ @<expr><call><name>Result</name><argument_list>(<argument><expr><name>location</name> = "/cadastro_linha_pesquisa.jsp"</expr></argument>, <argument><expr><name>name</name> = "success"</expr></argument>)</argument_list></call></expr> }</block></expr></argument>)</argument_list></call>
+	public <name>String</name> <call><name>mostrarLinhaPesquisa</name><argument_list>()</argument_list></call> <block>{
+		<try>try <block>{
+			<if>if <condition>(<expr><name>linhaPesquisa</name> != <name>null</name> &amp;&amp; <call><name><name>linhaPesquisa</name>.<name>getID</name></name><argument_list>()</argument_list></call> != <name>null</name></expr>)</condition><then> <block>{
+				<expr_stmt><expr><name>linhaPesquisa</name> = new <call><name>LinhaPesquisaDAO</name><argument_list>()</argument_list></call>
+						.<call><name>buscaPeloId</name><argument_list>(<argument><expr><call><name><name>linhaPesquisa</name>.<name>getID</name></name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+			<expr_stmt/></block></then></if></block></try>}</block></expr></expr_stmt>
+		} <catch>catch (<param><decl><type><name>Exception</name></type> <name>e</name></decl></param>) <block>{
+			<expr_stmt><expr><call><name><name>e</name>.<name>printStackTrace</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+			<expr_stmt><expr><call><name>setMsg</name><argument_list>(<argument><expr>"Linha de Pesquisa solicitada nao existe: "</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		}</block></catch>
+		<return>return <expr>"success"</expr>;</return>
+	}
+
+	<function><type><specifier>public</specifier> <name>LinhaPesquisa</name></type> <name>getLinhaPesquisa</name><parameter_list>()</parameter_list> <block>{
+		<return>return <expr><name>linhaPesquisa</name></expr>;</return>
+	}</block></function>
+
+	<function><type><specifier>public</specifier> <name>void</name></type> <name>setLinhaPesquisa</name><parameter_list>(<param><decl><type><name>LinhaPesquisa</name></type> <name>linhaPesquisa</name></decl></param>)</parameter_list> <block>{
+		<expr_stmt><expr><name>this</name>.<name>linhaPesquisa</name> = <name>linhaPesquisa</name></expr>;</expr_stmt>
+	}</block></function>
+
+	public <expr_stmt><expr><name>List</name>&lt;<name>LinhaPesquisa</name>&gt; <call><name>getLinhasPesquisa</name><argument_list>()</argument_list></call> <block>{
+		<return>return <expr><name>linhasPesquisa</name></expr>;</return></block></expr></expr_stmt>
+	}
+
+	<decl_stmt><decl><type><specifier>public</specifier> <name>void</name></type> <name>setLinhasPesquisa</name>(List<argument_list>&lt;<argument><name>LinhaPesquisa</name></argument>&gt;</argument_list> linhasPesquisas) <block>{
+		<expr_stmt><expr><name>this</name>.<name>linhasPesquisa</name> = <name>linhasPesquisas</name></expr>;</expr_stmt>
+	}</block></decl></decl_stmt>
+
+	<function><type><specifier>public</specifier> <name>String</name></type> <name>getMsg</name><parameter_list>()</parameter_list> <block>{
+		<return>return <expr><name>msg</name></expr>;</return>
+	}</block></function>
+
+	<function><type><specifier>public</specifier> <name>void</name></type> <name>setMsg</name><parameter_list>(<param><decl><type><name>String</name></type> <name>msg</name></decl></param>)</parameter_list> <block>{
+		<expr_stmt><expr><name>this</name>.<name>msg</name> = <name>msg</name></expr>;</expr_stmt>
+	}</block></function>
+
+	public <expr_stmt><expr><name>List</name>&lt;<name>Membro</name>&gt; <call><name>getMembros</name><argument_list>()</argument_list></call> <block>{
+		<expr><name>List</name>&lt;<name>Membro</name>&gt; <name>listMembros</name> = new <call><name>MembroDAO</name><argument_list>()</argument_list></call>.<call><name>listaTodos</name><argument_list>()</argument_list></call></expr>;
+		<return>return <expr><name>listMembros</name></expr>;</return></block></expr></expr_stmt>
+	}
+
+	public <expr_stmt><expr><name>List</name>&lt;<name>Publicacao</name>&gt; <call><name>getPublicacoes</name><argument_list>()</argument_list></call> <block>{
+		<return>return <expr>new <call><name>PublicacaoDAO</name><argument_list>()</argument_list></call>.<call><name>listaTodos</name><argument_list>()</argument_list></call></expr>;</return></block></expr></expr_stmt>
+	}
+}
+</unit>

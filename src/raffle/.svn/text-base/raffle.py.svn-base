@@ -1,0 +1,236 @@
+# -*- coding: utf-8 -*-
+'''
+Created on 12/01/2011
+
+@author: felipe
+'''
+import os, getopt, sys
+import xlrd, xlwt
+import random
+
+class Raffle(object):
+    '''
+    Read the dependencies sheet and performs a raffle
+    '''
+    def __init__(self, project_dir, balance):
+        self.project_dir = project_dir
+        self.results_dir = self.project_dir + '_pl-stats/results/'
+        self.directive_sheet = self.results_dir + 'directives.xls'
+        self.coupling_sheet = self.results_dir + 'coupling.xls'
+        self.balance = balance
+        
+    def getTotalMethods(self):
+        '''
+        Return the number of methods in the spreadsheet
+        '''
+        return self.sheet.nrows - 3
+    
+    def getDependenciesVariables(self):
+        '''
+        Read the dependencies sheet and return a dict {method_name: [variables]}
+        '''
+        dict_var = {}
+        
+        book = xlrd.open_workbook(self.coupling_sheet)
+        sheet = book.sheet_by_index(0)
+        
+        for rownum in range(sheet.nrows)[1:sheet.nrows - 2]:
+            dec_coup_count = sheet.cell(rowx=rownum, colx=1).value
+            assign_coup_count = sheet.cell(rowx=rownum, colx=4).value
+            
+            if dec_coup_count != 0 or assign_coup_count != 0:
+                # get method name
+                method_name = sheet.cell(rowx=rownum, colx=0).value
+                # get declare coupling vars
+                dec_vars = sheet.cell(rowx=rownum, colx=2).value
+                # get assignment coupling vars
+                assign_vars = sheet.cell(rowx=rownum, colx=5).value
+                # set the dictionary with a list of declare and coupling vars
+                dep_vars = dec_vars + assign_vars
+                list_dep_vars = dep_vars.split(', ')
+                dict_var[method_name] = list(set(list_dep_vars))
+                
+        return dict_var
+    
+    def getMethodswithDirective(self):
+        '''
+        Read the directive sheet and return ...
+        '''
+        list_method_more_than_balance = []
+        list_method_less_equal_than_balance = []
+        
+        book = xlrd.open_workbook(self.directive_sheet)
+        sheet = book.sheet_by_index(0)
+        
+        for rownum in range(sheet.nrows)[1:sheet.nrows - 19]:
+            # get method name
+            method_name = sheet.cell(rowx=rownum, colx=0).value
+            # get number of directives
+            nod = sheet.cell(rowx=rownum, colx=10).value
+
+            if nod > self.balance:
+                list_method_more_than_balance.append(method_name)
+            else:
+                list_method_less_equal_than_balance.append(method_name)
+            
+        return list_method_more_than_balance, list_method_less_equal_than_balance
+    
+    def getProportion(self, list_more_than_balance, list_less_equal_than_balance, dict_dependencies):
+        '''
+        Return the proportion between groups of methods
+        '''
+        dict_methods_with_dependencies_more_than_balance = {}
+        dict_methods_with_dependencies_less_equal_than_balance = {}
+        
+#        total_methods_with_dependencies = len(dict_dependencies)
+        dict_proportion = {}
+        
+        for method in list_more_than_balance:
+            if dict_dependencies.__contains__(method):
+                dict_methods_with_dependencies_more_than_balance[method] = dict_dependencies[method]
+        
+        for method in list_less_equal_than_balance:
+            if dict_dependencies.__contains__(method):
+                dict_methods_with_dependencies_less_equal_than_balance[method] = dict_dependencies[method]
+        
+        count_more_than_balance = len(dict_methods_with_dependencies_more_than_balance)
+        count_less_equal_than_balance = len(dict_methods_with_dependencies_less_equal_than_balance)
+        
+        print self.project_dir
+        print "Methods with dependencies and > 2 directives: %s" % (count_more_than_balance)
+        print "Methods with dependencies and <= 2 directives: %s" % (count_less_equal_than_balance)
+        
+        if count_more_than_balance > count_less_equal_than_balance:
+            name = 'more'
+            proportion = int(round(float(count_more_than_balance)/float(count_less_equal_than_balance)))
+        else:
+            name = 'less'
+            proportion = int(round(float(count_less_equal_than_balance)/float(count_more_than_balance)))
+        
+        dict_proportion[name] = proportion
+        return dict_methods_with_dependencies_more_than_balance, dict_methods_with_dependencies_less_equal_than_balance, dict_proportion
+    
+    def raffle(self):
+        '''
+        Return the list of methods between raffle
+        '''
+        dict_dependencies_vars = self.getDependenciesVariables()
+        list_more_than_balance, list_less_equal_than_balance = self.getMethodswithDirective()
+        dict_mtb, dict_letb, dict_proportion = self.getProportion(list_more_than_balance, list_less_equal_than_balance, dict_dependencies_vars)
+        
+        dict_random_more_methods = {}
+        dict_random_less_equal_methods = {}
+        
+        if dict_proportion.__contains__('less'):
+            method_name = dict_mtb.keys()[random.randint(0, len(dict_mtb)-1)]
+            dict_random_more_methods[method_name] = dict_mtb[method_name]
+            for i in range(dict_proportion.values()[0]):
+                method_name = dict_letb.keys()[random.randint(0, len(dict_letb)-1)]
+                dict_random_less_equal_methods[method_name] = dict_letb[method_name]
+        else:
+            method_name = dict_letb.keys()[random.randint(0, len(dict_letb)-1)]
+            dict_random_less_equal_methods[method_name] = dict_letb[method_name]
+            for i in range(dict_proportion.values()[0]):
+                method_name = dict_mtb.keys()[random.randint(0, len(dict_mtb)-1)]
+                dict_random_more_methods[method_name] = dict_mtb[method_name]
+        
+        print dict_random_more_methods
+        print dict_random_less_equal_methods
+        
+        return dict_random_more_methods, dict_random_less_equal_methods, [len(dict_mtb), len(dict_letb)]
+        
+    def exportRaffleToXLS(self, dict_random_more_methods, dict_random_less_equal_methods, list_size):
+        '''
+        Export raffle results to xls spreadsheet
+        '''
+        os.chdir(self.results_dir)
+        try:
+            wb = xlwt.Workbook(encoding="utf-8")
+            sheet = wb.add_sheet("raffle results")
+            
+            # cabeçalho para "more than" methods
+            row_count = 0
+            col_count = 0
+            row = sheet.row(row_count)
+            row.write(col_count, 'Methods with more than %s directives' % (str(self.balance)))
+            row_count += 1
+            row = sheet.row(row_count)
+            row.write(col_count, 'Total of methods: %s' % (str(list_size[0])))
+            row_count += 1
+            row = sheet.row(row_count)
+            row.write(col_count, 'Method FQDN')
+            row.write(col_count+1, 'Dependencies Vars')
+            row.write(col_count+2, 'Drawn var')
+            ###
+            for method in dict_random_more_methods:
+                list_vars = dict_random_more_methods[method]
+                row_count += 1
+                row = sheet.row(row_count)
+                row.write(col_count, method)
+                row.write(col_count+1, ", ".join(list_vars))
+                row.write(col_count+2, list_vars[random.randint(0, len(list_vars)-1)])
+                
+            
+            # cabeçalho para "less or equal than" methods
+            row_count = len(dict_random_more_methods) + 4
+            col_count = 0
+            row = sheet.row(row_count)
+            row.write(col_count, 'Methods with less or equal than %s directives' % (str(self.balance)))
+            row_count += 1
+            row = sheet.row(row_count)
+            row.write(col_count, 'Total of methods: %s' % (str(list_size[1])))
+            row_count += 1
+            row = sheet.row(row_count)
+            row.write(col_count, 'Method FQDN')
+            row.write(col_count+1, 'Dependencies Vars')
+            row.write(col_count+2, 'Drawn var')
+            ###
+            for method in dict_random_less_equal_methods:
+                list_vars = dict_random_less_equal_methods[method]
+                row_count += 1
+                row = sheet.row(row_count)
+                row.write(col_count, method)
+                row.write(col_count+1, ", ".join(list_vars))
+                row.write(col_count+2, list_vars[random.randint(0, len(list_vars)-1)])
+            
+            wb.save('raffle2-4.xls')
+        except Exception as e:
+            print 'Exception (exportRaffleToXLS): ' + e.__str__()
+
+def usage():
+    print "opa!"
+
+def main():
+    try:
+        opts, extra_params = getopt.getopt(sys.argv[1:], "i:o:", ["input_dir=", "output_dir="])
+    except getopt.GetoptError:          
+        usage()
+        sys.exit(2)
+        
+    input_dir = None
+    output_dir = None
+    for opt, arg in opts:
+        if opt in ['-i', '--input_dir']:
+            input_dir = arg
+        if opt in ['-o', '--output_dir']:
+            output_dir = arg
+    
+    if input_dir == None or output_dir == None:
+        print "Opa!"
+    else:
+
+        for project in os.listdir(input_dir):
+            try:
+                project_dir = input_dir + project + '/_pl-stats/results/'
+                r = Raffle(project_dir, 2)
+                d1, d2, size = r.raffle()
+                r.exportRaffleToXLS(d1, d2, size)
+            except Exception as e:
+                print ''
+                print 'Exception (__main__): %s' % (e.__str__())
+                print ''
+                continue
+
+if __name__ == '__main__': main()
+
+#dir = '/home/felipe/Documentos/master/thesis/dev/SPLs/workspace/lampiro/'

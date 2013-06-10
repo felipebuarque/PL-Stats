@@ -17,7 +17,7 @@ class Raffle(object):
         self.project_results_dir = self.project_dir + '/_pl-stats/results/'
         self.directive_sheet = self.project_results_dir + 'directives_data.csv'
         self.coupling_sheet = self.project_results_dir + 'dependencies.csv'
-        self.raffle_sheet = self.project_results_dir + 'raffle_with_dependencies_2.csv'
+        self.raffle_sheet = self.project_results_dir + 'raffle_without_dependencies_0.csv'
         self.balance = balance
         self.file_reader = csv.reader(open(self.coupling_sheet, 'rb'), delimiter=';', quotechar='|')
 
@@ -282,8 +282,7 @@ def generateProjectData(dir):
     Generate Raffle project data
     '''
     raffle = Raffle(os.path.abspath(dir), 2)
-#    dict_random_more_methods, dict_random_less_equal_methods, lens = raffle.raffle(raffle.getMethodsWithoutDependencies())
-    dict_random_more_methods, dict_random_less_equal_methods, lens = raffle.raffle(raffle.getMethodsWithDependencies())
+    dict_random_more_methods, dict_random_less_equal_methods, lens = raffle.raffle(raffle.getMethodsWithoutDependencies())
     raffle.exportRaffleToCSV(dict_random_more_methods, dict_random_less_equal_methods, lens)
 
 
@@ -295,8 +294,7 @@ def generateWorkspaceData(dir):
         print '======================================================'
         print 'Project: %s' % (project)
         raffle = Raffle(os.path.join(os.path.abspath(dir), project), 2)
-#        dict_random_more_methods, dict_random_less_equal_methods, lens = raffle.raffle(raffle.getMethodsWithoutDependencies())
-        dict_random_more_methods, dict_random_less_equal_methods, lens = raffle.raffle(raffle.getMethodsWithDependencies())
+        dict_random_more_methods, dict_random_less_equal_methods, lens = raffle.raffle(raffle.getMethodsWithoutDependencies())
         raffle.exportRaffleToCSV(dict_random_more_methods, dict_random_less_equal_methods, lens)
     
             

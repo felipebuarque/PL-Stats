@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit language="Java" dir="" filename="ListarPublicacaoAction.java"><package>package <name>in980</name>.<name>rgms</name>.<name>presentation</name>.<name>actions</name>;</package>
+
+<import>import <name>in980</name>.<name>rgms</name>.<name>domain</name>.<name>ArtigoConferencia</name>;</import>
+<import>import <name>in980</name>.<name>rgms</name>.<name>domain</name>.<name>ArtigoRevista</name>;</import>
+<import>import <name>in980</name>.<name>rgms</name>.<name>domain</name>.<name>DissertacaoMestrado</name>;</import>
+<import>import <name>in980</name>.<name>rgms</name>.<name>domain</name>.<name>Publicacao</name>;</import>
+<import>import <name>in980</name>.<name>rgms</name>.<name>domain</name>.<name>TeseDoutorado</name>;</import>
+<import>import <name>in980</name>.<name>rgms</name>.<name>persistence</name>.<name>ArtigoConferenciaDAO</name>;</import>
+<import>import <name>in980</name>.<name>rgms</name>.<name>persistence</name>.<name>ArtigoRevistaDAO</name>;</import>
+<import>import <name>in980</name>.<name>rgms</name>.<name>persistence</name>.<name>DissertacaoMestradoDAO</name>;</import>
+<import>import <name>in980</name>.<name>rgms</name>.<name>persistence</name>.<name>PublicacaoDAO</name>;</import>
+<import>import <name>in980</name>.<name>rgms</name>.<name>persistence</name>.<name>TeseDoutoradoDAO</name>;</import>
+
+<import>import <name>java</name>.<name>util</name>.<name>List</name>;</import>
+
+<import>import <name>org</name>.<name>apache</name>.<name>struts2</name>.<name>convention</name>.<name>annotation</name>.<name>Action</name>;</import>
+<import>import <name>org</name>.<name>apache</name>.<name>struts2</name>.<name>convention</name>.<name>annotation</name>.<name>Result</name>;</import>
+
+<class><specifier>public</specifier> class <name>ListarPublicacaoAction</name> <block>{
+	
+	<decl_stmt><decl><type><specifier>private</specifier> <name>List</name></type> <name>publicacoes</name></decl>;</decl_stmt>
+	<decl_stmt><decl><type><specifier>private</specifier> <name>String</name></type> <name>tituloPublicacao</name></decl>;</decl_stmt>
+	<decl_stmt><decl><type><specifier>private</specifier> <name>Integer</name></type> <name>ano</name></decl>;</decl_stmt>
+	
+	@<expr_stmt><expr><call><name>Action</name><argument_list>(<argument><expr><name>value</name> = "mudaLocaleLingua"</expr></argument>, <argument><expr><name>results</name> = <block>{ 
+			@<expr><call><name>Result</name><argument_list>(<argument><expr><name>location</name> = "/index.jsp"</expr></argument>, <argument><expr><name>name</name> = "success"</expr></argument>)</argument_list></call></expr> 
+			}</block></expr></argument>	
+	)</argument_list></call>
+	public <name>String</name> <call><name>mudaLocaleLingua</name><argument_list>()</argument_list></call> <block>{		
+		<return>return <expr>"success"</expr>;</return></block></expr></expr_stmt>
+	}</block></class>
+	
+	@<expr_stmt><expr><call><name>SuppressWarnings</name><argument_list>(<argument><expr>"unchecked"</expr></argument>)</argument_list></call>
+	@<call><name>Action</name><argument_list>(<argument><expr><name>value</name> = "listarTodasPublicacoes"</expr></argument>, <argument><expr><name>results</name> = <block>{ 
+			@<expr><call><name>Result</name><argument_list>(<argument><expr><name>location</name> = "/lista_publicacao.jsp"</expr></argument>, <argument><expr><name>name</name> = "success"</expr></argument>)</argument_list></call></expr> 
+			}</block></expr></argument>	
+	)</argument_list></call>
+	public <name>String</name> <call><name>listAll</name><argument_list>()</argument_list></call> <block>{
+		<expr><name>publicacoes</name> = new <call><name>ArtigoRevistaDAO</name><argument_list>()</argument_list></call>.<call><name>listaTodos</name><argument_list>()</argument_list></call></expr>;
+		<expr><call><name><name>publicacoes</name>.<name>addAll</name></name><argument_list>(<argument><expr>new <call><name>ArtigoConferenciaDAO</name><argument_list>()</argument_list></call>.<call><name>listaTodos</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;
+		<expr><call><name><name>publicacoes</name>.<name>addAll</name></name><argument_list>(<argument><expr>new <call><name>DissertacaoMestradoDAO</name><argument_list>()</argument_list></call>.<call><name>listaTodos</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;
+		<expr><call><name><name>publicacoes</name>.<name>addAll</name></name><argument_list>(<argument><expr>new <call><name>TeseDoutoradoDAO</name><argument_list>()</argument_list></call>.<call><name>listaTodos</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;
+		<return>return <expr>"success"</expr>;</return></block></expr></expr_stmt>
+	}
+	
+	
+	@<expr_stmt><expr><call><name>SuppressWarnings</name><argument_list>(<argument><expr>"unchecked"</expr></argument>)</argument_list></call>
+	@<call><name>Action</name><argument_list>(<argument><expr><name>value</name> = "buscarPublicacoesPeloTitulo"</expr></argument>, <argument><expr><name>results</name> = <block>{ 
+			@<expr><call><name>Result</name><argument_list>(<argument><expr><name>location</name> = "/lista_publicacao.jsp"</expr></argument>, <argument><expr><name>name</name> = "success"</expr></argument>)</argument_list></call></expr> 
+			}</block></expr></argument>	
+	)</argument_list></call>
+	public <name>String</name> <call><name>searchByName</name><argument_list>()</argument_list></call> throws <name>Exception</name> <block>{
+		<expr><name>ArtigoConferencia</name> <name>ac</name> = new <call><name>ArtigoConferencia</name><argument_list>()</argument_list></call></expr>;
+		<expr><call><name><name>ac</name>.<name>setTitulo</name></name><argument_list>(<argument><expr><name>tituloPublicacao</name></expr></argument>)</argument_list></call></expr>;
+		<expr><call><name><name>ac</name>.<name>setAno</name></name><argument_list>(<argument><expr><name>ano</name></expr></argument>)</argument_list></call></expr>;
+		
+		<expr><name>publicacoes</name> = new <call><name>PublicacaoDAO</name><argument_list>()</argument_list></call>.<call><name>buscar</name><argument_list>(<argument><expr><name>ac</name></expr></argument>)</argument_list></call></expr>;		
+		<return>return <expr>"success"</expr>;</return></block></expr></expr_stmt>
+	}
+
+	<function><type><specifier>public</specifier> <name>List</name></type> <name>getPublicacoes</name><parameter_list>()</parameter_list> <block>{
+		<return>return <expr><name>publicacoes</name></expr>;</return>
+	}</block></function>
+	
+
+	<decl_stmt><decl><type><specifier>public</specifier> <name>void</name></type> <name>setPublicacoes</name>(List<argument_list>&lt;<argument/></argument_list>? extends <name>Publicacao</name>&gt; <name>publicacoes</name>) <block>{
+		<expr_stmt><expr><name>this</name>.<name>publicacoes</name> = <name>publicacoes</name></expr>;</expr_stmt>
+	}</block></decl></decl_stmt>
+
+
+	<function><type><specifier>public</specifier> <name>String</name></type> <name>getTituloPublicacao</name><parameter_list>()</parameter_list> <block>{
+		<return>return <expr><name>tituloPublicacao</name></expr>;</return>
+	}</block></function>
+
+
+	<function><type><specifier>public</specifier> <name>void</name></type> <name>setTituloPublicacao</name><parameter_list>(<param><decl><type><name>String</name></type> <name>tituloPublicacao</name></decl></param>)</parameter_list> <block>{
+		<expr_stmt><expr><name>this</name>.<name>tituloPublicacao</name> = <name>tituloPublicacao</name></expr>;</expr_stmt>
+	}</block></function>
+
+	<function><type><specifier>public</specifier> <name>Integer</name></type> <name>getAno</name><parameter_list>()</parameter_list> <block>{
+		<return>return <expr><name>ano</name></expr>;</return>
+	}</block></function>
+
+	<function><type><specifier>public</specifier> <name>void</name></type> <name>setAno</name><parameter_list>(<param><decl><type><name>Integer</name></type> <name>ano</name></decl></param>)</parameter_list> <block>{
+		<expr_stmt><expr><name>this</name>.<name>ano</name> = <name>ano</name></expr>;</expr_stmt>
+	}</block></function>
+
+
+
+
+}
+</unit>

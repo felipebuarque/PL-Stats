@@ -1,0 +1,59 @@
+K 25
+svn:wc:ra_dav:version-url
+V 101
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/src/in980/rgms/persistence
+END
+ArtigoConferenciaDAO.java
+K 25
+svn:wc:ra_dav:version-url
+V 127
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/src/in980/rgms/persistence/ArtigoConferenciaDAO.java
+END
+DissertacaoMestradoDAO.java
+K 25
+svn:wc:ra_dav:version-url
+V 129
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/src/in980/rgms/persistence/DissertacaoMestradoDAO.java
+END
+PublicacaoDAO.java
+K 25
+svn:wc:ra_dav:version-url
+V 120
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/src/in980/rgms/persistence/PublicacaoDAO.java
+END
+MembroDAO.java
+K 25
+svn:wc:ra_dav:version-url
+V 116
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/src/in980/rgms/persistence/MembroDAO.java
+END
+TeseDoutoradoDAO.java
+K 25
+svn:wc:ra_dav:version-url
+V 123
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/src/in980/rgms/persistence/TeseDoutoradoDAO.java
+END
+ArtigoRevistaDAO.java
+K 25
+svn:wc:ra_dav:version-url
+V 123
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/src/in980/rgms/persistence/ArtigoRevistaDAO.java
+END
+UsuarioDAO.java
+K 25
+svn:wc:ra_dav:version-url
+V 117
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/src/in980/rgms/persistence/UsuarioDAO.java
+END
+LinhaPesquisaDAO.java
+K 25
+svn:wc:ra_dav:version-url
+V 123
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/src/in980/rgms/persistence/LinhaPesquisaDAO.java
+END
+Dao.java
+K 25
+svn:wc:ra_dav:version-url
+V 110
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/src/in980/rgms/persistence/Dao.java
+END

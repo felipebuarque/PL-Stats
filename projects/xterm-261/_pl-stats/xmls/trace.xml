@@ -1,0 +1,836 @@
+<unit xmlns="http://www.sdml.info/srcML/src" xmlns:cpp="http://www.sdml.info/srcML/cpp" language="C" dir="" filename="trace.c"><comment type="block">/* $XTermId: trace.c,v 1.115 2010/06/15 22:40:28 tom Exp $ */</comment>
+
+<comment type="block">/*
+ * 
+ * Copyright 1997-2009,2010 by Thomas E. Dickey
+ * 
+ *                         All Rights Reserved
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE ABOVE LISTED COPYRIGHT HOLDER(S) BE LIABLE FOR ANY
+ * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * Except as contained in this notice, the name(s) of the above copyright
+ * holders shall not be used in advertising or otherwise to promote the
+ * sale, use or other dealings in this Software without prior written
+ * authorization.
+ * 
+ */</comment>
+
+<comment type="block">/*
+ * debugging support via TRACE macro.
+ */</comment>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;xterm.h&gt;</cpp:file></cpp:include>		<comment type="block">/* for definition of GCC_UNUSED */</comment>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;data.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;trace.h&gt;</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;time.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdlib.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;unistd.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/types.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdio.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdarg.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;assert.h&gt;</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;X11/Xatom.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;X11/Xmu/Atoms.h&gt;</cpp:file></cpp:include>
+
+<cpp:ifdef>#<cpp:directive>ifdef</cpp:directive> <name>HAVE_X11_TRANSLATEI_H</name></cpp:ifdef>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;X11/TranslateI.h&gt;</cpp:file></cpp:include>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<cpp:ifdef>#<cpp:directive>ifdef</cpp:directive> <name>__cplusplus</name></cpp:ifdef>
+<extern>extern "C" <block>{
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+    <function_decl><type><name>extern</name> <name>String</name></type> <name>_XtPrintXlations</name><parameter_list>(<param><decl><type><name>Widget</name></type> <name>w</name></decl></param>,
+				   <param><decl><type><name>XtTranslations</name></type> <name>xlations</name></decl></param>,
+				   <param><decl><type><name>Widget</name></type> <name>accelWidget</name></decl></param>,
+				   <param><decl><type><name>_XtBoolean</name></type> <name>includeRHS</name></decl></param>)</parameter_list>;</function_decl>
+<cpp:ifdef>#<cpp:directive>ifdef</cpp:directive> <name>__cplusplus</name></cpp:ifdef>
+}</block></extern>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<decl_stmt><decl><type><name>const</name> <name>char</name> *</type><name>trace_who</name> =<init> <expr>"parent"</expr></init></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>static</name> <name>FILE</name> *</type><name>trace_fp</name></decl>;</decl_stmt>
+
+<function><type><name>void</name></type>
+<name>Trace</name><parameter_list>(<param><decl><type><name>const</name> <name>char</name> *</type><name>fmt</name></decl></param>,<param><decl><type>...</type></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>static</name> <name>const</name> <name>char</name> *</type><name>trace_out</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>va_list</name></type> <name>ap</name></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr><name>trace_fp</name> != 0
+	&amp;&amp; <name>trace_who</name> != <name>trace_out</name></expr>)</condition><then> <block>{
+	<expr_stmt><expr><call><name>fclose</name><argument_list>(<argument><expr><name>trace_fp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><name>trace_fp</name> = 0</expr>;</expr_stmt>
+    }</block></then></if>
+    <expr_stmt><expr><name>trace_out</name> = <name>trace_who</name></expr>;</expr_stmt>
+
+    <if>if <condition>(<expr>!<name>trace_fp</name></expr>)</condition><then> <block>{
+	<decl_stmt><decl><type><name>char</name></type> <name><name>name</name><index>[<expr><name>BUFSIZ</name></expr>]</index></name></decl>;</decl_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr>0</expr></cpp:if>				<comment type="block">/* usually I do not want unique names */</comment>
+	int unique;
+	for (unique = 0;; ++unique) {
+	    if (unique)
+		sprintf(name, "Trace-%s.out-%d", trace_who, unique);
+	    else
+		sprintf(name, "Trace-%s.out", trace_who);
+	    if ((trace_fp = fopen(name, "r")) == 0) {
+		break;
+	    }
+	    fclose(trace_fp);
+	}
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+	<expr_stmt><expr><call><name>sprintf</name><argument_list>(<argument><expr><name>name</name></expr></argument>, <argument><expr>"Trace-%s.out"</expr></argument>, <argument><expr><name>trace_who</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+	<expr_stmt><expr><name>trace_fp</name> = <call><name>fopen</name><argument_list>(<argument><expr><name>name</name></expr></argument>, <argument><expr>"w"</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<if>if <condition>(<expr><name>trace_fp</name> != 0</expr>)</condition><then> <block>{
+	    <expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>trace_fp</name></expr></argument>, <argument><expr>"%s\n"</expr></argument>, <argument><expr><call><name>xtermVersion</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><call><name>TraceIds</name><argument_list>(<argument><expr><name>NULL</name></expr></argument>, <argument><expr>0</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	}</block></then></if>
+    }</block></then></if>
+    <if>if <condition>(<expr>!<name>trace_fp</name></expr>)</condition><then>
+	<expr_stmt><expr><call><name>abort</name><argument_list>()</argument_list></call></expr>;</expr_stmt></then></if>
+
+    <expr_stmt><expr><call><name>va_start</name><argument_list>(<argument><expr><name>ap</name></expr></argument>, <argument><expr><name>fmt</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>vfprintf</name><argument_list>(<argument><expr><name>trace_fp</name></expr></argument>, <argument><expr><name>fmt</name></expr></argument>, <argument><expr><name>ap</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr>(<name>void</name>) <call><name>fflush</name><argument_list>(<argument><expr><name>trace_fp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>va_end</name><argument_list>(<argument><expr><name>ap</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+}</block></function>
+
+<function><type><name>void</name></type>
+<name>TraceClose</name><parameter_list>(<param><decl><type><name>void</name></type></decl></param>)</parameter_list>
+<block>{
+    <if>if <condition>(<expr><name>trace_fp</name> != 0</expr>)</condition><then> <block>{
+	<expr_stmt><expr>(<name>void</name>) <call><name>fclose</name><argument_list>(<argument><expr><name>trace_fp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr>(<name>void</name>) <call><name>fflush</name><argument_list>(<argument><expr><name>stdout</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr>(<name>void</name>) <call><name>fflush</name><argument_list>(<argument><expr><name>stderr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr>(<name>void</name>) <call><name>visibleChars</name><argument_list>(<argument><expr><name>NULL</name></expr></argument>, <argument><expr>0</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr>(<name>void</name>) <call><name>visibleIChars</name><argument_list>(<argument><expr><name>NULL</name></expr></argument>, <argument><expr>0</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr>(<name>void</name>) <call><name>visibleIChar</name><argument_list>(<argument><expr><name>NULL</name></expr></argument>, <argument><expr>0</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><name>trace_fp</name> = 0</expr>;</expr_stmt>
+    }</block></then></if>
+}</block></function>
+
+<function><type><name>void</name></type>
+<name>TraceIds</name><parameter_list>(<param><decl><type><name>const</name> <name>char</name> *</type><name>fname</name></decl></param>, <param><decl><type><name>int</name></type> <name>lnum</name></decl></param>)</parameter_list>
+<block>{
+    <expr_stmt><expr><call><name>Trace</name><argument_list>(<argument><expr>"process %d "</expr></argument>, <argument><expr>(<name>int</name>) <call><name>getpid</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:ifdef>#<cpp:directive>ifdef</cpp:directive> <name>HAVE_UNISTD_H</name></cpp:ifdef>
+    <expr_stmt><expr><call><name>Trace</name><argument_list>(<argument><expr>"real (%u/%u) effective (%u/%u)"</expr></argument>,
+	  <argument><expr>(<name>unsigned</name>) <call><name>getuid</name><argument_list>()</argument_list></call></expr></argument>, <argument><expr>(<name>unsigned</name>) <call><name>getgid</name><argument_list>()</argument_list></call></expr></argument>,
+	  <argument><expr>(<name>unsigned</name>) <call><name>geteuid</name><argument_list>()</argument_list></call></expr></argument>, <argument><expr>(<name>unsigned</name>) <call><name>getegid</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+    <if>if <condition>(<expr><name>fname</name> != 0</expr>)</condition><then> <block>{
+	<expr_stmt><expr><call><name>Trace</name><argument_list>(<argument><expr>" (%s@%d)\n"</expr></argument>, <argument><expr><name>fname</name></expr></argument>, <argument><expr><name>lnum</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></then> <else>else <block>{
+	<decl_stmt><decl><type><name>time_t</name></type> <name>now</name> =<init> <expr><call><name>time</name><argument_list>(<argument><expr>(<name>time_t</name> *) 0</expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+	<expr_stmt><expr><call><name>Trace</name><argument_list>(<argument><expr>"-- %s"</expr></argument>, <argument><expr><call><name>ctime</name><argument_list>(<argument><expr>&amp;<name>now</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></else></if>
+}</block></function>
+
+<function><type><name>static</name> <name>void</name></type>
+<name>formatAscii</name><parameter_list>(<param><decl><type><name>char</name> *</type><name>dst</name></decl></param>, <param><decl><type><name>unsigned</name></type> <name>value</name></decl></param>)</parameter_list>
+<block>{
+    <switch>switch <condition>(<expr><name>value</name></expr>)</condition> <block>{
+    <case>case <expr>'\\'</expr>:
+	<expr_stmt><expr><call><name>sprintf</name><argument_list>(<argument><expr><name>dst</name></expr></argument>, <argument><expr>"\\\\"</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<break>break;</break>
+    </case><case>case <expr>'\b'</expr>:
+	<expr_stmt><expr><call><name>sprintf</name><argument_list>(<argument><expr><name>dst</name></expr></argument>, <argument><expr>"\\b"</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<break>break;</break>
+    </case><case>case <expr>'\n'</expr>:
+	<expr_stmt><expr><call><name>sprintf</name><argument_list>(<argument><expr><name>dst</name></expr></argument>, <argument><expr>"\\n"</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<break>break;</break>
+    </case><case>case <expr>'\r'</expr>:
+	<expr_stmt><expr><call><name>sprintf</name><argument_list>(<argument><expr><name>dst</name></expr></argument>, <argument><expr>"\\r"</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<break>break;</break>
+    </case><case>case <expr>'\t'</expr>:
+	<expr_stmt><expr><call><name>sprintf</name><argument_list>(<argument><expr><name>dst</name></expr></argument>, <argument><expr>"\\t"</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<break>break;</break>
+    </case><default>default:
+	<if>if <condition>(<expr><call><name>E2A</name><argument_list>(<argument><expr><name>value</name></expr></argument>)</argument_list></call> &lt; 32 || (<call><name>E2A</name><argument_list>(<argument><expr><name>value</name></expr></argument>)</argument_list></call> &gt;= 127 &amp;&amp; <call><name>E2A</name><argument_list>(<argument><expr><name>value</name></expr></argument>)</argument_list></call> &lt; 160)</expr>)</condition><then>
+	    <expr_stmt><expr><call><name>sprintf</name><argument_list>(<argument><expr><name>dst</name></expr></argument>, <argument><expr>"\\%03o"</expr></argument>, <argument><expr><name>value</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></then>
+	<else>else
+	    <expr_stmt><expr><call><name>sprintf</name><argument_list>(<argument><expr><name>dst</name></expr></argument>, <argument><expr>"%c"</expr></argument>, <argument><expr><call><name>CharOf</name><argument_list>(<argument><expr><name>value</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></else></if>
+	<break>break;</break>
+    </default>}</block></switch>
+}</block></function>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_DEC_CHRSET</name></expr></cpp:if>
+
+<function><type><name>const</name> <name>char</name> *</type>
+<name>visibleChrsetName</name><parameter_list>(<param><decl><type><name>unsigned</name></type> <name>chrset</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>const</name> <name>char</name> *</type><name>result</name> =<init> <expr>"?"</expr></init></decl>;</decl_stmt>
+    <switch>switch <condition>(<expr><name>chrset</name></expr>)</condition> <block>{
+    <case>case <expr><name>CSET_SWL</name></expr>:
+	<expr_stmt><expr><name>result</name> = "CSET_SWL"</expr>;</expr_stmt>
+	<break>break;</break>
+    </case><case>case <expr><name>CSET_DHL_TOP</name></expr>:
+	<expr_stmt><expr><name>result</name> = "CSET_DHL_TOP"</expr>;</expr_stmt>
+	<break>break;</break>
+    </case><case>case <expr><name>CSET_DHL_BOT</name></expr>:
+	<expr_stmt><expr><name>result</name> = "CSET_DHL_BOT"</expr>;</expr_stmt>
+	<break>break;</break>
+    </case><case>case <expr><name>CSET_DWL</name></expr>:
+	<expr_stmt><expr><name>result</name> = "CSET_DWL"</expr>;</expr_stmt>
+	<break>break;</break>
+    </case>}</block></switch>
+    <return>return <expr><name>result</name></expr>;</return>
+}</block></function>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<function><type><name>char</name> *</type>
+<name>visibleChars</name><parameter_list>(<param><decl><type><name>const</name> <name>Char</name> *</type> <name>buf</name></decl></param>, <param><decl><type><name>unsigned</name></type> <name>len</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>static</name> <name>char</name> *</type><name>result</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>static</name> <name>unsigned</name></type> <name>used</name></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr><name>buf</name> != 0</expr>)</condition><then> <block>{
+	<decl_stmt><decl><type><name>unsigned</name></type> <name>limit</name> =<init> <expr>((<name>len</name> + 1) * 8) + 1</expr></init></decl>;</decl_stmt>
+	<decl_stmt><decl><type><name>char</name> *</type><name>dst</name></decl>;</decl_stmt>
+
+	<if>if <condition>(<expr><name>limit</name> &gt; <name>used</name></expr>)</condition><then> <block>{
+	    <expr_stmt><expr><name>used</name> = <name>limit</name></expr>;</expr_stmt>
+	    <expr_stmt><expr><name>result</name> = <call><name>XtRealloc</name><argument_list>(<argument><expr><name>result</name></expr></argument>, <argument><expr><name>used</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	}</block></then></if>
+	<if>if <condition>(<expr><name>result</name> != 0</expr>)</condition><then> <block>{
+	    <expr_stmt><expr><name>dst</name> = <name>result</name></expr>;</expr_stmt>
+	    <expr_stmt><expr>*<name>dst</name> = '\0'</expr>;</expr_stmt>
+	    <while>while <condition>(<expr><name>len</name>--</expr>)</condition> <block>{
+		<decl_stmt><decl><type><name>unsigned</name></type> <name>value</name> =<init> <expr>*<name>buf</name>++</expr></init></decl>;</decl_stmt>
+		<expr_stmt><expr><call><name>formatAscii</name><argument_list>(<argument><expr><name>dst</name></expr></argument>, <argument><expr><name>value</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><name>dst</name> += <call><name>strlen</name><argument_list>(<argument><expr><name>dst</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    }</block></while>
+	}</block></then></if>
+    }</block></then> <else>else <if>if <condition>(<expr><name>result</name> != 0</expr>)</condition><then> <block>{
+	<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>result</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><name>result</name> = 0</expr>;</expr_stmt>
+	<expr_stmt><expr><name>used</name> = 0</expr>;</expr_stmt>
+    }</block></then></if></else></if>
+    <return>return <expr><name>result</name></expr>;</return>
+}</block></function>
+
+<function><type><name>char</name> *</type>
+<name>visibleIChars</name><parameter_list>(<param><decl><type><name>IChar</name> *</type> <name>buf</name></decl></param>, <param><decl><type><name>unsigned</name></type> <name>len</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>static</name> <name>char</name> *</type><name>result</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>static</name> <name>unsigned</name></type> <name>used</name></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr><name>buf</name> != 0</expr>)</condition><then> <block>{
+	<decl_stmt><decl><type><name>unsigned</name></type> <name>limit</name> =<init> <expr>((<name>len</name> + 1) * 8) + 1</expr></init></decl>;</decl_stmt>
+	<decl_stmt><decl><type><name>char</name> *</type><name>dst</name></decl>;</decl_stmt>
+
+	<if>if <condition>(<expr><name>limit</name> &gt; <name>used</name></expr>)</condition><then> <block>{
+	    <expr_stmt><expr><name>used</name> = <name>limit</name></expr>;</expr_stmt>
+	    <expr_stmt><expr><name>result</name> = <call><name>XtRealloc</name><argument_list>(<argument><expr><name>result</name></expr></argument>, <argument><expr><name>used</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	}</block></then></if>
+	<if>if <condition>(<expr><name>result</name> != 0</expr>)</condition><then> <block>{
+	    <expr_stmt><expr><name>dst</name> = <name>result</name></expr>;</expr_stmt>
+	    <expr_stmt><expr>*<name>dst</name> = '\0'</expr>;</expr_stmt>
+	    <while>while <condition>(<expr><name>len</name>--</expr>)</condition> <block>{
+		<decl_stmt><decl><type><name>unsigned</name></type> <name>value</name> =<init> <expr>*<name>buf</name>++</expr></init></decl>;</decl_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_WIDE_CHARS</name></expr></cpp:if>
+		<if>if <condition>(<expr><name>value</name> &gt; 255</expr>)</condition><then>
+		    <expr_stmt><expr><call><name>sprintf</name><argument_list>(<argument><expr><name>dst</name></expr></argument>, <argument><expr>"\\u+%04X"</expr></argument>, <argument><expr><name>value</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></then>
+		<else>else
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+		    <expr_stmt><expr><call><name>formatAscii</name><argument_list>(<argument><expr><name>dst</name></expr></argument>, <argument><expr><name>value</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></else></if>
+		<expr_stmt><expr><name>dst</name> += <call><name>strlen</name><argument_list>(<argument><expr><name>dst</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    }</block></while>
+	}</block></then></if>
+    }</block></then> <else>else <if>if <condition>(<expr><name>result</name> != 0</expr>)</condition><then> <block>{
+	<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>result</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><name>result</name> = 0</expr>;</expr_stmt>
+	<expr_stmt><expr><name>used</name> = 0</expr>;</expr_stmt>
+    }</block></then></if></else></if>
+    <return>return <expr><name>result</name></expr>;</return>
+}</block></function>
+
+<function><type><name>char</name> *</type>
+<name>visibleIChar</name><parameter_list>(<param><decl><type><name>IChar</name> *</type> <name>buf</name></decl></param>, <param><decl><type><name>unsigned</name></type> <name>len</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>static</name> <name>char</name> *</type><name>result</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>static</name> <name>unsigned</name></type> <name>used</name></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr><name>buf</name> != 0</expr>)</condition><then> <block>{
+	<decl_stmt><decl><type><name>unsigned</name></type> <name>limit</name> =<init> <expr>((<name>len</name> + 1) * 8) + 1</expr></init></decl>;</decl_stmt>
+	<decl_stmt><decl><type><name>char</name> *</type><name>dst</name></decl>;</decl_stmt>
+
+	<if>if <condition>(<expr><name>limit</name> &gt; <name>used</name></expr>)</condition><then> <block>{
+	    <expr_stmt><expr><name>used</name> = <name>limit</name></expr>;</expr_stmt>
+	    <expr_stmt><expr><name>result</name> = <call><name>XtRealloc</name><argument_list>(<argument><expr><name>result</name></expr></argument>, <argument><expr><name>used</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	}</block></then></if>
+	<if>if <condition>(<expr><name>result</name> != 0</expr>)</condition><then> <block>{
+	    <expr_stmt><expr><name>dst</name> = <name>result</name></expr>;</expr_stmt>
+	    <while>while <condition>(<expr><name>len</name>--</expr>)</condition> <block>{
+		<decl_stmt><decl><type><name>unsigned</name></type> <name>value</name> =<init> <expr>*<name>buf</name>++</expr></init></decl>;</decl_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_WIDE_CHARS</name></expr></cpp:if>
+		<if>if <condition>(<expr><name>value</name> &gt; 255</expr>)</condition><then>
+		    <expr_stmt><expr><call><name>sprintf</name><argument_list>(<argument><expr><name>dst</name></expr></argument>, <argument><expr>"\\u+%04X"</expr></argument>, <argument><expr><name>value</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></then>
+		<else>else
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+		    <expr_stmt><expr><call><name>formatAscii</name><argument_list>(<argument><expr><name>dst</name></expr></argument>, <argument><expr><name>value</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></else></if>
+		<expr_stmt><expr><name>dst</name> += <call><name>strlen</name><argument_list>(<argument><expr><name>dst</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    }</block></while>
+	}</block></then></if>
+    }</block></then> <else>else <if>if <condition>(<expr><name>result</name> != 0</expr>)</condition><then> <block>{
+	<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>result</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><name>result</name> = 0</expr>;</expr_stmt>
+	<expr_stmt><expr><name>used</name> = 0</expr>;</expr_stmt>
+    }</block></then></if></else></if>
+    <return>return <expr><name>result</name></expr>;</return>
+}</block></function>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>CASETYPE</name>(name) case name: result = #name; break;</cpp:define>
+
+<function><type><name>const</name> <name>char</name> *</type>
+<name>visibleKeyboardType</name><parameter_list>(<param><decl><type><name>xtermKeyboardType</name></type> <name>type</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>const</name> <name>char</name> *</type><name>result</name> =<init> <expr>"?"</expr></init></decl>;</decl_stmt>
+    <switch>switch <condition>(<expr><name>type</name></expr>)</condition> <block>{
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>keyboardIsLegacy</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>	<comment type="block">/* bogus vt220 codes for F1-F4, etc. */</comment>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>keyboardIsDefault</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>keyboardIsHP</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>keyboardIsSCO</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>keyboardIsSun</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>keyboardIsTermcap</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>keyboardIsVT220</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></switch>
+    <return>return <expr><name>result</name></expr>;</return>
+}</block></function>
+
+<function><type><name>const</name> <name>char</name> *</type>
+<name>visibleEventType</name><parameter_list>(<param><decl><type><name>int</name></type> <name>type</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>const</name> <name>char</name> *</type><name>result</name> =<init> <expr>"?"</expr></init></decl>;</decl_stmt>
+    <switch>switch <condition>(<expr><name>type</name></expr>)</condition> <block>{
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>KeyPress</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>KeyRelease</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>ButtonPress</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>ButtonRelease</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>MotionNotify</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>EnterNotify</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>LeaveNotify</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>FocusIn</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>FocusOut</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>KeymapNotify</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>Expose</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>GraphicsExpose</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>NoExpose</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>VisibilityNotify</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>CreateNotify</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>DestroyNotify</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>UnmapNotify</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>MapNotify</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>MapRequest</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>ReparentNotify</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>ConfigureNotify</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>ConfigureRequest</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>GravityNotify</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>ResizeRequest</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>CirculateNotify</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>CirculateRequest</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>PropertyNotify</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>SelectionClear</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>SelectionRequest</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>SelectionNotify</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>ColormapNotify</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>ClientMessage</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>MappingNotify</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></switch>
+    <return>return <expr><name>result</name></expr>;</return>
+}</block></function>
+
+<function><type><name>const</name> <name>char</name> *</type>
+<name>visibleNotifyDetail</name><parameter_list>(<param><decl><type><name>int</name></type> <name>code</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>const</name> <name>char</name> *</type><name>result</name> =<init> <expr>"?"</expr></init></decl>;</decl_stmt>
+    <switch>switch <condition>(<expr><name>code</name></expr>)</condition> <block>{
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>NotifyAncestor</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>NotifyVirtual</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>NotifyInferior</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>NotifyNonlinear</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>NotifyNonlinearVirtual</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>NotifyPointer</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>NotifyPointerRoot</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>NotifyDetailNone</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></switch>
+    <return>return <expr><name>result</name></expr>;</return>
+}</block></function>
+
+<function><type><name>const</name> <name>char</name> *</type>
+<name>visibleSelectionTarget</name><parameter_list>(<param><decl><type><name>Display</name> *</type> <name>d</name></decl></param>, <param><decl><type><name>Atom</name></type> <name>a</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>const</name> <name>char</name> *</type><name>result</name> =<init> <expr>"?"</expr></init></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr><name>a</name> == <name>XA_STRING</name></expr>)</condition><then> <block>{
+	<expr_stmt><expr><name>result</name> = "XA_STRING"</expr>;</expr_stmt>
+    }</block></then> <else>else <if>if <condition>(<expr><name>a</name> == <call><name>XA_TEXT</name><argument_list>(<argument><expr><name>d</name></expr></argument>)</argument_list></call></expr>)</condition><then> <block>{
+	<expr_stmt><expr><name>result</name> = "XA_TEXT()"</expr>;</expr_stmt>
+    }</block></then> <else>else <if>if <condition>(<expr><name>a</name> == <call><name>XA_COMPOUND_TEXT</name><argument_list>(<argument><expr><name>d</name></expr></argument>)</argument_list></call></expr>)</condition><then> <block>{
+	<expr_stmt><expr><name>result</name> = "XA_COMPOUND_TEXT()"</expr>;</expr_stmt>
+    }</block></then> <else>else <if>if <condition>(<expr><name>a</name> == <call><name>XA_UTF8_STRING</name><argument_list>(<argument><expr><name>d</name></expr></argument>)</argument_list></call></expr>)</condition><then> <block>{
+	<expr_stmt><expr><name>result</name> = "XA_UTF8_STRING()"</expr>;</expr_stmt>
+    }</block></then> <else>else <if>if <condition>(<expr><name>a</name> == <call><name>XA_TARGETS</name><argument_list>(<argument><expr><name>d</name></expr></argument>)</argument_list></call></expr>)</condition><then> <block>{
+	<expr_stmt><expr><name>result</name> = "XA_TARGETS()"</expr>;</expr_stmt>
+    }</block></then></if></else></if></else></if></else></if></else></if>
+
+    <return>return <expr><name>result</name></expr>;</return>
+}</block></function>
+
+<function><type><name>const</name> <name>char</name> *</type>
+<name>visibleXError</name><parameter_list>(<param><decl><type><name>int</name></type> <name>code</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>static</name> <name>char</name></type> <name><name>temp</name><index>[<expr>80</expr>]</index></name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>const</name> <name>char</name> *</type><name>result</name> =<init> <expr>"?"</expr></init></decl>;</decl_stmt>
+    <switch>switch <condition>(<expr><name>code</name></expr>)</condition> <block>{
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>Success</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>BadRequest</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>BadValue</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>BadWindow</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>BadPixmap</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>BadAtom</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>BadCursor</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>BadFont</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>BadMatch</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>BadDrawable</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>BadAccess</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>BadAlloc</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>BadColor</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>BadGC</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>BadIDChoice</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>BadName</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>BadLength</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASETYPE</name><argument_list>(<argument><expr><name>BadImplementation</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <default>default:
+	<expr_stmt><expr><call><name>sprintf</name><argument_list>(<argument><expr><name>temp</name></expr></argument>, <argument><expr>"%d"</expr></argument>, <argument><expr><name>code</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><name>result</name> = <name>temp</name></expr>;</expr_stmt>
+	<break>break;</break>
+    </default>}</block></switch>
+    <return>return <expr><name>result</name></expr>;</return>
+}</block></function>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_TRACE_FLAGS</name></expr></cpp:if>
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>isScrnFlag</name>(flag) ((flag) == LINEWRAPPED)</cpp:define>
+
+<function><type><name>static</name> <name>char</name> *</type>
+<name>ScrnText</name><parameter_list>(<param><decl><type><name>LineData</name> *</type> <name>ld</name></decl></param>)</parameter_list>
+<block>{
+    <return>return <expr><call><name>visibleIChars</name><argument_list>(<argument><expr><name>ld</name>-&gt;<name>charData</name></expr></argument>, <argument><expr><name>ld</name>-&gt;<name>lineSize</name></expr></argument>)</argument_list></call></expr>;</return>
+}</block></function>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>SHOW_BAD_LINE</name>(name, ld) \
+	Trace("OOPS " #name " bad row\n")</cpp:define>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>SHOW_SCRN_FLAG</name>(name,code) \
+	Trace(#name " %s:%s\n", \
+	      code ? "*" : "", \
+	      ScrnText(ld))</cpp:define>
+
+<function><type><name>void</name></type>
+<name>LineClrFlag</name><parameter_list>(<param><decl><type><name>LineData</name> *</type> <name>ld</name></decl></param>, <param><decl><type><name>int</name></type> <name>flag</name></decl></param>)</parameter_list>
+<block>{
+    <if>if <condition>(<expr><name>ld</name> == 0</expr>)</condition><then> <block>{
+	<expr_stmt><expr><call><name>SHOW_BAD_LINE</name><argument_list>(<argument><expr><name>LineClrFlag</name></expr></argument>, <argument><expr><name>ld</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr>0</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></then> <else>else <if>if <condition>(<expr><call><name>isScrnFlag</name><argument_list>(<argument><expr><name>flag</name></expr></argument>)</argument_list></call></expr>)</condition><then> <block>{
+	<expr_stmt><expr><call><name>SHOW_SCRN_FLAG</name><argument_list>(<argument><expr><name>LineClrFlag</name></expr></argument>, <argument><expr>0</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></then></if></else></if>
+
+    <expr_stmt><expr><call><name>LineFlags</name><argument_list>(<argument><expr><name>ld</name></expr></argument>)</argument_list></call> &amp;= ~<name>flag</name></expr>;</expr_stmt>
+}</block></function>
+
+<function><type><name>void</name></type>
+<name>LineSetFlag</name><parameter_list>(<param><decl><type><name>LineData</name> *</type> <name>ld</name></decl></param>, <param><decl><type><name>int</name></type> <name>flag</name></decl></param>)</parameter_list>
+<block>{
+    <if>if <condition>(<expr><name>ld</name> == 0</expr>)</condition><then> <block>{
+	<expr_stmt><expr><call><name>SHOW_BAD_LINE</name><argument_list>(<argument><expr><name>LineSetFlag</name></expr></argument>, <argument><expr><name>ld</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr>0</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></then> <else>else <if>if <condition>(<expr><call><name>isScrnFlag</name><argument_list>(<argument><expr><name>flag</name></expr></argument>)</argument_list></call></expr>)</condition><then> <block>{
+	<expr_stmt><expr><call><name>SHOW_SCRN_FLAG</name><argument_list>(<argument><expr><name>LineSetFlag</name></expr></argument>, <argument><expr>1</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></then></if></else></if>
+
+    <expr_stmt><expr><call><name>LineFlags</name><argument_list>(<argument><expr><name>ld</name></expr></argument>)</argument_list></call> |= <name>flag</name></expr>;</expr_stmt>
+}</block></function>
+
+<function><type><name>int</name></type>
+<name>LineTstFlag</name><parameter_list>(<param><decl><type><name>LineData</name></type> <name>ld</name></decl></param>, <param><decl><type><name>int</name></type> <name>flag</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>int</name></type> <name>code</name> =<init> <expr>0</expr></init></decl>;</decl_stmt>
+    <if>if <condition>(<expr><name>ld</name> == 0</expr>)</condition><then> <block>{
+	<expr_stmt><expr><call><name>SHOW_BAD_LINE</name><argument_list>(<argument><expr><name>LineTstFlag</name></expr></argument>, <argument><expr><name>ld</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></then> <else>else <block>{
+	<expr_stmt><expr><name>code</name> = <call><name>LineFlags</name><argument_list>(<argument><expr><name>ld</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+	<if>if <condition>(<expr><call><name>isScrnFlag</name><argument_list>(<argument><expr><name>flag</name></expr></argument>)</argument_list></call></expr>)</condition><then> <block>{
+	    <expr_stmt><expr><call><name>SHOW_SCRN_FLAG</name><argument_list>(<argument><expr><name>LineTstFlag</name></expr></argument>, <argument><expr><name>code</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	}</block></then></if>
+    }</block></else></if>
+    <return>return <expr><name>code</name></expr>;</return>
+}</block></function>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif> <comment type="block">/* OPT_TRACE_FLAGS */</comment>
+
+<function><type><name>void</name></type>
+<name>TraceFocus</name><parameter_list>(<param><decl><type><name>Widget</name></type> <name>w</name></decl></param>, <param><decl><type><name>XEvent</name> *</type> <name>ev</name></decl></param>)</parameter_list>
+<block>{
+    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("trace_focus event type %d:%s\n",
+	   <name>ev</name>-&gt;<name>type</name>, <call><name>visibleEventType</name><argument_list>(<argument><expr><name>ev</name>-&gt;<name>type</name></expr></argument>)</argument_list></call>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <switch>switch <condition>(<expr><name>ev</name>-&gt;<name>type</name></expr>)</condition> <block>{
+    <case>case <expr><name>FocusIn</name></expr>:
+    </case><case>case <expr><name>FocusOut</name></expr>:
+	<block>{
+	    <decl_stmt><decl><type><name>XFocusChangeEvent</name> *</type><name>event</name> =<init> <expr>(<name>XFocusChangeEvent</name> *) <name>ev</name></expr></init></decl>;</decl_stmt>
+	    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("\tdetail: %s\n", <call><name>visibleNotifyDetail</name><argument_list>(<argument><expr><name>event</name>-&gt;<name>detail</name></expr></argument>)</argument_list></call>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("\tmode:   %d\n", <name>event</name>-&gt;<name>mode</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("\twindow: %#lx\n", <name>event</name>-&gt;<name>window</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	}</block>
+	<break>break;</break>
+    </case><case>case <expr><name>EnterNotify</name></expr>:
+    </case><case>case <expr><name>LeaveNotify</name></expr>:
+	<block>{
+	    <decl_stmt><decl><type><name>XCrossingEvent</name> *</type><name>event</name> =<init> <expr>(<name>XCrossingEvent</name> *) <name>ev</name></expr></init></decl>;</decl_stmt>
+	    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("\tdetail:    %s\n", <call><name>visibleNotifyDetail</name><argument_list>(<argument><expr><name>event</name>-&gt;<name>detail</name></expr></argument>)</argument_list></call>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("\tmode:      %d\n", <name>event</name>-&gt;<name>mode</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("\twindow:    %#lx\n", <name>event</name>-&gt;<name>window</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("\troot:      %#lx\n", <name>event</name>-&gt;<name>root</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("\tsubwindow: %#lx\n", <name>event</name>-&gt;<name>subwindow</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	}</block>
+	<break>break;</break>
+    </case>}</block></switch>
+    <while>while <condition>(<expr><name>w</name> != 0</expr>)</condition> <block>{
+	<expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("w %p -&gt; %#lx\n", (<name>void</name> *) <name>w</name>, <call><name>XtWindow</name><argument_list>(<argument><expr><name>w</name></expr></argument>)</argument_list></call>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><name>w</name> = <call><name>XtParent</name><argument_list>(<argument><expr><name>w</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></while>
+}</block></function>
+
+<function><type><name>void</name></type>
+<name>TraceSizeHints</name><parameter_list>(<param><decl><type><name>XSizeHints</name> *</type> <name>hints</name></decl></param>)</parameter_list>
+<block>{
+    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("size hints:\n")</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <if>if <condition>(<expr><name>hints</name>-&gt;<name>flags</name> &amp; (<name>USPosition</name> | <name>PPosition</name>)</expr>)</condition><then>
+	<expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("   position   %d,%d%s%s\n", <name>hints</name>-&gt;<name>y</name>, <name>hints</name>-&gt;<name>x</name>,
+	       <name>hints</name>-&gt;<name>flags</name> &amp; <name>USPosition</name> ? " user" : "",
+	       <name>hints</name>-&gt;<name>flags</name> &amp; <name>PPosition</name> ? " prog" : "")</expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+    <if>if <condition>(<expr><name>hints</name>-&gt;<name>flags</name> &amp; (<name>USSize</name> | <name>PSize</name>)</expr>)</condition><then>
+	<expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("   size       %d,%d%s%s\n", <name>hints</name>-&gt;<name>height</name>, <name>hints</name>-&gt;<name>width</name>,
+	       <name>hints</name>-&gt;<name>flags</name> &amp; <name>USSize</name> ? " user" : "",
+	       <name>hints</name>-&gt;<name>flags</name> &amp; <name>PSize</name> ? " prog" : "")</expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+    <if>if <condition>(<expr><name>hints</name>-&gt;<name>flags</name> &amp; <name>PMinSize</name></expr>)</condition><then>
+	<expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("   min        %d,%d\n", <name>hints</name>-&gt;<name>min_height</name>, <name>hints</name>-&gt;<name>min_width</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+    <if>if <condition>(<expr><name>hints</name>-&gt;<name>flags</name> &amp; <name>PMaxSize</name></expr>)</condition><then>
+	<expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("   max        %d,%d\n", <name>hints</name>-&gt;<name>max_height</name>, <name>hints</name>-&gt;<name>max_width</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+    <if>if <condition>(<expr><name>hints</name>-&gt;<name>flags</name> &amp; <name>PResizeInc</name></expr>)</condition><then>
+	<expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("   inc        %d,%d\n", <name>hints</name>-&gt;<name>height_inc</name>, <name>hints</name>-&gt;<name>width_inc</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt></then>
+    <else>else
+	<expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("   inc        NONE!\n")</expr></argument>)</argument_list></call></expr>;</expr_stmt></else></if>
+    <if>if <condition>(<expr><name>hints</name>-&gt;<name>flags</name> &amp; <name>PAspect</name></expr>)</condition><then>
+	<expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("   min aspect %d/%d\n", <name>hints</name>-&gt;<name>min_aspect</name>.<name>y</name>, <name>hints</name>-&gt;<name>min_aspect</name>.<name>y</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+    <if>if <condition>(<expr><name>hints</name>-&gt;<name>flags</name> &amp; <name>PAspect</name></expr>)</condition><then>
+	<expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("   max aspect %d/%d\n", <name>hints</name>-&gt;<name>max_aspect</name>.<name>y</name>, <name>hints</name>-&gt;<name>max_aspect</name>.<name>y</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+    <if>if <condition>(<expr><name>hints</name>-&gt;<name>flags</name> &amp; <name>PBaseSize</name></expr>)</condition><then>
+	<expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("   base       %d,%d\n", <name>hints</name>-&gt;<name>base_height</name>, <name>hints</name>-&gt;<name>base_width</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+    <if>if <condition>(<expr><name>hints</name>-&gt;<name>flags</name> &amp; <name>PWinGravity</name></expr>)</condition><then>
+	<expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("   gravity    %d\n", <name>hints</name>-&gt;<name>win_gravity</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+}</block></function>
+
+<function><type><name>void</name></type>
+<name>TraceWMSizeHints</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>XSizeHints</name></type> <name>sizehints</name> =<init> <expr><name>xw</name>-&gt;<name>hints</name></expr></init></decl>;</decl_stmt>
+
+    <expr_stmt><expr><call><name>getXtermSizeHints</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>TraceSizeHints</name><argument_list>(<argument><expr>&amp;<name>xw</name>-&gt;<name>hints</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><name>xw</name>-&gt;<name>hints</name> = <name>sizehints</name></expr>;</expr_stmt>
+}</block></function>
+
+<comment type="block">/*
+ * Some calls to XGetAtom() will fail, and we don't want to stop.  So we use
+ * our own error-handler.
+ */</comment>
+<function><type><name>static</name> <name>int</name></type>
+<name>no_error</name><parameter_list>(<param><decl><type><name>Display</name> * <name>dpy</name></type> <name>GCC_UNUSED</name></decl></param>, <param><decl><type><name>XErrorEvent</name> * <name>event</name></type> <name>GCC_UNUSED</name></decl></param>)</parameter_list>
+<block>{
+    <return>return <expr>1</expr>;</return>
+}</block></function>
+
+<function><type><name>void</name></type>
+<name>TraceTranslations</name><parameter_list>(<param><decl><type><name>const</name> <name>char</name> *</type><name>name</name></decl></param>, <param><decl><type><name>Widget</name></type> <name>w</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>String</name></type> <name>result</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>XErrorHandler</name></type> <name>save</name> =<init> <expr><call><name>XSetErrorHandler</name><argument_list>(<argument><expr><name>no_error</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>XtTranslations</name></type> <name>xlations</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>Widget</name></type> <name>xcelerat</name></decl>;</decl_stmt>
+
+    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("TraceTranslations for %s (widget %#lx) {{\n", <name>name</name>, (<name>long</name>) <name>w</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <if>if <condition>(<expr><name>w</name></expr>)</condition><then> <block>{
+	<expr_stmt><expr><call><name>XtVaGetValues</name><argument_list>(<argument><expr><name>w</name></expr></argument>,
+		      <argument><expr><name>XtNtranslations</name></expr></argument>, <argument><expr>&amp;<name>xlations</name></expr></argument>,
+		      <argument><expr><name>XtNaccelerators</name></expr></argument>, <argument><expr>&amp;<name>xcelerat</name></expr></argument>,
+		      <argument><expr>(<name>XtPointer</name>) 0</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("... xlations %#08lx\n", (<name>long</name>) <name>xlations</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("... xcelerat %#08lx\n", (<name>long</name>) <name>xcelerat</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><name>result</name> = <call><name>_XtPrintXlations</name><argument_list>(<argument><expr><name>w</name></expr></argument>, <argument><expr><name>xlations</name></expr></argument>, <argument><expr><name>xcelerat</name></expr></argument>, <argument><expr><name>True</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("%s\n", <call><name>NonNull</name><argument_list>(<argument><expr><name>result</name></expr></argument>)</argument_list></call>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<if>if <condition>(<expr><name>result</name></expr>)</condition><then>
+	    <expr_stmt><expr><call><name>XFree</name><argument_list>(<argument><expr>(<name>char</name> *) <name>result</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+    }</block></then> <else>else <block>{
+	<expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("none (widget is null)\n")</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></else></if>
+    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("}}\n")</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>XSetErrorHandler</name><argument_list>(<argument><expr><name>save</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+}</block></function>
+
+<function><type><name>int</name></type>
+<name>TraceResizeRequest</name><parameter_list>(<param><decl><type><name>const</name> <name>char</name> *</type><name>fn</name></decl></param>, <param><decl><type><name>int</name></type> <name>ln</name></decl></param>, <param><decl><type><name>Widget</name></type> <name>w</name></decl></param>,
+		   <param><decl><type><name>Dimension</name></type> <name>reqwide</name></decl></param>,
+		   <param><decl><type><name>Dimension</name></type> <name>reqhigh</name></decl></param>,
+		   <param><decl><type><name>Dimension</name> *</type> <name>gotwide</name></decl></param>,
+		   <param><decl><type><name>Dimension</name> *</type> <name>gothigh</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>int</name></type> <name>rc</name></decl>;</decl_stmt>
+
+    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("%s@%d ResizeRequest %dx%d\n", <name>fn</name>, <name>ln</name>, <name>reqhigh</name>, <name>reqwide</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><name>rc</name> = <call><name>XtMakeResizeRequest</name><argument_list>(<argument><expr>(<name>Widget</name>) <name>w</name></expr></argument>, <argument><expr><name>reqwide</name></expr></argument>, <argument><expr><name>reqhigh</name></expr></argument>, <argument><expr><name>gotwide</name></expr></argument>, <argument><expr><name>gothigh</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("... ResizeRequest -&gt; ")</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <if>if <condition>(<expr><name>gothigh</name> &amp;&amp; <name>gotwide</name></expr>)</condition><then>
+	<expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("%dx%d ", *<name>gothigh</name>, *<name>gotwide</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("(%d)\n", <name>rc</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <return>return <expr><name>rc</name></expr>;</return>
+}</block></function>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>XRES_S</name>(name) Trace(#name " = %s\n", NonNull(resp-&gt;name))</cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>XRES_B</name>(name) Trace(#name " = %s\n", BtoS(resp-&gt;name))</cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>XRES_I</name>(name) Trace(#name " = %d\n", resp-&gt;name)</cpp:define>
+
+<function><type><name>void</name></type>
+<name>TraceXtermResources</name><parameter_list>(<param><decl><type><name>void</name></type></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>XTERM_RESOURCE</name> *</type><name>resp</name> =<init> <expr>&amp;<name>resource</name></expr></init></decl>;</decl_stmt>
+
+    <expr_stmt><expr><call><name>Trace</name><argument_list>(<argument><expr>"XTERM_RESOURCE settings:\n"</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>XRES_S</name><argument_list>(<argument><expr><name>xterm_name</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>XRES_S</name><argument_list>(<argument><expr><name>icon_geometry</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>XRES_S</name><argument_list>(<argument><expr><name>title</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>XRES_S</name><argument_list>(<argument><expr><name>icon_name</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>XRES_S</name><argument_list>(<argument><expr><name>term_name</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>XRES_S</name><argument_list>(<argument><expr><name>tty_modes</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>XRES_B</name><argument_list>(<argument><expr><name>hold_screen</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>XRES_B</name><argument_list>(<argument><expr><name>utmpInhibit</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>XRES_B</name><argument_list>(<argument><expr><name>utmpDisplayId</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>XRES_B</name><argument_list>(<argument><expr><name>messages</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_SUNPC_KBD</name></expr></cpp:if>
+    <expr_stmt><expr><call><name>XRES_B</name><argument_list>(<argument><expr><name>sunKeyboard</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_HP_FUNC_KEYS</name></expr></cpp:if>
+    <expr_stmt><expr><call><name>XRES_B</name><argument_list>(<argument><expr><name>hpFunctionKeys</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_SCO_FUNC_KEYS</name></expr></cpp:if>
+    <expr_stmt><expr><call><name>XRES_B</name><argument_list>(<argument><expr><name>scoFunctionKeys</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_SUN_FUNC_KEYS</name></expr></cpp:if>
+    <expr_stmt><expr><call><name>XRES_B</name><argument_list>(<argument><expr><name>sunFunctionKeys</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_INITIAL_ERASE</name></expr></cpp:if>
+    <expr_stmt><expr><call><name>XRES_B</name><argument_list>(<argument><expr><name>ptyInitialErase</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>XRES_B</name><argument_list>(<argument><expr><name>backarrow_is_erase</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+    <expr_stmt><expr><call><name>XRES_B</name><argument_list>(<argument><expr><name>useInsertMode</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_ZICONBEEP</name></expr></cpp:if>
+    <expr_stmt><expr><call><name>XRES_I</name><argument_list>(<argument><expr><name>zIconBeep</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_PTY_HANDSHAKE</name></expr></cpp:if>
+    <expr_stmt><expr><call><name>XRES_B</name><argument_list>(<argument><expr><name>wait_for_map</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>XRES_B</name><argument_list>(<argument><expr><name>ptyHandshake</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>XRES_B</name><argument_list>(<argument><expr><name>ptySttySize</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_SAME_NAME</name></expr></cpp:if>
+    <expr_stmt><expr><call><name>XRES_B</name><argument_list>(<argument><expr><name>sameName</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_SESSION_MGT</name></expr></cpp:if>
+    <expr_stmt><expr><call><name>XRES_B</name><argument_list>(<argument><expr><name>sessionMgt</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+}</block></function>
+
+<function><type><name>void</name></type>
+<name>TraceArgv</name><parameter_list>(<param><decl><type><name>const</name> <name>char</name> *</type><name>tag</name></decl></param>, <param><decl><type><name>char</name> **</type><name>argv</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>int</name></type> <name>n</name> =<init> <expr>0</expr></init></decl>;</decl_stmt>
+
+    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("%s:\n", <name>tag</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <while>while <condition>(<expr>*<name>argv</name> != 0</expr>)</condition> <block>{
+	<expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("  %d:%s\n", <name>n</name>++, *<name>argv</name>++)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></while>
+}</block></function>
+
+<function><type><name>static</name> <name>char</name> *</type>
+<name>parse_option</name><parameter_list>(<param><decl><type><name>char</name> *</type><name>dst</name></decl></param>, <param><decl><type><name>String</name></type> <name>src</name></decl></param>, <param><decl><type><name>int</name></type> <name>first</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>char</name> *</type><name>s</name></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr>!<call><name>strncmp</name><argument_list>(<argument><expr><name>src</name></expr></argument>, <argument><expr>"-/+"</expr></argument>, <argument><expr>3</expr></argument>)</argument_list></call></expr>)</condition><then> <block>{
+	<expr_stmt><expr><name><name>dst</name><index>[<expr>0</expr>]</index></name> = (<name>char</name>) <name>first</name></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>strcpy</name><argument_list>(<argument><expr><name>dst</name> + 1</expr></argument>, <argument><expr><name>src</name> + 3</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></then> <else>else <block>{
+	<expr_stmt><expr><call><name>strcpy</name><argument_list>(<argument><expr><name>dst</name></expr></argument>, <argument><expr><name>src</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></else></if>
+    <for>for (<init><expr><name>s</name> = <name>dst</name></expr>;</init> <condition><expr>*<name>s</name> != '\0'</expr>;</condition> <incr><expr><name>s</name>++</expr></incr>) <block>{
+	<if>if <condition>(<expr>*<name>s</name> == '#' || *<name>s</name> == '%' || *<name>s</name> == 'S'</expr>)</condition><then> <block>{
+	    <expr_stmt><expr><name><name>s</name><index>[<expr>1</expr>]</index></name> = '\0'</expr>;</expr_stmt>
+	}</block></then> <else>else <if>if <condition>(<expr>*<name>s</name> == ' '</expr>)</condition><then> <block>{
+	    <expr_stmt><expr>*<name>s</name> = '\0'</expr>;</expr_stmt>
+	    <break>break;</break>
+	}</block></then></if></else></if>
+    }</block></for>
+    <return>return <expr><name>dst</name></expr>;</return>
+}</block></function>
+
+<function><type><name>static</name> <name>Bool</name></type>
+<name>same_option</name><parameter_list>(<param><decl><type><name>OptionHelp</name> *</type> <name>opt</name></decl></param>, <param><decl><type><name>XrmOptionDescRec</name> *</type> <name>res</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>char</name></type> <name><name>temp</name><index>[<expr><name>BUFSIZ</name></expr>]</index></name></decl>;</decl_stmt>
+    <return>return <expr>!<call><name>strcmp</name><argument_list>(<argument><expr><call><name>parse_option</name><argument_list>(<argument><expr><name>temp</name></expr></argument>, <argument><expr><name>opt</name>-&gt;<name>opt</name></expr></argument>, <argument><expr><name>res</name>-&gt;<name><name>option</name><index>[<expr>0</expr>]</index></name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name>res</name>-&gt;<name>option</name></expr></argument>)</argument_list></call></expr>;</return>
+}</block></function>
+
+<function><type><name>static</name> <name>Bool</name></type>
+<name>standard_option</name><parameter_list>(<param><decl><type><name>String</name></type> <name>opt</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>static</name> <name>const</name> <name>char</name> *</type><name><name>table</name><index>[]</index></name> =<init>
+    <expr><block>{
+	<expr>"+rv"</expr>,
+	<expr>"+synchronous"</expr>,
+	<expr>"-background"</expr>,
+	<expr>"-bd"</expr>,
+	<expr>"-bg"</expr>,
+	<expr>"-bordercolor"</expr>,
+	<expr>"-borderwidth"</expr>,
+	<expr>"-bw"</expr>,
+	<expr>"-display"</expr>,
+	<expr>"-fg"</expr>,
+	<expr>"-fn"</expr>,
+	<expr>"-font"</expr>,
+	<expr>"-foreground"</expr>,
+	<expr>"-geometry"</expr>,
+	<expr>"-iconic"</expr>,
+	<expr>"-name"</expr>,
+	<expr>"-reverse"</expr>,
+	<expr>"-rv"</expr>,
+	<expr>"-selectionTimeout"</expr>,
+	<expr>"-synchronous"</expr>,
+	<expr>"-title"</expr>,
+	<expr>"-xnllanguage"</expr>,
+	<expr>"-xrm"</expr>,
+	<expr>"-xtsessionID"</expr>,
+    }</block></expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>Cardinal</name></type> <name>n</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>char</name></type> <name><name>temp</name><index>[<expr><name>BUFSIZ</name></expr>]</index></name></decl>;</decl_stmt>
+
+    <expr_stmt><expr><name>opt</name> = <call><name>parse_option</name><argument_list>(<argument><expr><name>temp</name></expr></argument>, <argument><expr><name>opt</name></expr></argument>, <argument><expr>'-'</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <for>for (<init><expr><name>n</name> = 0</expr>;</init> <condition><expr><name>n</name> &lt; <call><name>XtNumber</name><argument_list>(<argument><expr><name>table</name></expr></argument>)</argument_list></call></expr>;</condition> <incr><expr><name>n</name>++</expr></incr>) <block>{
+	<if>if <condition>(<expr>!<call><name>strcmp</name><argument_list>(<argument><expr><name>opt</name></expr></argument>, <argument><expr><name><name>table</name><index>[<expr><name>n</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>)</condition><then>
+	    <return>return <expr><name>True</name></expr>;</return></then></if>
+    }</block></for>
+    <return>return <expr><name>False</name></expr>;</return>
+}</block></function>
+
+<comment type="block">/*
+ * Analyse the options/help messages for inconsistencies.
+ */</comment>
+<function><type><name>void</name></type>
+<name>TraceOptions</name><parameter_list>(<param><decl><type><name>OptionHelp</name> *</type> <name>options</name></decl></param>, <param><decl><type><name>XrmOptionDescRec</name> *</type> <name>resources</name></decl></param>, <param><decl><type><name>Cardinal</name></type> <name>res_count</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>OptionHelp</name> *</type><name>opt_array</name> =<init> <expr><call><name>sortedOpts</name><argument_list>(<argument><expr><name>options</name></expr></argument>, <argument><expr><name>resources</name></expr></argument>, <argument><expr><name>res_count</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>size_t</name></type> <name>j</name>, <name>k</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>XrmOptionDescRec</name> *</type><name>res_array</name> =<init> <expr><call><name>sortedOptDescs</name><argument_list>(<argument><expr><name>resources</name></expr></argument>, <argument><expr><name>res_count</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>Bool</name></type> <name>first</name>, <name>found</name></decl>;</decl_stmt>
+
+    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("Checking options-tables for inconsistencies:\n")</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr>0</expr></cpp:if>
+    TRACE(("Options listed in help-message:\n"));
+    for (j = 0; options[j].opt != 0; j++)
+	TRACE(("%5d %-28s %s\n", j, opt_array[j].opt, opt_array[j].desc));
+    TRACE(("Options listed in resource-table:\n"));
+    for (j = 0; j &lt; res_count; j++)
+	TRACE(("%5d %-28s %s\n", j, res_array[j].option, res_array[j].specifier));
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+    <comment type="block">/* list all options[] not found in resources[] */</comment>
+    <for>for (<init><expr><name>j</name> = 0</expr>, <expr><name>first</name> = <name>True</name></expr>;</init> <condition><expr><name><name>options</name><index>[<expr><name>j</name></expr>]</index></name>.<name>opt</name> != 0</expr>;</condition> <incr><expr><name>j</name>++</expr></incr>) <block>{
+	<expr_stmt><expr><name>found</name> = <name>False</name></expr>;</expr_stmt>
+	<for>for (<init><expr><name>k</name> = 0</expr>;</init> <condition><expr><name>k</name> &lt; <name>res_count</name></expr>;</condition> <incr><expr><name>k</name>++</expr></incr>) <block>{
+	    <if>if <condition>(<expr><call><name>same_option</name><argument_list>(<argument><expr>&amp;<name><name>opt_array</name><index>[<expr><name>j</name></expr>]</index></name></expr></argument>, <argument><expr>&amp;<name><name>res_array</name><index>[<expr><name>k</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>)</condition><then> <block>{
+		<expr_stmt><expr><name>found</name> = <name>True</name></expr>;</expr_stmt>
+		<break>break;</break>
+	    }</block></then></if>
+	}</block></for>
+	<if>if <condition>(<expr>!<name>found</name></expr>)</condition><then> <block>{
+	    <if>if <condition>(<expr><name>first</name></expr>)</condition><then> <block>{
+		<expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("Options listed in help, not found in resource list:\n")</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><name>first</name> = <name>False</name></expr>;</expr_stmt>
+	    }</block></then></if>
+	    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("  %-28s%s\n", <name><name>opt_array</name><index>[<expr><name>j</name></expr>]</index></name>.<name>opt</name>,
+		   <call><name>standard_option</name><argument_list>(<argument><expr><name><name>opt_array</name><index>[<expr><name>j</name></expr>]</index></name>.<name>opt</name></expr></argument>)</argument_list></call> ? " (standard)" : "")</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	}</block></then></if>
+    }</block></for>
+
+    <comment type="block">/* list all resources[] not found in options[] */</comment>
+    <for>for (<init><expr><name>j</name> = 0</expr>, <expr><name>first</name> = <name>True</name></expr>;</init> <condition><expr><name>j</name> &lt; <name>res_count</name></expr>;</condition> <incr><expr><name>j</name>++</expr></incr>) <block>{
+	<expr_stmt><expr><name>found</name> = <name>False</name></expr>;</expr_stmt>
+	<for>for (<init><expr><name>k</name> = 0</expr>;</init> <condition><expr><name><name>options</name><index>[<expr><name>k</name></expr>]</index></name>.<name>opt</name> != 0</expr>;</condition> <incr><expr><name>k</name>++</expr></incr>) <block>{
+	    <if>if <condition>(<expr><call><name>same_option</name><argument_list>(<argument><expr>&amp;<name><name>opt_array</name><index>[<expr><name>k</name></expr>]</index></name></expr></argument>, <argument><expr>&amp;<name><name>res_array</name><index>[<expr><name>j</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>)</condition><then> <block>{
+		<expr_stmt><expr><name>found</name> = <name>True</name></expr>;</expr_stmt>
+		<break>break;</break>
+	    }</block></then></if>
+	}</block></for>
+	<if>if <condition>(<expr>!<name>found</name></expr>)</condition><then> <block>{
+	    <if>if <condition>(<expr><name>first</name></expr>)</condition><then> <block>{
+		<expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("Resource list items not found in options-help:\n")</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><name>first</name> = <name>False</name></expr>;</expr_stmt>
+	    }</block></then></if>
+	    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("  %s\n", <name><name>res_array</name><index>[<expr><name>j</name></expr>]</index></name>.<name>option</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	}</block></then></if>
+    }</block></for>
+
+    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("Resource list items that will be ignored by XtOpenApplication:\n")</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <for>for (<init><expr><name>j</name> = 0</expr>;</init> <condition><expr><name>j</name> &lt; <name>res_count</name></expr>;</condition> <incr><expr><name>j</name>++</expr></incr>) <block>{
+	<switch>switch <condition>(<expr><name><name>res_array</name><index>[<expr><name>j</name></expr>]</index></name>.<name>argKind</name></expr>)</condition> <block>{
+	<case>case <expr><name>XrmoptionSkipArg</name></expr>:
+	    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("  %-28s {param}\n", <name><name>res_array</name><index>[<expr><name>j</name></expr>]</index></name>.<name>option</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <break>break;</break>
+	</case><case>case <expr><name>XrmoptionSkipNArgs</name></expr>:
+	    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("  %-28s {%ld params}\n", <name><name>res_array</name><index>[<expr><name>j</name></expr>]</index></name>.<name>option</name>, (<name>long</name>)
+		   <name><name>res_array</name><index>[<expr><name>j</name></expr>]</index></name>.<name>value</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <break>break;</break>
+	</case><case>case <expr><name>XrmoptionSkipLine</name></expr>:
+	    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("  %-28s {remainder of line}\n", <name><name>res_array</name><index>[<expr><name>j</name></expr>]</index></name>.<name>option</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <break>break;</break>
+	</case><case>case <expr><name>XrmoptionIsArg</name></expr>:
+	</case><case>case <expr><name>XrmoptionNoArg</name></expr>:
+	</case><case>case <expr><name>XrmoptionResArg</name></expr>:
+	</case><case>case <expr><name>XrmoptionSepArg</name></expr>:
+	</case><case>case <expr><name>XrmoptionStickyArg</name></expr>:
+	</case><default>default:
+	    <break>break;</break>
+	</default>}</block></switch>
+    }</block></for>
+}</block></function>
+</unit>

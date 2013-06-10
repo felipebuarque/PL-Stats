@@ -1,0 +1,230 @@
+<unit xmlns="http://www.sdml.info/srcML/src" xmlns:cpp="http://www.sdml.info/srcML/cpp" language="C" dir="" filename="testxmc.c"><comment type="block">/* $XTermId: testxmc.c,v 1.47 2010/04/17 17:11:33 tom Exp $ */</comment>
+
+<comment type="block">/************************************************************
+
+Copyright 1997-2009,2010 by Thomas E. Dickey
+
+                        All Rights Reserved
+
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
+IN NO EVENT SHALL THE ABOVE LISTED COPYRIGHT HOLDER(S) BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+Except as contained in this notice, the name(s) of the above copyright
+holders shall not be used in advertising or otherwise to promote the
+sale, use or other dealings in this Software without prior written
+authorization.
+
+********************************************************/</comment>
+
+<comment type="block">/*
+ * This module provides test support for curses applications that must work
+ * with terminals that have the xmc (magic cookie) glitch.  The xmc_glitch
+ * resource denotes the number of spaces that are emitted when switching to or
+ * from standout (reverse) mode.  Some terminals implement this by storing the
+ * attribute controls in the character cell that is skipped.  So if the cell is
+ * overwritten by text, then the attribute change in the cell is cancelled,
+ * causing attributes to the left of the change to propagate.
+ *
+ * We implement the glitch by writing a character that won't be mistaken for
+ * other normal characters (and mapping normal writes to that character to a
+ * different one).
+ *
+ * Since xmc isn't normally part of xterm, we document it here rather than in
+ * the man-page.  This module is driven by resources rather than by the
+ * termcap/terminfo description to make it a little more flexible for testing
+ * purposes.
+ *
+ * Resources:
+ *
+ * xmcGlitch (class XmcGlitch)
+ *	When true, enables this extension.  The default is `0', which disables
+ *	the module.  (termcap sg, terminfo xmc).
+ *
+ * xmcAttributes (class XmcAttributes)
+ *	The attributes for which we'll generate a glitch, as a bitmask.
+ *
+ *		INVERSE		1
+ *		UNDERLINE	2
+ *		BOLD		4
+ *		BLINK		8
+ *
+ *	The default is `1' (INVERSE).  Some terminals emit glitches for
+ *	underline.  Just for completeness, we recognize all of the video
+ *	attributes.
+ *
+ * xmcInline (class XmcInline)
+ *	When true, limits the extent of an SGR change to the current line.
+ *	The default is `false'.  (No termcap or terminfo equivalent, though
+ *	there are comments in some entries relating to this issue).
+ *
+ * xmcMoveSGR (class XmcMoveSGR)
+ *	When false, a cursor movement will leave a glitch when SGR's are
+ *	active.  The default is `true'.  (termcap ms, terminfo msgr).
+ *
+ * TODO:
+ *	When xmc is active, the terminfo max_attributes (ma) capability is
+ *	assumed to be 1.
+ *
+ *	The xmcAttributes resource should also apply to alternate character
+ *	sets and to color.
+ */</comment>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;xterm.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;data.h&gt;</cpp:file></cpp:include>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>MARK_ON</name>(a)  (Bool) ((my_attrs &amp; a) != 0 &amp;&amp; (xw-&gt;flags &amp; (whichone = CharOf(a))) == 0)</cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>MARK_OFF</name>(a) (Bool) ((my_attrs &amp; a) != 0 &amp;&amp; (xw-&gt;flags &amp; (whichone = CharOf(a))) != 0)</cpp:define>
+
+<function><type><name>void</name></type>
+<name>Mark_XMC</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>, <param><decl><type><name>int</name></type> <name>param</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>static</name> <name>IChar</name> *</type><name>glitch</name></decl>;</decl_stmt>
+
+    <decl_stmt><decl><type><name>TScreen</name> *</type><name>screen</name> =<init> <expr><call><name>TScreenOf</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>Bool</name></type> <name>found</name> =<init> <expr><name>False</name></expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>unsigned</name></type> <name>my_attrs</name> =<init> <expr><call><name>CharOf</name><argument_list>(<argument><expr><name>screen</name>-&gt;<name>xmc_attributes</name> &amp; <name>XMC_FLAGS</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>unsigned</name></type> <name>whichone</name> =<init> <expr>0</expr></init></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr><name>glitch</name> == 0</expr>)</condition><then> <block>{
+	<decl_stmt><decl><type><name>unsigned</name></type> <name>len</name> =<init> <expr><name>screen</name>-&gt;<name>xmc_glitch</name></expr></init></decl>;</decl_stmt>
+	<expr_stmt><expr><name>glitch</name> = <call><name>TypeMallocN</name><argument_list>(<argument><expr><name>IChar</name></expr></argument>, <argument><expr><name>len</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<while>while <condition>(<expr><name>len</name>--</expr>)</condition>
+	    <expr_stmt><expr><name><name>glitch</name><index>[<expr><name>len</name></expr>]</index></name> = <name>XMC_GLITCH</name></expr>;</expr_stmt></while>
+    }</block></then></if>
+    <switch>switch <condition>(<expr><name>param</name></expr>)</condition> <block>{
+    <case>case <expr>-1</expr>:			<comment type="block">/* DEFAULT */</comment>
+    </case><case>case <expr>0</expr>:			<comment type="block">/* FALLTHRU */</comment>
+	<expr_stmt><expr><name>found</name> = <call><name>MARK_OFF</name><argument_list>(<argument><expr>(<name>xw</name>-&gt;<name>flags</name> &amp; <name>XMC_FLAGS</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<break>break;</break>
+    </case><case>case <expr>1</expr>:
+	<expr_stmt><expr><name>found</name> = <call><name>MARK_ON</name><argument_list>(<argument><expr><name>BOLD</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<break>break;</break>
+    </case><case>case <expr>4</expr>:
+	<expr_stmt><expr><name>found</name> = <call><name>MARK_ON</name><argument_list>(<argument><expr><name>UNDERLINE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<break>break;</break>
+    </case><case>case <expr>5</expr>:
+	<expr_stmt><expr><name>found</name> = <call><name>MARK_ON</name><argument_list>(<argument><expr><name>BLINK</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<break>break;</break>
+    </case><case>case <expr>7</expr>:
+	<expr_stmt><expr><name>found</name> = <call><name>MARK_ON</name><argument_list>(<argument><expr><name>INVERSE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<break>break;</break>
+    </case><case>case <expr>22</expr>:
+	<expr_stmt><expr><name>found</name> = <call><name>MARK_OFF</name><argument_list>(<argument><expr><name>BOLD</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<break>break;</break>
+    </case><case>case <expr>24</expr>:
+	<expr_stmt><expr><name>found</name> = <call><name>MARK_OFF</name><argument_list>(<argument><expr><name>UNDERLINE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<break>break;</break>
+    </case><case>case <expr>25</expr>:
+	<expr_stmt><expr><name>found</name> = <call><name>MARK_OFF</name><argument_list>(<argument><expr><name>BLINK</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<break>break;</break>
+    </case><case>case <expr>27</expr>:
+	<expr_stmt><expr><name>found</name> = <call><name>MARK_OFF</name><argument_list>(<argument><expr><name>INVERSE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<break>break;</break>
+    </case>}</block></switch>
+
+    <comment type="block">/*
+     * Write a glitch with the attributes temporarily set to the new(er)
+     * ones.
+     */</comment>
+    <if>if <condition>(<expr><name>found</name></expr>)</condition><then> <block>{
+	<decl_stmt><decl><type><name>unsigned</name></type> <name>save</name> =<init> <expr><name>xw</name>-&gt;<name>flags</name></expr></init></decl>;</decl_stmt>
+	<expr_stmt><expr><name>xw</name>-&gt;<name>flags</name> ^= <name>whichone</name></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("XMC Writing glitch (%d/%d) after SGR %d\n", <name>my_attrs</name>,
+	       <name>whichone</name>, <name>param</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>dotext</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr>'?'</expr></argument>, <argument><expr><name>glitch</name></expr></argument>, <argument><expr><name>screen</name>-&gt;<name>xmc_glitch</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><name>xw</name>-&gt;<name>flags</name> = <name>save</name></expr>;</expr_stmt>
+    }</block></then></if>
+}</block></function>
+
+<comment type="block">/*
+ * Force a glitch on cursor movement when we're in standout mode and not at the
+ * end of a line.
+ */</comment>
+<function><type><name>void</name></type>
+<name>Jump_XMC</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>TScreen</name> *</type><name>screen</name> =<init> <expr><call><name>TScreenOf</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+    <if>if <condition>(<expr>!<name>screen</name>-&gt;<name>move_sgr_ok</name>
+	&amp;&amp; <name>screen</name>-&gt;<name>cur_col</name> &lt;= <call><name>LineMaxCol</name><argument_list>(<argument><expr><name>screen</name></expr></argument>,
+					 <argument><expr><call><name>getLineData</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr><name>screen</name>-&gt;<name>cur_row</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>)</condition><then> <block>{
+	<expr_stmt><expr><call><name>Mark_XMC</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr>-1</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></then></if>
+}</block></function>
+
+<comment type="block">/*
+ * After writing text to the screen, resolve mismatch between the current
+ * location and any attributes that would have been set by preceding locations.
+ */</comment>
+<function><type><name>void</name></type>
+<name>Resolve_XMC</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>TScreen</name> *</type><name>screen</name> =<init> <expr><call><name>TScreenOf</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>LineData</name> *</type><name>ld</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>Bool</name></type> <name>changed</name> =<init> <expr><name>False</name></expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>Char</name></type> <name>start</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>Char</name></type> <name>my_attrs</name> =<init> <expr><call><name>CharOf</name><argument_list>(<argument><expr><name>screen</name>-&gt;<name>xmc_attributes</name> &amp; <name>XMC_FLAGS</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>int</name></type> <name>row</name> =<init> <expr><name>screen</name>-&gt;<name>cur_row</name></expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>int</name></type> <name>col</name> =<init> <expr><name>screen</name>-&gt;<name>cur_col</name></expr></init></decl>;</decl_stmt>
+
+    <comment type="block">/* Find the preceding cell.
+     */</comment>
+    <expr_stmt><expr><name>ld</name> = <call><name>getLineData</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr><name>row</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <if>if <condition>(<expr><name>ld</name>-&gt;<name><name>charData</name><index>[<expr><name>col</name></expr>]</index></name> != <name>XMC_GLITCH</name></expr>)</condition><then> <block>{
+	<if>if <condition>(<expr><name>col</name> != 0</expr>)</condition><then> <block>{
+	    <expr_stmt><expr><name>col</name>--</expr>;</expr_stmt>
+	}</block></then> <else>else <if>if <condition>(<expr>!<name>screen</name>-&gt;<name>xmc_inline</name> &amp;&amp; <name>row</name> != 0</expr>)</condition><then> <block>{
+	    <expr_stmt><expr><name>ld</name> = <call><name>getLineData</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr>--<name>row</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><name>col</name> = <call><name>LineMaxCol</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr><name>ld</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	}</block></then></if></else></if>
+    }</block></then></if>
+    <expr_stmt><expr><name>start</name> = (<name>ld</name>-&gt;<name><name>attribs</name><index>[<expr><name>col</name></expr>]</index></name> &amp; <name>my_attrs</name>)</expr>;</expr_stmt>
+
+    <comment type="block">/* Now propagate the starting state until we reach a cell which holds
+     * a glitch.
+     */</comment>
+    <for>for (<init>;</init><condition>;</condition><incr/>) <block>{
+	<if>if <condition>(<expr><name>col</name> &lt; <call><name>LineMaxCol</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr><name>ld</name></expr></argument>)</argument_list></call></expr>)</condition><then> <block>{
+	    <expr_stmt><expr><name>col</name>++</expr>;</expr_stmt>
+	}</block></then> <else>else <if>if <condition>(<expr>!<name>screen</name>-&gt;<name>xmc_inline</name> &amp;&amp; <name>row</name> &lt; <name>screen</name>-&gt;<name>max_row</name></expr>)</condition><then> <block>{
+	    <expr_stmt><expr><name>col</name> = 0</expr>;</expr_stmt>
+	    <expr_stmt><expr><name>ld</name> = <call><name>getLineData</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr>++<name>row</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	}</block></then> <else>else
+	    <break>break;</break></else></if></else></if>
+	<if>if <condition>(<expr><name>ld</name>-&gt;<name><name>charData</name><index>[<expr><name>col</name></expr>]</index></name> == <name>XMC_GLITCH</name></expr>)</condition><then>
+	    <break>break;</break></then></if>
+	<if>if <condition>(<expr>(<name>ld</name>-&gt;<name><name>attribs</name><index>[<expr><name>col</name></expr>]</index></name> &amp; <name>my_attrs</name>) != <name>start</name></expr>)</condition><then> <block>{
+	    <expr_stmt><expr><name>ld</name>-&gt;<name><name>attribs</name><index>[<expr><name>col</name></expr>]</index></name> =
+		<call><name>CharOf</name><argument_list>(<argument><expr><name>start</name> | (<name>ld</name>-&gt;<name><name>attribs</name><index>[<expr><name>col</name></expr>]</index></name> &amp; ~<name>my_attrs</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><name>changed</name> = <name>True</name></expr>;</expr_stmt>
+	}</block></then></if>
+    }</block></for>
+
+    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("XMC %s (%s:%d/%d) from %d,%d to %d,%d\n",
+	   <name>changed</name> ? "Ripple" : "Nochange",
+	   <call><name>BtoS</name><argument_list>(<argument><expr><name>xw</name>-&gt;<name>flags</name> &amp; <name>my_attrs</name></expr></argument>)</argument_list></call>,
+	   <name>my_attrs</name>, <name>start</name>,
+	   <name>screen</name>-&gt;<name>cur_row</name>, <name>screen</name>-&gt;<name>cur_col</name>,
+	   <name>row</name>, <name>col</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+    <if>if <condition>(<expr><name>changed</name></expr>)</condition><then> <block>{
+	<expr_stmt><expr><call><name>ScrnUpdate</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>screen</name>-&gt;<name>cur_row</name></expr></argument>, <argument><expr>0</expr></argument>, <argument><expr><name>row</name> + 1 - <name>screen</name>-&gt;<name>cur_row</name></expr></argument>,
+		   <argument><expr><call><name>MaxCols</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name>True</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></then></if>
+}</block></function>
+</unit>

@@ -1,0 +1,933 @@
+<unit xmlns="http://www.sdml.info/srcML/src" xmlns:cpp="http://www.sdml.info/srcML/cpp" language="C" dir="" filename="scrollbar.c"><comment type="block">/* $XTermId: scrollbar.c,v 1.173 2010/06/15 22:47:34 tom Exp $ */</comment>
+
+<comment type="block">/*
+ * Copyright 2000-2009,2010 by Thomas E. Dickey
+ *
+ *                         All Rights Reserved
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE ABOVE LISTED COPYRIGHT HOLDER(S) BE LIABLE FOR ANY
+ * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * Except as contained in this notice, the name(s) of the above copyright
+ * holders shall not be used in advertising or otherwise to promote the
+ * sale, use or other dealings in this Software without prior written
+ * authorization.
+ *
+ *
+ * Copyright 1987 by Digital Equipment Corporation, Maynard, Massachusetts.
+ *
+ *                         All Rights Reserved
+ *
+ * Permission to use, copy, modify, and distribute this software and its
+ * documentation for any purpose and without fee is hereby granted,
+ * provided that the above copyright notice appear in all copies and that
+ * both that copyright notice and this permission notice appear in
+ * supporting documentation, and that the name of Digital Equipment
+ * Corporation not be used in advertising or publicity pertaining to
+ * distribution of the software without specific, written prior permission.
+ *
+ *
+ * DIGITAL DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
+ * ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
+ * DIGITAL BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR
+ * ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+ * WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+ * ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+ * SOFTWARE.
+ */</comment>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;xterm.h&gt;</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;X11/Xatom.h&gt;</cpp:file></cpp:include>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>HAVE_LIB_XAW</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;X11/Xaw/Scrollbar.h&gt;</cpp:file></cpp:include>
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>HAVE_LIB_XAW3D</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;X11/Xaw3d/Scrollbar.h&gt;</cpp:file></cpp:include>
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>HAVE_LIB_NEXTAW</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;X11/neXtaw/Scrollbar.h&gt;</cpp:file></cpp:include>
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>HAVE_LIB_XAWPLUS</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;X11/XawPlus/Scrollbar.h&gt;</cpp:file></cpp:include>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>HAVE_XKBQUERYEXTENSION</name></expr></argument>)</argument_list></call> &amp;&amp; <call><name>defined</name><argument_list>(<argument><expr><name>HAVE_X11_XKBLIB_H</name></expr></argument>)</argument_list></call> &amp;&amp; <call><name>defined</name><argument_list>(<argument><expr><name>HAVE_X11_EXTENSIONS_XKB_H</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;X11/extensions/XKB.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;X11/XKBlib.h&gt;</cpp:file></cpp:include>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<cpp:undef>#<cpp:directive>undef</cpp:directive> <name>HAVE_XKBQUERYEXTENSION</name></cpp:undef>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;data.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;error.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;menu.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;xcharmouse.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;xstrings.h&gt;</cpp:file></cpp:include>
+
+<comment type="block">/*
+ * The scrollbar's border overlaps the border of the vt100 window.  If there
+ * is no border for the vt100, there can be no border for the scrollbar.
+ */</comment>
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>SCROLLBAR_BORDER</name>(xw) (TScreenOf(xw)-&gt;scrollBarBorder)</cpp:define>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_TOOLBAR</name></expr></cpp:if>
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>ScrollBarBorder</name>(xw) (BorderWidth(xw) ? SCROLLBAR_BORDER(xw) : 0)</cpp:define>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>ScrollBarBorder</name>(xw) SCROLLBAR_BORDER(xw)</cpp:define>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<comment type="block">/* Event handlers */</comment>
+
+<decl_stmt><decl><type><name>static</name> <name>void</name> <name>ScrollTextTo</name></type> <name>PROTO_XT_CALLBACK_ARGS</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>static</name> <name>void</name> <name>ScrollTextUpDownBy</name></type> <name>PROTO_XT_CALLBACK_ARGS</name></decl>;</decl_stmt>
+
+<comment type="block">/* Resize the text window for a terminal screen, modifying the
+ * appropriate WM_SIZE_HINTS and taking advantage of bit gravity.
+ */</comment>
+<function><type><name>void</name></type>
+<name>DoResizeScreen</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>TScreen</name> *</type><name>screen</name> =<init> <expr><call><name>TScreenOf</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+    <decl_stmt><decl><type><name>int</name></type> <name>border</name> =<init> <expr>2 * <name>screen</name>-&gt;<name>border</name></expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>int</name></type> <name>min_wide</name> =<init> <expr><name>border</name> + <name>screen</name>-&gt;<name>fullVwin</name>.<name>sb_info</name>.<name>width</name></expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>int</name></type> <name>min_high</name> =<init> <expr><name>border</name></expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>XtGeometryResult</name></type> <name>geomreqresult</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>Dimension</name></type> <name>reqWidth</name>, <name>reqHeight</name>, <name>repWidth</name>, <name>repHeight</name></decl>;</decl_stmt>
+<cpp:ifndef>#<cpp:directive>ifndef</cpp:directive> <name>NO_ACTIVE_ICON</name></cpp:ifndef>
+    <decl_stmt><decl><type><name>VTwin</name> *</type><name>saveWin</name> =<init> <expr><call><name>WhichVWin</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+    <comment type="block">/* all units here want to be in the normal font units */</comment>
+    <expr_stmt><expr><call><name>WhichVWin</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call> = &amp;<name>screen</name>-&gt;<name>fullVwin</name></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif> <comment type="block">/* NO_ACTIVE_ICON */</comment>
+
+    <comment type="block">/*
+     * I'm going to try to explain, as I understand it, why we
+     * have to do XGetWMNormalHints and XSetWMNormalHints here,
+     * although I can't guarantee that I've got it right.
+     *
+     * In a correctly written toolkit program, the Shell widget
+     * parses the user supplied geometry argument.  However,
+     * because of the way xterm does things, the VT100 widget does
+     * the parsing of the geometry option, not the Shell widget.
+     * The result of this is that the Shell widget doesn't set the
+     * correct window manager hints, and doesn't know that the
+     * user has specified a geometry.
+     *
+     * The XtVaSetValues call below tells the Shell widget to
+     * change its hints.  However, since it's confused about the
+     * hints to begin with, it doesn't get them all right when it
+     * does the SetValues -- it undoes some of what the VT100
+     * widget did when it originally set the hints.
+     *
+     * To fix this, we do the following:
+     *
+     * 1. Get the sizehints directly from the window, going around
+     *    the (confused) shell widget.
+     * 2. Call XtVaSetValues to let the shell widget know which
+     *    hints have changed.  Note that this may not even be
+     *    necessary, since we're going to right ahead after that
+     *    and set the hints ourselves, but it's good to put it
+     *    here anyway, so that when we finally do fix the code so
+     *    that the Shell does the right thing with hints, we
+     *    already have the XtVaSetValues in place.
+     * 3. We set the sizehints directly, this fixing up whatever
+     *    damage was done by the Shell widget during the
+     *    XtVaSetValues.
+     *
+     * Gross, huh?
+     *
+     * The correct fix is to redo VTRealize, VTInitialize and
+     * VTSetValues so that font processing happens early enough to
+     * give back responsibility for the size hints to the Shell.
+     *
+     * Someday, we hope to have time to do this.  Someday, we hope
+     * to have time to completely rewrite xterm.
+     */</comment>
+
+    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("DoResizeScreen\n")</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr>1</expr></cpp:if>				<comment type="block">/* ndef nothack */</comment>
+    <comment type="block">/*
+     * NOTE: the hints and the XtVaSetValues() must match.
+     */</comment>
+    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("%s@%d -- ", <name>__FILE__</name>, <name>__LINE__</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>TRACE_WM_HINTS</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>getXtermSizeHints</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+    <expr_stmt><expr><call><name>xtermSizeHints</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><call><name>ScrollbarWidth</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+    <comment type="block">/* These are obsolete, but old clients may use them */</comment>
+    <expr_stmt><expr><name>xw</name>-&gt;<name>hints</name>.<name>width</name> = <call><name>MaxCols</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call> * <call><name>FontWidth</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call> + <name>xw</name>-&gt;<name>hints</name>.<name>min_width</name></expr>;</expr_stmt>
+    <expr_stmt><expr><name>xw</name>-&gt;<name>hints</name>.<name>height</name> = <call><name>MaxRows</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call> * <call><name>FontHeight</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call> + <name>xw</name>-&gt;<name>hints</name>.<name>min_height</name></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+    <expr_stmt><expr><call><name>XSetWMNormalHints</name><argument_list>(<argument><expr><name>screen</name>-&gt;<name>display</name></expr></argument>, <argument><expr><call><name>XtWindow</name><argument_list>(<argument><expr><call><name>SHELL_OF</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></argument>, <argument><expr>&amp;<name>xw</name>-&gt;<name>hints</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+    <expr_stmt><expr><name>reqWidth</name> = <call>(<name>Dimension</name>) <argument_list>(<argument><expr><call><name>MaxCols</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call> * <call><name>FontWidth</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call> + <name>min_wide</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><name>reqHeight</name> = <call>(<name>Dimension</name>) <argument_list>(<argument><expr><call><name>MaxRows</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call> * <call><name>FontHeight</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call> + <name>min_high</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("...requesting screensize chars %dx%d, pixels %dx%d\n",
+	   <call><name>MaxRows</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call>,
+	   <call><name>MaxCols</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call>,
+	   <name>reqHeight</name>, <name>reqWidth</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+    <expr_stmt><expr><name>geomreqresult</name> = <call><name>REQ_RESIZE</name><argument_list>(<argument><expr>(<name>Widget</name>) <name>xw</name></expr></argument>, <argument><expr><name>reqWidth</name></expr></argument>, <argument><expr><name>reqHeight</name></expr></argument>,
+			       <argument><expr>&amp;<name>repWidth</name></expr></argument>, <argument><expr>&amp;<name>repHeight</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+    <if>if <condition>(<expr><name>geomreqresult</name> == <name>XtGeometryAlmost</name></expr>)</condition><then> <block>{
+	<expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("...almost, retry screensize %dx%d\n", <name>repHeight</name>, <name>repWidth</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><name>geomreqresult</name> = <call><name>REQ_RESIZE</name><argument_list>(<argument><expr>(<name>Widget</name>) <name>xw</name></expr></argument>, <argument><expr><name>repWidth</name></expr></argument>,
+				   <argument><expr><name>repHeight</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></then></if>
+
+    <if>if <condition>(<expr><name>geomreqresult</name> != <name>XtGeometryYes</name></expr>)</condition><then> <block>{
+	<comment type="block">/* The resize wasn't successful, so we might need to adjust
+	   our idea of how large the screen is. */</comment>
+	<expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("...still no (%d) - resize the core-class\n", <name>geomreqresult</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><name>xw</name>-&gt;<name>core</name>.<name>widget_class</name>-&gt;<name>core_class</name>.<call><name>resize</name><argument_list>(<argument><expr>(<name>Widget</name>) <name>xw</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></then></if>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr>1</expr></cpp:if>				<comment type="block">/* ndef nothack */</comment>
+    <comment type="block">/*
+     * XtMakeResizeRequest() has the undesirable side-effect of clearing
+     * the window manager's hints, even on a failed request.  This would
+     * presumably be fixed if the shell did its own work.
+     */</comment>
+    <if>if <condition>(<expr><name>xw</name>-&gt;<name>hints</name>.<name>flags</name>
+	&amp;&amp; <name>repHeight</name>
+	&amp;&amp; <name>repWidth</name></expr>)</condition><then> <block>{
+	<expr_stmt><expr><name>xw</name>-&gt;<name>hints</name>.<name>height</name> = <name>repHeight</name></expr>;</expr_stmt>
+	<expr_stmt><expr><name>xw</name>-&gt;<name>hints</name>.<name>width</name> = <name>repWidth</name></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>TRACE_HINTS</name><argument_list>(<argument><expr>&amp;<name>xw</name>-&gt;<name>hints</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>XSetWMNormalHints</name><argument_list>(<argument><expr><name>screen</name>-&gt;<name>display</name></expr></argument>, <argument><expr><name>VShellWindow</name></expr></argument>, <argument><expr>&amp;<name>xw</name>-&gt;<name>hints</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></then></if>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+    <expr_stmt><expr><call><name>XSync</name><argument_list>(<argument><expr><name>screen</name>-&gt;<name>display</name></expr></argument>, <argument><expr><name>False</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>	<comment type="block">/* synchronize */</comment>
+    <if>if <condition>(<expr><call><name>XtAppPending</name><argument_list>(<argument><expr><name>app_con</name></expr></argument>)</argument_list></call></expr>)</condition><then>
+	<expr_stmt><expr><call><name>xevents</name><argument_list>()</argument_list></call></expr>;</expr_stmt></then></if>
+
+<cpp:ifndef>#<cpp:directive>ifndef</cpp:directive> <name>NO_ACTIVE_ICON</name></cpp:ifndef>
+    <expr_stmt><expr><call><name>WhichVWin</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call> = <name>saveWin</name></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif> <comment type="block">/* NO_ACTIVE_ICON */</comment>
+}</block></function>
+
+<function><type><name>static</name> <name>Widget</name></type>
+<name>CreateScrollBar</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>, <param><decl><type><name>int</name></type> <name>x</name></decl></param>, <param><decl><type><name>int</name></type> <name>y</name></decl></param>, <param><decl><type><name>int</name></type> <name>height</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>Widget</name></type> <name>result</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>Arg</name></type> <name><name>args</name><index>[<expr>6</expr>]</index></name></decl>;</decl_stmt>
+
+    <expr_stmt><expr><call><name>XtSetArg</name><argument_list>(<argument><expr><name><name>args</name><index>[<expr>0</expr>]</index></name></expr></argument>, <argument><expr><name>XtNx</name></expr></argument>, <argument><expr><name>x</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>XtSetArg</name><argument_list>(<argument><expr><name><name>args</name><index>[<expr>1</expr>]</index></name></expr></argument>, <argument><expr><name>XtNy</name></expr></argument>, <argument><expr><name>y</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>XtSetArg</name><argument_list>(<argument><expr><name><name>args</name><index>[<expr>2</expr>]</index></name></expr></argument>, <argument><expr><name>XtNheight</name></expr></argument>, <argument><expr><name>height</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>XtSetArg</name><argument_list>(<argument><expr><name><name>args</name><index>[<expr>3</expr>]</index></name></expr></argument>, <argument><expr><name>XtNreverseVideo</name></expr></argument>, <argument><expr><name>xw</name>-&gt;<name>misc</name>.<name>re_verse</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>XtSetArg</name><argument_list>(<argument><expr><name><name>args</name><index>[<expr>4</expr>]</index></name></expr></argument>, <argument><expr><name>XtNorientation</name></expr></argument>, <argument><expr><name>XtorientVertical</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>XtSetArg</name><argument_list>(<argument><expr><name><name>args</name><index>[<expr>5</expr>]</index></name></expr></argument>, <argument><expr><name>XtNborderWidth</name></expr></argument>, <argument><expr><call><name>ScrollBarBorder</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+    <expr_stmt><expr><name>result</name> = <call><name>XtCreateWidget</name><argument_list>(<argument><expr>"scrollbar"</expr></argument>, <argument><expr><name>scrollbarWidgetClass</name></expr></argument>,
+			    <argument><expr>(<name>Widget</name>) <name>xw</name></expr></argument>, <argument><expr><name>args</name></expr></argument>, <argument><expr><call><name>XtNumber</name><argument_list>(<argument><expr><name>args</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>XtAddCallback</name><argument_list>(<argument><expr><name>result</name></expr></argument>, <argument><expr><name>XtNscrollProc</name></expr></argument>, <argument><expr><name>ScrollTextUpDownBy</name></expr></argument>, <argument><expr>0</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>XtAddCallback</name><argument_list>(<argument><expr><name>result</name></expr></argument>, <argument><expr><name>XtNjumpProc</name></expr></argument>, <argument><expr><name>ScrollTextTo</name></expr></argument>, <argument><expr>0</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <return>return <expr>(<name>result</name>)</expr>;</return>
+}</block></function>
+
+<function><type><name>void</name></type>
+<name>ScrollBarReverseVideo</name><parameter_list>(<param><decl><type><name>Widget</name></type> <name>scrollWidget</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>XtermWidget</name></type> <name>xw</name> =<init> <expr><call><name>getXtermWidget</name><argument_list>(<argument><expr><name>scrollWidget</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr><name>xw</name> != 0</expr>)</condition><then> <block>{
+	<decl_stmt><decl><type><name>SbInfo</name> *</type><name>sb</name> =<init> <expr>&amp;(<call><name>TScreenOf</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call>-&gt;<name>fullVwin</name>.<name>sb_info</name>)</expr></init></decl>;</decl_stmt>
+	<decl_stmt><decl><type><name>Arg</name></type> <name><name>args</name><index>[<expr>4</expr>]</index></name></decl>;</decl_stmt>
+	<decl_stmt><decl><type><name>Cardinal</name></type> <name>nargs</name> =<init> <expr><call><name>XtNumber</name><argument_list>(<argument><expr><name>args</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+	<comment type="block">/*
+	 * Remember the scrollbar's original colors.
+	 */</comment>
+	<if>if <condition>(<expr><name>sb</name>-&gt;<name>rv_cached</name> == <name>False</name></expr>)</condition><then> <block>{
+	    <expr_stmt><expr><call><name>XtSetArg</name><argument_list>(<argument><expr><name><name>args</name><index>[<expr>0</expr>]</index></name></expr></argument>, <argument><expr><name>XtNbackground</name></expr></argument>, <argument><expr>&amp;(<name>sb</name>-&gt;<name>bg</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><call><name>XtSetArg</name><argument_list>(<argument><expr><name><name>args</name><index>[<expr>1</expr>]</index></name></expr></argument>, <argument><expr><name>XtNforeground</name></expr></argument>, <argument><expr>&amp;(<name>sb</name>-&gt;<name>fg</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><call><name>XtSetArg</name><argument_list>(<argument><expr><name><name>args</name><index>[<expr>2</expr>]</index></name></expr></argument>, <argument><expr><name>XtNborderColor</name></expr></argument>, <argument><expr>&amp;(<name>sb</name>-&gt;<name>bdr</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><call><name>XtSetArg</name><argument_list>(<argument><expr><name><name>args</name><index>[<expr>3</expr>]</index></name></expr></argument>, <argument><expr><name>XtNborderPixmap</name></expr></argument>, <argument><expr>&amp;(<name>sb</name>-&gt;<name>bdpix</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><call><name>XtGetValues</name><argument_list>(<argument><expr><name>scrollWidget</name></expr></argument>, <argument><expr><name>args</name></expr></argument>, <argument><expr><name>nargs</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><name>sb</name>-&gt;<name>rv_cached</name> = <name>True</name></expr>;</expr_stmt>
+	    <expr_stmt><expr><name>sb</name>-&gt;<name>rv_active</name> = 0</expr>;</expr_stmt>
+	}</block></then></if>
+
+	<expr_stmt><expr><name>sb</name>-&gt;<name>rv_active</name> = !(<name>sb</name>-&gt;<name>rv_active</name>)</expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>XtSetArg</name><argument_list>(<argument><expr><name><name>args</name><index>[<expr>!(<name>sb</name>-&gt;<name>rv_active</name>)</expr>]</index></name></expr></argument>, <argument><expr><name>XtNbackground</name></expr></argument>, <argument><expr><name>sb</name>-&gt;<name>bg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>XtSetArg</name><argument_list>(<argument><expr><name><name>args</name><index>[<expr>(<name>sb</name>-&gt;<name>rv_active</name>)</expr>]</index></name></expr></argument>, <argument><expr><name>XtNforeground</name></expr></argument>, <argument><expr><name>sb</name>-&gt;<name>fg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><name>nargs</name> = 2</expr>;</expr_stmt>		<comment type="block">/* don't set border_pixmap */</comment>
+	<if>if <condition>(<expr><name>sb</name>-&gt;<name>bdpix</name> == <name>XtUnspecifiedPixmap</name></expr>)</condition><then> <block>{
+	    <comment type="block">/* if not pixmap then pixel */</comment>
+	    <if>if <condition>(<expr><name>sb</name>-&gt;<name>rv_active</name></expr>)</condition><then> <block>{
+		<comment type="block">/* keep border visible */</comment>
+		<expr_stmt><expr><call><name>XtSetArg</name><argument_list>(<argument><expr><name><name>args</name><index>[<expr>2</expr>]</index></name></expr></argument>, <argument><expr><name>XtNborderColor</name></expr></argument>, <argument><expr><name><name>args</name><index>[<expr>1</expr>]</index></name>.<name>value</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    }</block></then> <else>else <block>{
+		<expr_stmt><expr><call><name>XtSetArg</name><argument_list>(<argument><expr><name><name>args</name><index>[<expr>2</expr>]</index></name></expr></argument>, <argument><expr><name>XtNborderColor</name></expr></argument>, <argument><expr><name>sb</name>-&gt;<name>bdr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    }</block></else></if>
+	    <expr_stmt><expr><name>nargs</name> = 3</expr>;</expr_stmt>
+	}</block></then></if>
+	<expr_stmt><expr><call><name>XtSetValues</name><argument_list>(<argument><expr><name>scrollWidget</name></expr></argument>, <argument><expr><name>args</name></expr></argument>, <argument><expr><name>nargs</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></then></if>
+}</block></function>
+
+<function><type><name>void</name></type>
+<name>ScrollBarDrawThumb</name><parameter_list>(<param><decl><type><name>Widget</name></type> <name>scrollWidget</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>XtermWidget</name></type> <name>xw</name> =<init> <expr><call><name>getXtermWidget</name><argument_list>(<argument><expr><name>scrollWidget</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr><name>xw</name> != 0</expr>)</condition><then> <block>{
+	<decl_stmt><decl><type><name>TScreen</name> *</type><name>screen</name> =<init> <expr><call><name>TScreenOf</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+	<decl_stmt><decl><type><name>int</name></type> <name>thumbTop</name>, <name>thumbHeight</name>, <name>totalHeight</name></decl>;</decl_stmt>
+
+	<expr_stmt><expr><name>thumbTop</name> = <call><name>ROW2INX</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr><name>screen</name>-&gt;<name>savedlines</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><name>thumbHeight</name> = <call><name>MaxRows</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><name>totalHeight</name> = <name>thumbHeight</name> + <name>screen</name>-&gt;<name>savedlines</name></expr>;</expr_stmt>
+
+	<expr_stmt><expr><call><name>XawScrollbarSetThumb</name><argument_list>(<argument><expr><name>scrollWidget</name></expr></argument>,
+			     <argument><expr>((<name>float</name>) <name>thumbTop</name>) / (<name>float</name>) <name>totalHeight</name></expr></argument>,
+			     <argument><expr>((<name>float</name>) <name>thumbHeight</name>) / (<name>float</name>) <name>totalHeight</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></then></if>
+}</block></function>
+
+<function><type><name>void</name></type>
+<name>ResizeScrollBar</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>TScreen</name> *</type><name>screen</name> =<init> <expr><call><name>TScreenOf</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr><name>screen</name>-&gt;<name>scrollWidget</name> != 0</expr>)</condition><then> <block>{
+	<decl_stmt><decl><type><name>int</name></type> <name>height</name> =<init> <expr><name>screen</name>-&gt;<name>fullVwin</name>.<name>height</name> + <name>screen</name>-&gt;<name>border</name> * 2</expr></init></decl>;</decl_stmt>
+	<decl_stmt><decl><type><name>int</name></type> <name>width</name> =<init> <expr><name>screen</name>-&gt;<name>scrollWidget</name>-&gt;<name>core</name>.<name>width</name></expr></init></decl>;</decl_stmt>
+	<decl_stmt><decl><type><name>int</name></type> <name>ypos</name> =<init> <expr>-<call><name>ScrollBarBorder</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<cpp:ifdef>#<cpp:directive>ifdef</cpp:directive> <name>SCROLLBAR_RIGHT</name></cpp:ifdef>
+	<decl_stmt><decl><type><name>int</name></type> <name>xpos</name> =<init> <expr>((<name>xw</name>-&gt;<name>misc</name>.<name>useRight</name>)
+		    ? (<name>screen</name>-&gt;<name>fullVwin</name>.<name>fullwidth</name> -
+		       <name>screen</name>-&gt;<name>scrollWidget</name>-&gt;<name>core</name>.<name>width</name> -
+		       <call><name>BorderWidth</name><argument_list>(<argument><expr><name>screen</name>-&gt;<name>scrollWidget</name></expr></argument>)</argument_list></call>)
+		    : -<call><name>ScrollBarBorder</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call>)</expr></init></decl>;</decl_stmt>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+	<decl_stmt><decl><type><name>int</name></type> <name>xpos</name> =<init> <expr>-<call><name>ScrollBarBorder</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+	<expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("ResizeScrollBar at %d,%d %dx%d\n", <name>ypos</name>, <name>xpos</name>, <name>height</name>, <name>width</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+	<expr_stmt><expr><call><name>XtConfigureWidget</name><argument_list>(
+			     <argument><expr><name>screen</name>-&gt;<name>scrollWidget</name></expr></argument>,
+			     <argument><expr>(<name>Position</name>) <name>xpos</name></expr></argument>,
+			     <argument><expr>(<name>Position</name>) <name>ypos</name></expr></argument>,
+			     <argument><expr>(<name>Dimension</name>) <name>width</name></expr></argument>,
+			     <argument><expr>(<name>Dimension</name>) <name>height</name></expr></argument>,
+			     <argument><expr><call><name>BorderWidth</name><argument_list>(<argument><expr><name>screen</name>-&gt;<name>scrollWidget</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>ScrollBarDrawThumb</name><argument_list>(<argument><expr><name>screen</name>-&gt;<name>scrollWidget</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></then></if>
+}</block></function>
+
+<function><type><name>void</name></type>
+<name>WindowScroll</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>, <param><decl><type><name>int</name></type> <name>top</name></decl></param>, <param><decl><type><name>Bool</name> <name>always</name></type> <name>GCC_UNUSED</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>TScreen</name> *</type><name>screen</name> =<init> <expr><call><name>TScreenOf</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>int</name></type> <name>i</name>, <name>lines</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>int</name></type> <name>scrolltop</name>, <name>scrollheight</name>, <name>refreshtop</name></decl>;</decl_stmt>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_SCROLL_LOCK</name></expr></cpp:if>
+    <if>if <condition>(<expr><name>screen</name>-&gt;<name>allowScrollLock</name> &amp;&amp; (<name>screen</name>-&gt;<name>scroll_lock</name> &amp;&amp; !<name>always</name>)</expr>)</condition><then> <block>{
+	<if>if <condition>(<expr><name>screen</name>-&gt;<name>scroll_dirty</name></expr>)</condition><then> <block>{
+	    <expr_stmt><expr><name>screen</name>-&gt;<name>scroll_dirty</name> = <name>False</name></expr>;</expr_stmt>
+	    <expr_stmt><expr><call><name>ScrnRefresh</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr>0</expr></argument>, <argument><expr>0</expr></argument>, <argument><expr><call><name>MaxRows</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><call><name>MaxCols</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name>False</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	}</block></then></if>
+    }</block></then> <else>else
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+    <block>{
+	<if>if <condition>(<expr><name>top</name> &lt; -<name>screen</name>-&gt;<name>savedlines</name></expr>)</condition><then> <block>{
+	    <expr_stmt><expr><name>top</name> = -<name>screen</name>-&gt;<name>savedlines</name></expr>;</expr_stmt>
+	}</block></then> <else>else <if>if <condition>(<expr><name>top</name> &gt; 0</expr>)</condition><then> <block>{
+	    <expr_stmt><expr><name>top</name> = 0</expr>;</expr_stmt>
+	}</block></then></if></else></if>
+
+	<if>if <condition>(<expr>(<name>i</name> = <name>screen</name>-&gt;<name>topline</name> - <name>top</name>) != 0</expr>)</condition><then> <block>{
+
+	    <if>if <condition>(<expr><name>screen</name>-&gt;<name>cursor_state</name></expr>)</condition><then>
+		<expr_stmt><expr><call><name>HideCursor</name><argument_list>()</argument_list></call></expr>;</expr_stmt></then></if>
+	    <expr_stmt><expr><name>lines</name> = <name>i</name> &gt; 0 ? <name>i</name> : -<name>i</name></expr>;</expr_stmt>
+	    <if>if <condition>(<expr><name>lines</name> &gt; <call><name>MaxRows</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call></expr>)</condition><then>
+		<expr_stmt><expr><name>lines</name> = <call><name>MaxRows</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+	    <expr_stmt><expr><name>scrollheight</name> = <name>screen</name>-&gt;<name>max_row</name> - <name>lines</name> + 1</expr>;</expr_stmt>
+	    <if>if <condition>(<expr><name>i</name> &gt; 0</expr>)</condition><then>
+		<expr_stmt><expr><name>refreshtop</name> = <name>scrolltop</name> = 0</expr>;</expr_stmt></then>
+	    <else>else <block>{
+		<expr_stmt><expr><name>scrolltop</name> = <name>lines</name></expr>;</expr_stmt>
+		<expr_stmt><expr><name>refreshtop</name> = <name>scrollheight</name></expr>;</expr_stmt>
+	    }</block></else></if>
+	    <expr_stmt><expr><call><name>scrolling_copy_area</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>scrolltop</name></expr></argument>, <argument><expr><name>scrollheight</name></expr></argument>, <argument><expr>-<name>i</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><name>screen</name>-&gt;<name>topline</name> = <name>top</name></expr>;</expr_stmt>
+
+	    <expr_stmt><expr><call><name>ScrollSelection</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr><name>i</name></expr></argument>, <argument><expr><name>True</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+	    <expr_stmt><expr><call><name>XClearArea</name><argument_list>(
+			  <argument><expr><name>screen</name>-&gt;<name>display</name></expr></argument>,
+			  <argument><expr><call><name>VWindow</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call></expr></argument>,
+			  <argument><expr><call><name>OriginX</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call></expr></argument>,
+			  <argument><expr><call><name>OriginY</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call> + <name>refreshtop</name> * <call><name>FontHeight</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call></expr></argument>,
+			  <argument><expr>(<name>unsigned</name>) <call><name>Width</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call></expr></argument>,
+			  <argument><expr><call>(<name>unsigned</name>) <argument_list>(<argument><expr><name>lines</name> * <call><name>FontHeight</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></argument>,
+			  <argument><expr><name>False</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><call><name>ScrnRefresh</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>refreshtop</name></expr></argument>, <argument><expr>0</expr></argument>, <argument><expr><name>lines</name></expr></argument>, <argument><expr><call><name>MaxCols</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name>False</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_BLINK_CURS</name> || <name>OPT_BLINK_TEXT</name></expr></cpp:if>
+	    <expr_stmt><expr><call><name>RestartBlinking</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+	}</block></then></if>
+    }</block></else></if>
+    <expr_stmt><expr><call><name>ScrollBarDrawThumb</name><argument_list>(<argument><expr><name>screen</name>-&gt;<name>scrollWidget</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+}</block></function>
+
+<cpp:ifdef>#<cpp:directive>ifdef</cpp:directive> <name>SCROLLBAR_RIGHT</name></cpp:ifdef>
+<comment type="block">/*
+ * Adjust the scrollbar position if we're asked to turn on scrollbars for the
+ * first time (or after resizing) after the xterm is already running.  That
+ * makes the window grow after we've initially configured the scrollbar's
+ * position.  (There must be a better way).
+ */</comment>
+<function><type><name>void</name></type>
+<name>updateRightScrollbar</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>TScreen</name> *</type><name>screen</name> =<init> <expr><call><name>TScreenOf</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr><name>xw</name>-&gt;<name>misc</name>.<name>useRight</name>
+	&amp;&amp; <name>screen</name>-&gt;<name>fullVwin</name>.<name>fullwidth</name> &lt; <name>xw</name>-&gt;<name>core</name>.<name>width</name></expr>)</condition><then>
+	<expr_stmt><expr><call><name>XtVaSetValues</name><argument_list>(<argument><expr><name>screen</name>-&gt;<name>scrollWidget</name></expr></argument>,
+		      <argument><expr><name>XtNx</name></expr></argument>, <argument><expr><name>screen</name>-&gt;<name>fullVwin</name>.<name>fullwidth</name> - <call><name>BorderWidth</name><argument_list>(<argument><expr><name>screen</name>-&gt;<name>scrollWidget</name></expr></argument>)</argument_list></call></expr></argument>,
+		      <argument><expr>(<name>XtPointer</name>) 0</expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+}</block></function>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<function><type><name>void</name></type>
+<name>ScrollBarOn</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>, <param><decl><type><name>Bool</name></type> <name>init</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>TScreen</name> *</type><name>screen</name> =<init> <expr><call><name>TScreenOf</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr><name>screen</name>-&gt;<name>fullVwin</name>.<name>sb_info</name>.<name>width</name> || <call><name>IsIcon</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call></expr>)</condition><then>
+	<return>return;</return></then></if>
+
+    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("ScrollBarOn(init %s)\n", <call><name>BtoS</name><argument_list>(<argument><expr><name>init</name></expr></argument>)</argument_list></call>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <if>if <condition>(<expr><name>init</name></expr>)</condition><then> <block>{			<comment type="block">/* then create it only */</comment>
+	<if>if <condition>(<expr><name>screen</name>-&gt;<name>scrollWidget</name> == 0</expr>)</condition><then> <block>{
+	    <comment type="block">/* make it a dummy size and resize later */</comment>
+	    <expr_stmt><expr><name>screen</name>-&gt;<name>scrollWidget</name> = <call><name>CreateScrollBar</name><argument_list>(<argument><expr><name>xw</name></expr></argument>,
+						   <argument><expr>-<call><name>ScrollBarBorder</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr></argument>,
+						   <argument><expr>-<call><name>ScrollBarBorder</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr></argument>,
+						   <argument><expr>5</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <if>if <condition>(<expr><name>screen</name>-&gt;<name>scrollWidget</name> == <name>NULL</name></expr>)</condition><then> <block>{
+		<expr_stmt><expr><call><name>Bell</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>XkbBI_MinorError</name></expr></argument>, <argument><expr>0</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    }</block></then></if>
+	}</block></then></if>
+    }</block></then> <else>else <if>if <condition>(<expr>!<name>screen</name>-&gt;<name>scrollWidget</name> || !<call><name>XtIsRealized</name><argument_list>(<argument><expr>(<name>Widget</name>) <name>xw</name></expr></argument>)</argument_list></call></expr>)</condition><then> <block>{
+	<expr_stmt><expr><call><name>Bell</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>XkbBI_MinorError</name></expr></argument>, <argument><expr>0</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>Bell</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>XkbBI_MinorError</name></expr></argument>, <argument><expr>0</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></then> <else>else <block>{
+
+	<expr_stmt><expr><call><name>ResizeScrollBar</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>xtermAddInput</name><argument_list>(<argument><expr><name>screen</name>-&gt;<name>scrollWidget</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>XtRealizeWidget</name><argument_list>(<argument><expr><name>screen</name>-&gt;<name>scrollWidget</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>TRACE_TRANS</name><argument_list>(<argument><expr>"scrollbar"</expr></argument>, <argument><expr><name>screen</name>-&gt;<name>scrollWidget</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+	<expr_stmt><expr><name>screen</name>-&gt;<name>fullVwin</name>.<name>sb_info</name>.<name>rv_cached</name> = <name>False</name></expr>;</expr_stmt>
+
+	<expr_stmt><expr><name>screen</name>-&gt;<name>fullVwin</name>.<name>sb_info</name>.<name>width</name> = (<name>screen</name>-&gt;<name>scrollWidget</name>-&gt;<name>core</name>.<name>width</name>
+					  + <call><name>BorderWidth</name><argument_list>(<argument><expr><name>screen</name>-&gt;<name>scrollWidget</name></expr></argument>)</argument_list></call>)</expr>;</expr_stmt>
+
+	<expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("setting scrollbar width %d = %d + %d\n",
+	       <name>screen</name>-&gt;<name>fullVwin</name>.<name>sb_info</name>.<name>width</name>,
+	       <name>screen</name>-&gt;<name>scrollWidget</name>-&gt;<name>core</name>.<name>width</name>,
+	       <call><name>BorderWidth</name><argument_list>(<argument><expr><name>screen</name>-&gt;<name>scrollWidget</name></expr></argument>)</argument_list></call>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+	<expr_stmt><expr><call><name>ScrollBarDrawThumb</name><argument_list>(<argument><expr><name>screen</name>-&gt;<name>scrollWidget</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>DoResizeScreen</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<cpp:ifdef>#<cpp:directive>ifdef</cpp:directive> <name>SCROLLBAR_RIGHT</name></cpp:ifdef>
+	<expr_stmt><expr><call><name>updateRightScrollbar</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+	<expr_stmt><expr><call><name>XtMapWidget</name><argument_list>(<argument><expr><name>screen</name>-&gt;<name>scrollWidget</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>update_scrollbar</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+	<if>if <condition>(<expr><name>screen</name>-&gt;<name>visbuf</name></expr>)</condition><then> <block>{
+	    <expr_stmt><expr><call><name>xtermClear</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><call><name>Redraw</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+	}</block></then></if>
+    }</block></else></if></else></if>
+}</block></function>
+
+<function><type><name>void</name></type>
+<name>ScrollBarOff</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>TScreen</name> *</type><name>screen</name> =<init> <expr><call><name>TScreenOf</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr>!<name>screen</name>-&gt;<name>fullVwin</name>.<name>sb_info</name>.<name>width</name> || <call><name>IsIcon</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call></expr>)</condition><then>
+	<return>return;</return></then></if>
+
+    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("ScrollBarOff\n")</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <if>if <condition>(<expr><call><name>XtIsRealized</name><argument_list>(<argument><expr>(<name>Widget</name>) <name>xw</name></expr></argument>)</argument_list></call></expr>)</condition><then> <block>{
+	<expr_stmt><expr><call><name>XtUnmapWidget</name><argument_list>(<argument><expr><name>screen</name>-&gt;<name>scrollWidget</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><name>screen</name>-&gt;<name>fullVwin</name>.<name>sb_info</name>.<name>width</name> = 0</expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>DoResizeScreen</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>update_scrollbar</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+	<if>if <condition>(<expr><name>screen</name>-&gt;<name>visbuf</name></expr>)</condition><then> <block>{
+	    <expr_stmt><expr><call><name>xtermClear</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><call><name>Redraw</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+	}</block></then></if>
+    }</block></then> <else>else <block>{
+	<expr_stmt><expr><call><name>Bell</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>XkbBI_MinorError</name></expr></argument>, <argument><expr>0</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></else></if>
+}</block></function>
+
+<comment type="block">/*
+ * Toggle the visibility of the scrollbars.
+ */</comment>
+<function><type><name>void</name></type>
+<name>ToggleScrollBar</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>TScreen</name> *</type><name>screen</name> =<init> <expr><call><name>TScreenOf</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr><call><name>IsIcon</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call></expr>)</condition><then> <block>{
+	<expr_stmt><expr><call><name>Bell</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>XkbBI_MinorError</name></expr></argument>, <argument><expr>0</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></then> <else>else <block>{
+	<expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("ToggleScrollBar{{\n")</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<if>if <condition>(<expr><name>screen</name>-&gt;<name>fullVwin</name>.<name>sb_info</name>.<name>width</name></expr>)</condition><then> <block>{
+	    <expr_stmt><expr><call><name>ScrollBarOff</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	}</block></then> <else>else <block>{
+	    <expr_stmt><expr><call><name>ScrollBarOn</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>False</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	}</block></else></if>
+	<expr_stmt><expr><call><name>update_scrollbar</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("...ToggleScrollBar}}\n")</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></else></if>
+}</block></function>
+
+<comment type="block">/*ARGSUSED*/</comment>
+<function><type><name>static</name> <name>void</name></type>
+<name>ScrollTextTo</name><parameter_list>(
+		<param><decl><type><name>Widget</name></type> <name>scrollbarWidget</name></decl></param>,
+		<param><decl><type><name>XtPointer</name> <name>client_data</name></type> <name>GCC_UNUSED</name></decl></param>,
+		<param><decl><type><name>XtPointer</name></type> <name>call_data</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>XtermWidget</name></type> <name>xw</name> =<init> <expr><call><name>getXtermWidget</name><argument_list>(<argument><expr><name>scrollbarWidget</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr><name>xw</name> != 0</expr>)</condition><then> <block>{
+	<decl_stmt><decl><type><name>float</name> *</type><name>topPercent</name> =<init> <expr>(<name>float</name> *) <name>call_data</name></expr></init></decl>;</decl_stmt>
+	<decl_stmt><decl><type><name>TScreen</name> *</type><name>screen</name> =<init> <expr><call><name>TScreenOf</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+	<decl_stmt><decl><type><name>int</name></type> <name>thumbTop</name></decl>;</decl_stmt>		<comment type="block">/* relative to first saved line */</comment>
+	<decl_stmt><decl><type><name>int</name></type> <name>newTopLine</name></decl>;</decl_stmt>
+
+	<comment type="block">/*
+	 * screen-&gt;savedlines : Number of offscreen text lines,
+	 * MaxRows(screen)    : Number of onscreen  text lines,
+	 */</comment>
+	<expr_stmt><expr><name>thumbTop</name> = <call>(<name>int</name>) <argument_list>(<argument><expr>*<name>topPercent</name>
+			  * <call>(<name>float</name>) <argument_list>(<argument><expr><name>screen</name>-&gt;<name>savedlines</name> + <call><name>MaxRows</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><name>newTopLine</name> = <name>thumbTop</name> - <name>screen</name>-&gt;<name>savedlines</name></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>WindowScroll</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>newTopLine</name></expr></argument>, <argument><expr><name>True</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></then></if>
+}</block></function>
+
+<comment type="block">/*ARGSUSED*/</comment>
+<function><type><name>static</name> <name>void</name></type>
+<name>ScrollTextUpDownBy</name><parameter_list>(
+		      <param><decl><type><name>Widget</name></type> <name>scrollbarWidget</name></decl></param>,
+		      <param><decl><type><name>XtPointer</name> <name>client_data</name></type> <name>GCC_UNUSED</name></decl></param>,
+		      <param><decl><type><name>XtPointer</name></type> <name>call_data</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>XtermWidget</name></type> <name>xw</name> =<init> <expr><call><name>getXtermWidget</name><argument_list>(<argument><expr><name>scrollbarWidget</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr><name>xw</name> != 0</expr>)</condition><then> <block>{
+	<decl_stmt><decl><type><name>long</name></type> <name>pixels</name> =<init> <expr>(<name>long</name>) <name>call_data</name></expr></init></decl>;</decl_stmt>
+
+	<decl_stmt><decl><type><name>TScreen</name> *</type><name>screen</name> =<init> <expr><call><name>TScreenOf</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+	<decl_stmt><decl><type><name>int</name></type> <name>rowOnScreen</name>, <name>newTopLine</name></decl>;</decl_stmt>
+
+	<expr_stmt><expr><name>rowOnScreen</name> = <call>(<name>int</name>) <argument_list>(<argument><expr><name>pixels</name> / <call><name>FontHeight</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<if>if <condition>(<expr><name>rowOnScreen</name> == 0</expr>)</condition><then> <block>{
+	    <if>if <condition>(<expr><name>pixels</name> &lt; 0</expr>)</condition><then>
+		<expr_stmt><expr><name>rowOnScreen</name> = -1</expr>;</expr_stmt></then>
+	    <else>else <if>if <condition>(<expr><name>pixels</name> &gt; 0</expr>)</condition><then>
+		<expr_stmt><expr><name>rowOnScreen</name> = 1</expr>;</expr_stmt></then></if></else></if>
+	}</block></then></if>
+	<expr_stmt><expr><name>newTopLine</name> = <call><name>ROW2INX</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr><name>rowOnScreen</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>WindowScroll</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>newTopLine</name></expr></argument>, <argument><expr><name>True</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></then></if>
+}</block></function>
+
+<comment type="block">/*
+ * assume that b is alphabetic and allow plural
+ */</comment>
+<function><type><name>static</name> <name>int</name></type>
+<name>CompareWidths</name><parameter_list>(<param><decl><type><name>const</name> <name>char</name> *</type><name>a</name></decl></param>, <param><decl><type><name>const</name> <name>char</name> *</type><name>b</name></decl></param>, <param><decl><type><name>int</name> *</type><name>modifier</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>int</name></type> <name>result</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>char</name></type> <name>ca</name>, <name>cb</name></decl>;</decl_stmt>
+
+    <expr_stmt><expr>*<name>modifier</name> = 0</expr>;</expr_stmt>
+    <if>if <condition>(<expr>!<name>a</name> || !<name>b</name></expr>)</condition><then>
+	<return>return <expr>0</expr>;</return></then></if>
+
+    <while>while <condition>(<expr>1</expr>)</condition> <block>{
+	<expr_stmt><expr><name>ca</name> = <call><name>x_toupper</name><argument_list>(<argument><expr>*<name>a</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><name>cb</name> = <call><name>x_toupper</name><argument_list>(<argument><expr>*<name>b</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<if>if <condition>(<expr><name>ca</name> != <name>cb</name> || <name>ca</name> == '\0'</expr>)</condition><then>
+	    <break>break;</break></then></if>		<comment type="block">/* if not eq else both nul */</comment>
+	<expr_stmt><expr><name>a</name>++</expr>, <expr><name>b</name>++</expr>;</expr_stmt>
+    }</block></while>
+    <if>if <condition>(<expr><name>cb</name> != '\0'</expr>)</condition><then>
+	<return>return <expr>0</expr>;</return></then></if>
+
+    <if>if <condition>(<expr><name>ca</name> == 'S'</expr>)</condition><then>
+	<expr_stmt><expr><name>ca</name> = *++<name>a</name></expr>;</expr_stmt></then></if>
+
+    <switch>switch <condition>(<expr><name>ca</name></expr>)</condition> <block>{
+    <case>case <expr>'+'</expr>:
+    </case><case>case <expr>'-'</expr>:
+	<expr_stmt><expr>*<name>modifier</name> = (<name>ca</name> == '-' ? -1 : 1) * <call><name>atoi</name><argument_list>(<argument><expr><name>a</name> + 1</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><name>result</name> = 1</expr>;</expr_stmt>
+	<break>break;</break>
+
+    </case><case>case <expr>'\0'</expr>:
+	<expr_stmt><expr><name>result</name> = 1</expr>;</expr_stmt>
+	<break>break;</break>
+
+    </case><default>default:
+	<expr_stmt><expr><name>result</name> = 0</expr>;</expr_stmt>
+	<break>break;</break>
+    </default>}</block></switch>
+    <return>return <expr><name>result</name></expr>;</return>
+}</block></function>
+
+<function><type><name>static</name> <name>long</name></type>
+<name>params_to_pixels</name><parameter_list>(<param><decl><type><name>TScreen</name> *</type> <name>screen</name></decl></param>, <param><decl><type><name>String</name> *</type> <name>params</name></decl></param>, <param><decl><type><name>Cardinal</name></type> <name>n</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>int</name></type> <name>mult</name> =<init> <expr>1</expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>const</name> <name>char</name> *</type><name>s</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>int</name></type> <name>modifier</name></decl>;</decl_stmt>
+
+    <switch>switch <condition>(<expr><name>n</name> &gt; 2 ? 2 : <name>n</name></expr>)</condition> <block>{
+    <case>case <expr>2</expr>:
+	<expr_stmt><expr><name>s</name> = <name><name>params</name><index>[<expr>1</expr>]</index></name></expr>;</expr_stmt>
+	<if>if <condition>(<expr><call><name>CompareWidths</name><argument_list>(<argument><expr><name>s</name></expr></argument>, <argument><expr>"PAGE"</expr></argument>, <argument><expr>&amp;<name>modifier</name></expr></argument>)</argument_list></call></expr>)</condition><then> <block>{
+	    <expr_stmt><expr><name>mult</name> = (<call><name>MaxRows</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call> + <name>modifier</name>) * <call><name>FontHeight</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	}</block></then> <else>else <if>if <condition>(<expr><call><name>CompareWidths</name><argument_list>(<argument><expr><name>s</name></expr></argument>, <argument><expr>"HALFPAGE"</expr></argument>, <argument><expr>&amp;<name>modifier</name></expr></argument>)</argument_list></call></expr>)</condition><then> <block>{
+	    <expr_stmt><expr><name>mult</name> = ((<call><name>MaxRows</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call> + <name>modifier</name>) * <call><name>FontHeight</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call>) / 2</expr>;</expr_stmt>
+	}</block></then> <else>else <if>if <condition>(<expr><call><name>CompareWidths</name><argument_list>(<argument><expr><name>s</name></expr></argument>, <argument><expr>"PIXEL"</expr></argument>, <argument><expr>&amp;<name>modifier</name></expr></argument>)</argument_list></call></expr>)</condition><then> <block>{
+	    <expr_stmt><expr><name>mult</name> = 1</expr>;</expr_stmt>
+	}</block></then> <else>else <block>{
+	    <comment type="block">/* else assume that it is Line */</comment>
+	    <expr_stmt><expr><name>mult</name> = <call><name>FontHeight</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	}</block></else></if></else></if></else></if>
+	<expr_stmt><expr><name>mult</name> *= <call><name>atoi</name><argument_list>(<argument><expr><name><name>params</name><index>[<expr>0</expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<break>break;</break>
+    </case><case>case <expr>1</expr>:
+	<expr_stmt><expr><name>mult</name> = <call><name>atoi</name><argument_list>(<argument><expr><name><name>params</name><index>[<expr>0</expr>]</index></name></expr></argument>)</argument_list></call> * <call><name>FontHeight</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>	<comment type="block">/* lines */</comment>
+	<break>break;</break>
+    </case><default>default:
+	<expr_stmt><expr><name>mult</name> = <name>screen</name>-&gt;<name>scrolllines</name> * <call><name>FontHeight</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<break>break;</break>
+    </default>}</block></switch>
+    <return>return <expr><name>mult</name></expr>;</return>
+}</block></function>
+
+<function><type><name>static</name> <name>long</name></type>
+<name>AmountToScroll</name><parameter_list>(<param><decl><type><name>Widget</name></type> <name>w</name></decl></param>, <param><decl><type><name>String</name> *</type> <name>params</name></decl></param>, <param><decl><type><name>Cardinal</name></type> <name>nparams</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>long</name></type> <name>result</name> =<init> <expr>0</expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>XtermWidget</name></type> <name>xw</name></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr>(<name>xw</name> = <call><name>getXtermWidget</name><argument_list>(<argument><expr><name>w</name></expr></argument>)</argument_list></call>) != 0</expr>)</condition><then> <block>{
+	<decl_stmt><decl><type><name>TScreen</name> *</type><name>screen</name> =<init> <expr><call><name>TScreenOf</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+	<if>if <condition>(<expr><name>nparams</name> &lt;= 2
+	    || <name>screen</name>-&gt;<name>send_mouse_pos</name> == <name>MOUSE_OFF</name></expr>)</condition><then> <block>{
+	    <expr_stmt><expr><name>result</name> = <call><name>params_to_pixels</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr><name>params</name></expr></argument>, <argument><expr><name>nparams</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	}</block></then></if>
+    }</block></then></if>
+    <return>return <expr><name>result</name></expr>;</return>
+}</block></function>
+
+<comment type="block">/*ARGSUSED*/</comment>
+<function><type><name>void</name></type>
+<name>HandleScrollForward</name><parameter_list>(
+		       <param><decl><type><name>Widget</name></type> <name>xw</name></decl></param>,
+		       <param><decl><type><name>XEvent</name> * <name>event</name></type> <name>GCC_UNUSED</name></decl></param>,
+		       <param><decl><type><name>String</name> *</type> <name>params</name></decl></param>,
+		       <param><decl><type><name>Cardinal</name> *</type><name>nparams</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>long</name></type> <name>amount</name></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr>(<name>amount</name> = <call><name>AmountToScroll</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>params</name></expr></argument>, <argument><expr>*<name>nparams</name></expr></argument>)</argument_list></call>) != 0</expr>)</condition><then> <block>{
+	<expr_stmt><expr><call><name>ScrollTextUpDownBy</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr>(<name>XtPointer</name>) 0</expr></argument>, <argument><expr>(<name>XtPointer</name>) <name>amount</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></then></if>
+}</block></function>
+
+<comment type="block">/*ARGSUSED*/</comment>
+<function><type><name>void</name></type>
+<name>HandleScrollBack</name><parameter_list>(
+		    <param><decl><type><name>Widget</name></type> <name>xw</name></decl></param>,
+		    <param><decl><type><name>XEvent</name> * <name>event</name></type> <name>GCC_UNUSED</name></decl></param>,
+		    <param><decl><type><name>String</name> *</type> <name>params</name></decl></param>,
+		    <param><decl><type><name>Cardinal</name> *</type><name>nparams</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>long</name></type> <name>amount</name></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr>(<name>amount</name> = -<call><name>AmountToScroll</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>params</name></expr></argument>, <argument><expr>*<name>nparams</name></expr></argument>)</argument_list></call>) != 0</expr>)</condition><then> <block>{
+	<expr_stmt><expr><call><name>ScrollTextUpDownBy</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr>(<name>XtPointer</name>) 0</expr></argument>, <argument><expr>(<name>XtPointer</name>) <name>amount</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></then></if>
+}</block></function>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_SCROLL_LOCK</name></expr></cpp:if>
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>SCROLL_LOCK_LED</name> 3</cpp:define>
+
+<cpp:ifdef>#<cpp:directive>ifdef</cpp:directive> <name>HAVE_XKBQUERYEXTENSION</name></cpp:ifdef>
+<comment type="block">/*
+ * Check for Xkb on client and server.
+ */</comment>
+<function><type><name>static</name> <name>int</name></type>
+<name>have_xkb</name><parameter_list>(<param><decl><type><name>Display</name> *</type> <name>dpy</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>static</name> <name>int</name></type> <name>initialized</name> =<init> <expr>-1</expr></init></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr><name>initialized</name> &lt; 0</expr>)</condition><then> <block>{
+	<decl_stmt><decl><type><name>int</name></type> <name>xkbmajor</name> =<init> <expr><name>XkbMajorVersion</name></expr></init></decl>;</decl_stmt>
+	<decl_stmt><decl><type><name>int</name></type> <name>xkbminor</name> =<init> <expr><name>XkbMinorVersion</name></expr></init></decl>;</decl_stmt>
+	<decl_stmt><decl><type><name>int</name></type> <name>xkbopcode</name>, <name>xkbevent</name>, <name>xkberror</name></decl>;</decl_stmt>
+
+	<expr_stmt><expr><name>initialized</name> = 0</expr>;</expr_stmt>
+	<if>if <condition>(<expr><call><name>XkbLibraryVersion</name><argument_list>(<argument><expr>&amp;<name>xkbmajor</name></expr></argument>, <argument><expr>&amp;<name>xkbminor</name></expr></argument>)</argument_list></call>
+	    &amp;&amp; <call><name>XkbQueryExtension</name><argument_list>(<argument><expr><name>dpy</name></expr></argument>,
+				 <argument><expr>&amp;<name>xkbopcode</name></expr></argument>,
+				 <argument><expr>&amp;<name>xkbevent</name></expr></argument>,
+				 <argument><expr>&amp;<name>xkberror</name></expr></argument>,
+				 <argument><expr>&amp;<name>xkbmajor</name></expr></argument>,
+				 <argument><expr>&amp;<name>xkbminor</name></expr></argument>)</argument_list></call></expr>)</condition><then> <block>{
+	    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("we have Xkb\n")</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><name>initialized</name> = 1</expr>;</expr_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_TRACE</name></expr></cpp:if>
+	    <block>{
+		<decl_stmt><decl><type><name>XkbDescPtr</name></type> <name>xkb</name></decl>;</decl_stmt>
+		<decl_stmt><decl><type><name>unsigned</name> <name>int</name></type> <name>mask</name></decl>;</decl_stmt>
+		<decl_stmt><decl><type><name>int</name></type> <name>n</name></decl>;</decl_stmt>
+		<decl_stmt><decl><type><name>char</name> *</type><name>modStr</name></decl>;</decl_stmt>
+
+		<expr_stmt><expr><name>xkb</name> = <call><name>XkbGetKeyboard</name><argument_list>(<argument><expr><name>dpy</name></expr></argument>, <argument><expr><name>XkbAllComponentsMask</name></expr></argument>, <argument><expr><name>XkbUseCoreKbd</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<if>if <condition>(<expr><name>xkb</name> != <name>NULL</name></expr>)</condition><then> <block>{
+
+		    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("XkbGetKeyboard ok\n")</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		    <for>for (<init><expr><name>n</name> = 0</expr>;</init> <condition><expr><name>n</name> &lt; <name>XkbNumVirtualMods</name></expr>;</condition> <incr><expr>++<name>n</name></expr></incr>) <block>{
+			<if>if <condition>(<expr><name>xkb</name>-&gt;<name>names</name>-&gt;<name><name>vmods</name><index>[<expr><name>n</name></expr>]</index></name> != 0</expr>)</condition><then> <block>{
+			    <expr_stmt><expr><name>modStr</name> = <call><name>XGetAtomName</name><argument_list>(<argument><expr><name>xkb</name>-&gt;<name>dpy</name></expr></argument>,
+						  <argument><expr><name>xkb</name>-&gt;<name>names</name>-&gt;<name><name>vmods</name><index>[<expr><name>n</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+			    <if>if <condition>(<expr><name>modStr</name> != 0</expr>)</condition><then> <block>{
+				<expr_stmt><expr><call><name>XkbVirtualModsToReal</name><argument_list>(<argument><expr><name>xkb</name></expr></argument>,
+						     <argument><expr><call>(<name>unsigned</name>) <argument_list>(<argument><expr>1 &lt;&lt; <name>n</name></expr></argument>)</argument_list></call></expr></argument>,
+						     <argument><expr>&amp;<name>mask</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+				<expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("  name[%d] %s (%#x)\n", <name>n</name>, <name>modStr</name>, <name>mask</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+			    }</block></then></if>
+			}</block></then></if>
+		    }</block></for>
+		    <expr_stmt><expr><call><name>XkbFreeKeyboard</name><argument_list>(<argument><expr><name>xkb</name></expr></argument>, <argument><expr>0</expr></argument>, <argument><expr><name>True</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		}</block></then></if>
+	    }</block>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+	}</block></then></if>
+    }</block></then></if>
+    <return>return <expr><name>initialized</name></expr>;</return>
+}</block></function>
+
+<function><type><name>static</name> <name>Boolean</name></type>
+<name>getXkbLED</name><parameter_list>(<param><decl><type><name>Display</name> *</type> <name>dpy</name></decl></param>, <param><decl><type><name>const</name> <name>char</name> *</type><name>name</name></decl></param>, <param><decl><type><name>Boolean</name> *</type> <name>result</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>Atom</name></type> <name>my_atom</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>Boolean</name></type> <name>success</name> =<init> <expr><name>False</name></expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>Bool</name></type> <name>state</name></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr><call><name>have_xkb</name><argument_list>(<argument><expr><name>dpy</name></expr></argument>)</argument_list></call></expr>)</condition><then> <block>{
+	<expr_stmt><expr><name>my_atom</name> = <call><name>XInternAtom</name><argument_list>(<argument><expr><name>dpy</name></expr></argument>, <argument><expr><name>name</name></expr></argument>, <argument><expr><name>False</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<if>if <condition>(<expr>(<name>my_atom</name> != <name>None</name>) &amp;&amp;
+	    <call><name>XkbGetNamedIndicator</name><argument_list>(<argument><expr><name>dpy</name></expr></argument>, <argument><expr><name>my_atom</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr>&amp;<name>state</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>)</condition><then> <block>{
+	    <expr_stmt><expr>*<name>result</name> = (<name>Boolean</name>) <name>state</name></expr>;</expr_stmt>
+	    <expr_stmt><expr><name>success</name> = <name>True</name></expr>;</expr_stmt>
+	}</block></then></if>
+    }</block></then></if>
+
+    <return>return <expr><name>success</name></expr>;</return>
+}</block></function>
+
+<comment type="block">/*
+ * Use Xkb if we have it (still unreliable, but slightly better than hardcoded).
+ */</comment>
+<function><type><name>static</name> <name>Boolean</name></type>
+<name>showXkbLED</name><parameter_list>(<param><decl><type><name>Display</name> *</type> <name>dpy</name></decl></param>, <param><decl><type><name>const</name> <name>char</name> *</type><name>name</name></decl></param>, <param><decl><type><name>Bool</name></type> <name>enable</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>Atom</name></type> <name>my_atom</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>Boolean</name></type> <name>result</name> =<init> <expr><name>False</name></expr></init></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr><call><name>have_xkb</name><argument_list>(<argument><expr><name>dpy</name></expr></argument>)</argument_list></call></expr>)</condition><then> <block>{
+	<expr_stmt><expr><name>my_atom</name> = <call><name>XInternAtom</name><argument_list>(<argument><expr><name>dpy</name></expr></argument>, <argument><expr><name>name</name></expr></argument>, <argument><expr><name>False</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<if>if <condition>(<expr>(<name>my_atom</name> != <name>None</name>) &amp;&amp;
+	    <call><name>XkbGetNamedIndicator</name><argument_list>(<argument><expr><name>dpy</name></expr></argument>, <argument><expr><name>my_atom</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call> &amp;&amp;
+	    <call><name>XkbSetNamedIndicator</name><argument_list>(<argument><expr><name>dpy</name></expr></argument>, <argument><expr><name>my_atom</name></expr></argument>, <argument><expr><name>True</name></expr></argument>, <argument><expr><name>enable</name></expr></argument>, <argument><expr><name>False</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>)</condition><then> <block>{
+	    <expr_stmt><expr><name>result</name> = <name>True</name></expr>;</expr_stmt>
+	}</block></then></if>
+    }</block></then></if>
+
+    <return>return <expr><name>result</name></expr>;</return>
+}</block></function>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<comment type="block">/*
+ * xlsatoms agrees with this list.  However Num/Caps lock are generally
+ * unusable due to special treatment in X.  They are used here for
+ * completeness.
+ */</comment>
+<decl_stmt><decl><type><name>static</name> <name>const</name> <name>char</name> *</type><name><name>led_table</name><index>[]</index></name> =<init>
+<expr><block>{
+    <expr>"Num Lock"</expr>,
+    <expr>"Caps Lock"</expr>,
+    <expr>"Scroll Lock"</expr>
+}</block></expr></init></decl>;</decl_stmt>
+
+<function><type><name>static</name> <name>Boolean</name></type>
+<name>xtermGetLED</name><parameter_list>(<param><decl><type><name>TScreen</name> *</type> <name>screen</name></decl></param>, <param><decl><type><name>Cardinal</name></type> <name>led_number</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>Display</name> *</type><name>dpy</name> =<init> <expr><name>screen</name>-&gt;<name>display</name></expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>Boolean</name></type> <name>result</name> =<init> <expr><name>False</name></expr></init></decl>;</decl_stmt>
+
+<cpp:ifdef>#<cpp:directive>ifdef</cpp:directive> <name>HAVE_XKBQUERYEXTENSION</name></cpp:ifdef>
+    <if>if <condition>(<expr>!<call><name>getXkbLED</name><argument_list>(<argument><expr><name>dpy</name></expr></argument>, <argument><expr><name><name>led_table</name><index>[<expr><name>led_number</name> - 1</expr>]</index></name></expr></argument>, <argument><expr>&amp;<name>result</name></expr></argument>)</argument_list></call></expr>)</condition><then>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+    <block>{
+	<decl_stmt><decl><type><name>XKeyboardState</name></type> <name>state</name></decl>;</decl_stmt>
+	<decl_stmt><decl><type><name>unsigned</name> <name>long</name></type> <name>my_bit</name> =<init> <expr>(<name>unsigned</name> <name>long</name>) (1 &lt;&lt; (<name>led_number</name> - 1))</expr></init></decl>;</decl_stmt>
+
+	<expr_stmt><expr><call><name>XGetKeyboardControl</name><argument_list>(<argument><expr><name>dpy</name></expr></argument>, <argument><expr>&amp;<name>state</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+	<expr_stmt><expr><name>result</name> = <call>(<name>Boolean</name>) <argument_list>(<argument><expr>(<name>state</name>.<name>led_mask</name> &amp; <name>my_bit</name>) != 0</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></then></if>
+
+    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("xtermGetLED %d:%s\n", <name>led_number</name>, <call><name>BtoS</name><argument_list>(<argument><expr><name>result</name></expr></argument>)</argument_list></call>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <return>return <expr><name>result</name></expr>;</return>
+}</block></function>
+
+<comment type="block">/*
+ * Display the given LED, preferably independent of keyboard state.
+ */</comment>
+<function><type><name>void</name></type>
+<name>xtermShowLED</name><parameter_list>(<param><decl><type><name>TScreen</name> *</type> <name>screen</name></decl></param>, <param><decl><type><name>Cardinal</name></type> <name>led_number</name></decl></param>, <param><decl><type><name>Bool</name></type> <name>enable</name></decl></param>)</parameter_list>
+<block>{
+    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("xtermShowLED %d:%s\n", <name>led_number</name>, <call><name>BtoS</name><argument_list>(<argument><expr><name>enable</name></expr></argument>)</argument_list></call>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <if>if <condition>(<expr>(<name>led_number</name> &gt;= 1) &amp;&amp; (<name>led_number</name> &lt;= <call><name>XtNumber</name><argument_list>(<argument><expr><name>led_table</name></expr></argument>)</argument_list></call>)</expr>)</condition><then> <block>{
+	<decl_stmt><decl><type><name>Display</name> *</type><name>dpy</name> =<init> <expr><name>screen</name>-&gt;<name>display</name></expr></init></decl>;</decl_stmt>
+
+<cpp:ifdef>#<cpp:directive>ifdef</cpp:directive> <name>HAVE_XKBQUERYEXTENSION</name></cpp:ifdef>
+	<if>if <condition>(<expr>!<call><name>showXkbLED</name><argument_list>(<argument><expr><name>dpy</name></expr></argument>, <argument><expr><name><name>led_table</name><index>[<expr><name>led_number</name> - 1</expr>]</index></name></expr></argument>, <argument><expr><name>enable</name></expr></argument>)</argument_list></call></expr>)</condition><then>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+	<block>{
+	    <decl_stmt><decl><type><name>XKeyboardState</name></type> <name>state</name></decl>;</decl_stmt>
+	    <decl_stmt><decl><type><name>XKeyboardControl</name></type> <name>values</name></decl>;</decl_stmt>
+	    <decl_stmt><decl><type><name>unsigned</name> <name>long</name></type> <name>use_mask</name></decl>;</decl_stmt>
+	    <decl_stmt><decl><type><name>unsigned</name> <name>long</name></type> <name>my_bit</name> =<init> <expr>(<name>unsigned</name> <name>long</name>) (1 &lt;&lt; (<name>led_number</name> - 1))</expr></init></decl>;</decl_stmt>
+
+	    <expr_stmt><expr><call><name>XGetKeyboardControl</name><argument_list>(<argument><expr><name>dpy</name></expr></argument>, <argument><expr>&amp;<name>state</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><name>use_mask</name> = <name>state</name>.<name>led_mask</name></expr>;</expr_stmt>
+	    <if>if <condition>(<expr><name>enable</name></expr>)</condition><then> <block>{
+		<expr_stmt><expr><name>use_mask</name> |= <name>my_bit</name></expr>;</expr_stmt>
+	    }</block></then> <else>else <block>{
+		<expr_stmt><expr><name>use_mask</name> &amp;= ~<name>my_bit</name></expr>;</expr_stmt>
+	    }</block></else></if>
+
+	    <if>if <condition>(<expr><name>state</name>.<name>led_mask</name> != <name>use_mask</name></expr>)</condition><then> <block>{
+		<expr_stmt><expr><name>values</name>.<name>led</name> = (<name>int</name>) <name>led_number</name></expr>;</expr_stmt>
+		<expr_stmt><expr><name>values</name>.<name>led_mode</name> = <name>enable</name></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>XChangeKeyboardControl</name><argument_list>(<argument><expr><name>dpy</name></expr></argument>, <argument><expr><name>KBLed</name> | <name>KBLedMode</name></expr></argument>, <argument><expr>&amp;<name>values</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    }</block></then></if>
+	}</block></then></if>
+    }</block></then></if>
+}</block></function>
+
+<function><type><name>void</name></type>
+<name>xtermClearLEDs</name><parameter_list>(<param><decl><type><name>TScreen</name> *</type> <name>screen</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>Display</name> *</type><name>dpy</name> =<init> <expr><name>screen</name>-&gt;<name>display</name></expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>XKeyboardControl</name></type> <name>values</name></decl>;</decl_stmt>
+
+    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("xtermClearLEDs\n")</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:ifdef>#<cpp:directive>ifdef</cpp:directive> <name>HAVE_XKBQUERYEXTENSION</name></cpp:ifdef>
+    <expr_stmt><expr><call><name>ShowScrollLock</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr><name>False</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+    <expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr>&amp;<name>values</name></expr></argument>, <argument><expr>0</expr></argument>, <argument><expr><call><name>sizeof</name><argument_list>(<argument><expr><name>values</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>XChangeKeyboardControl</name><argument_list>(<argument><expr><name>dpy</name></expr></argument>, <argument><expr><name>KBLedMode</name></expr></argument>, <argument><expr>&amp;<name>values</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+}</block></function>
+
+<function><type><name>void</name></type>
+<name>ShowScrollLock</name><parameter_list>(<param><decl><type><name>TScreen</name> *</type> <name>screen</name></decl></param>, <param><decl><type><name>Bool</name></type> <name>enable</name></decl></param>)</parameter_list>
+<block>{
+    <expr_stmt><expr><call><name>xtermShowLED</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr><name>SCROLL_LOCK_LED</name></expr></argument>, <argument><expr><name>enable</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+}</block></function>
+
+<function><type><name>void</name></type>
+<name>GetScrollLock</name><parameter_list>(<param><decl><type><name>TScreen</name> *</type> <name>screen</name></decl></param>)</parameter_list>
+<block>{
+    <if>if <condition>(<expr><name>screen</name>-&gt;<name>allowScrollLock</name></expr>)</condition><then>
+	<expr_stmt><expr><name>screen</name>-&gt;<name>scroll_lock</name> = <call><name>xtermGetLED</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr><name>SCROLL_LOCK_LED</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+}</block></function>
+
+<function><type><name>void</name></type>
+<name>SetScrollLock</name><parameter_list>(<param><decl><type><name>TScreen</name> *</type> <name>screen</name></decl></param>, <param><decl><type><name>Bool</name></type> <name>enable</name></decl></param>)</parameter_list>
+<block>{
+    <if>if <condition>(<expr><name>screen</name>-&gt;<name>allowScrollLock</name></expr>)</condition><then> <block>{
+	<if>if <condition>(<expr><name>screen</name>-&gt;<name>scroll_lock</name> != <name>enable</name></expr>)</condition><then> <block>{
+	    <expr_stmt><expr><name>screen</name>-&gt;<name>scroll_lock</name> = (<name>Boolean</name>) <name>enable</name></expr>;</expr_stmt>
+	    <expr_stmt><expr><call><name>ShowScrollLock</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr><name>enable</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	}</block></then></if>
+    }</block></then></if>
+}</block></function>
+
+<function><type><name>void</name></type>
+<name>HandleScrollLock</name><parameter_list>(<param><decl><type><name>Widget</name></type> <name>w</name></decl></param>,
+		 <param><decl><type><name>XEvent</name> * <name>event</name></type> <name>GCC_UNUSED</name></decl></param>,
+		 <param><decl><type><name>String</name> *</type> <name>params</name></decl></param>,
+		 <param><decl><type><name>Cardinal</name> *</type><name>param_count</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>XtermWidget</name></type> <name>xw</name></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr>(<name>xw</name> = <call><name>getXtermWidget</name><argument_list>(<argument><expr><name>w</name></expr></argument>)</argument_list></call>) != 0</expr>)</condition><then> <block>{
+	<decl_stmt><decl><type><name>TScreen</name> *</type><name>screen</name> =<init> <expr><call><name>TScreenOf</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+	<if>if <condition>(<expr><name>screen</name>-&gt;<name>allowScrollLock</name></expr>)</condition><then> <block>{
+	    <comment type="block">/*
+	     * The default action (used with KeyRelease event) is to cycle the
+	     * state on/off.
+	     */</comment>
+	    <if>if <condition>(<expr>*<name>param_count</name> == 0</expr>)</condition><then> <block>{
+		<expr_stmt><expr><call><name>SetScrollLock</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr>!<name>screen</name>-&gt;<name>scroll_lock</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("HandleScrollLock -&gt;%d\n",
+		       <name>screen</name>-&gt;<name>scroll_lock</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    }</block></then> <else>else <block>{
+		<expr_stmt><expr><call><name>SetScrollLock</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr><call><name>atoi</name><argument_list>(<argument><expr><name><name>params</name><index>[<expr>0</expr>]</index></name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("HandleScrollLock(%s) -&gt;%d\n",
+		       <name><name>params</name><index>[<expr>0</expr>]</index></name>,
+		       <name>screen</name>-&gt;<name>scroll_lock</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    }</block></else></if>
+	}</block></then></if>
+    }</block></then></if>
+}</block></function>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</unit>

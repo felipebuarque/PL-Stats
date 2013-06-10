@@ -1,0 +1,513 @@
+<unit xmlns="http://www.sdml.info/srcML/src" xmlns:cpp="http://www.sdml.info/srcML/cpp" language="C" dir="" filename="ptydata.c"><comment type="block">/* $XTermId: ptydata.c,v 1.98 2010/06/20 21:41:15 tom Exp $ */</comment>
+
+<comment type="block">/************************************************************
+
+Copyright 1999-2009,2010 by Thomas E. Dickey
+
+                        All Rights Reserved
+
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE ABOVE LISTED COPYRIGHT HOLDER(S) BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+Except as contained in this notice, the name(s) of the above copyright
+holders shall not be used in advertising or otherwise to promote the
+sale, use or other dealings in this Software without prior written
+authorization.
+
+********************************************************/</comment>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;data.h&gt;</cpp:file></cpp:include>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_WIDE_CHARS</name></expr></cpp:if>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;menu.h&gt;</cpp:file></cpp:include>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<comment type="block">/*
+ * Check for both EAGAIN and EWOULDBLOCK, because some supposedly POSIX
+ * systems are broken and return EWOULDBLOCK when they should return EAGAIN.
+ * Note that this macro may evaluate its argument more than once.
+ */</comment>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>EAGAIN</name></expr></argument>)</argument_list></call> &amp;&amp; <call><name>defined</name><argument_list>(<argument><expr><name>EWOULDBLOCK</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>E_TEST</name>(err) ((err) == EAGAIN || (err) == EWOULDBLOCK)</cpp:define>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<cpp:ifdef>#<cpp:directive>ifdef</cpp:directive> <name>EAGAIN</name></cpp:ifdef>
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>E_TEST</name>(err) ((err) == EAGAIN)</cpp:define>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>E_TEST</name>(err) ((err) == EWOULDBLOCK)</cpp:define>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_WIDE_CHARS</name></expr></cpp:if>
+<comment type="block">/*
+ * Convert the 8-bit codes in data-&gt;buffer[] into Unicode in data-&gt;utf_data.
+ * The number of bytes converted will be nonzero iff there is data.
+ */</comment>
+<function><type><name>Bool</name></type>
+<name>decodeUtf8</name><parameter_list>(<param><decl><type><name>PtyData</name> *</type> <name>data</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>int</name></type> <name>i</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>int</name></type> <name>length</name> =<init> <expr><call>(<name>int</name>) <argument_list>(<argument><expr><name>data</name>-&gt;<name>last</name> - <name>data</name>-&gt;<name>next</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>int</name></type> <name>utf_count</name> =<init> <expr>0</expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>unsigned</name></type> <name>utf_char</name> =<init> <expr>0</expr></init></decl>;</decl_stmt>
+
+    <expr_stmt><expr><name>data</name>-&gt;<name>utf_size</name> = 0</expr>;</expr_stmt>
+    <for>for (<init><expr><name>i</name> = 0</expr>;</init> <condition><expr><name>i</name> &lt; <name>length</name></expr>;</condition> <incr><expr><name>i</name>++</expr></incr>) <block>{
+	<decl_stmt><decl><type><name>unsigned</name></type> <name>c</name> =<init> <expr><name>data</name>-&gt;<name><name>next</name><index>[<expr><name>i</name></expr>]</index></name></expr></init></decl>;</decl_stmt>
+
+	<comment type="block">/* Combine UTF-8 into Unicode */</comment>
+	<if>if <condition>(<expr><name>c</name> &lt; 0x80</expr>)</condition><then> <block>{
+	    <comment type="block">/* We received an ASCII character */</comment>
+	    <if>if <condition>(<expr><name>utf_count</name> &gt; 0</expr>)</condition><then> <block>{
+		<expr_stmt><expr><name>data</name>-&gt;<name>utf_data</name> = <name>UCS_REPL</name></expr>;</expr_stmt>	<comment type="block">/* prev. sequence incomplete */</comment>
+		<expr_stmt><expr><name>data</name>-&gt;<name>utf_size</name> = (<name>i</name> + 1)</expr>;</expr_stmt>
+	    }</block></then> <else>else <block>{
+		<expr_stmt><expr><name>data</name>-&gt;<name>utf_data</name> = (<name>IChar</name>) <name>c</name></expr>;</expr_stmt>
+		<expr_stmt><expr><name>data</name>-&gt;<name>utf_size</name> = 1</expr>;</expr_stmt>
+	    }</block></else></if>
+	    <break>break;</break>
+	}</block></then> <else>else <if>if <condition>(<expr><name>c</name> &lt; 0xc0</expr>)</condition><then> <block>{
+	    <comment type="block">/* We received a continuation byte */</comment>
+	    <if>if <condition>(<expr><name>utf_count</name> &lt; 1</expr>)</condition><then> <block>{
+		<comment type="block">/*
+		 * We received a continuation byte before receiving a sequence
+		 * state.  Or an attempt to use a C1 control string.  Either
+		 * way, it is mapped to the replacement character.
+		 */</comment>
+		<expr_stmt><expr><name>data</name>-&gt;<name>utf_data</name> = <name>UCS_REPL</name></expr>;</expr_stmt>	<comment type="block">/* ... unexpectedly */</comment>
+		<expr_stmt><expr><name>data</name>-&gt;<name>utf_size</name> = (<name>i</name> + 1)</expr>;</expr_stmt>
+		<break>break;</break>
+	    }</block></then> <else>else <block>{
+		<comment type="block">/* Check for overlong UTF-8 sequences for which a shorter
+		 * encoding would exist and replace them with UCS_REPL.
+		 * An overlong UTF-8 sequence can have any of the following
+		 * forms:
+		 *   1100000x 10xxxxxx
+		 *   11100000 100xxxxx 10xxxxxx
+		 *   11110000 1000xxxx 10xxxxxx 10xxxxxx
+		 *   11111000 10000xxx 10xxxxxx 10xxxxxx 10xxxxxx
+		 *   11111100 100000xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+		 */</comment>
+		<if>if <condition>(<expr>!<name>utf_char</name> &amp;&amp; !((<name>c</name> &amp; 0x7f) &gt;&gt; (7 - <name>utf_count</name>))</expr>)</condition><then> <block>{
+		    <expr_stmt><expr><name>utf_char</name> = <name>UCS_REPL</name></expr>;</expr_stmt>
+		}</block></then></if>
+		<expr_stmt><expr><name>utf_char</name> &lt;&lt;= 6</expr>;</expr_stmt>
+		<expr_stmt><expr><name>utf_char</name> |= (<name>c</name> &amp; 0x3f)</expr>;</expr_stmt>
+		<if>if <condition>(<expr>(<name>utf_char</name> &gt;= 0xd800 &amp;&amp;
+		     <name>utf_char</name> &lt;= 0xdfff) ||
+		    (<name>utf_char</name> == 0xfffe) ||
+		    (<name>utf_char</name> == <name>HIDDEN_CHAR</name>)</expr>)</condition><then> <block>{
+		    <expr_stmt><expr><name>utf_char</name> = <name>UCS_REPL</name></expr>;</expr_stmt>
+		}</block></then></if>
+		<expr_stmt><expr><name>utf_count</name>--</expr>;</expr_stmt>
+		<if>if <condition>(<expr><name>utf_count</name> == 0</expr>)</condition><then> <block>{
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr>!<name>OPT_WIDER_ICHAR</name></expr></cpp:if>
+		    <comment type="block">/* characters outside UCS-2 become UCS_REPL */</comment>
+		    <if>if <condition>(<expr><name>utf_char</name> &gt; 0xffff</expr>)</condition><then> <block>{
+			<expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("using replacement for %#x\n", <name>utf_char</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+			<expr_stmt><expr><name>utf_char</name> = <name>UCS_REPL</name></expr>;</expr_stmt>
+		    }</block></then></if>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+		    <expr_stmt><expr><name>data</name>-&gt;<name>utf_data</name> = (<name>IChar</name>) <name>utf_char</name></expr>;</expr_stmt>
+		    <expr_stmt><expr><name>data</name>-&gt;<name>utf_size</name> = (<name>i</name> + 1)</expr>;</expr_stmt>
+		    <break>break;</break>
+		}</block></then></if>
+	    }</block></else></if>
+	}</block></then> <else>else <block>{
+	    <comment type="block">/* We received a sequence start byte */</comment>
+	    <if>if <condition>(<expr><name>utf_count</name> &gt; 0</expr>)</condition><then> <block>{
+		<expr_stmt><expr><name>data</name>-&gt;<name>utf_data</name> = <name>UCS_REPL</name></expr>;</expr_stmt>	<comment type="block">/* prev. sequence incomplete */</comment>
+		<expr_stmt><expr><name>data</name>-&gt;<name>utf_size</name> = (<name>i</name> + 1)</expr>;</expr_stmt>
+		<break>break;</break>
+	    }</block></then></if>
+	    <if>if <condition>(<expr><name>c</name> &lt; 0xe0</expr>)</condition><then> <block>{
+		<expr_stmt><expr><name>utf_count</name> = 1</expr>;</expr_stmt>
+		<expr_stmt><expr><name>utf_char</name> = (<name>c</name> &amp; 0x1f)</expr>;</expr_stmt>
+		<if>if <condition>(<expr>!(<name>c</name> &amp; 0x1e)</expr>)</condition><then>
+		    <expr_stmt><expr><name>utf_char</name> = <name>UCS_REPL</name></expr>;</expr_stmt></then></if>	<comment type="block">/* overlong sequence */</comment>
+	    }</block></then> <else>else <if>if <condition>(<expr><name>c</name> &lt; 0xf0</expr>)</condition><then> <block>{
+		<expr_stmt><expr><name>utf_count</name> = 2</expr>;</expr_stmt>
+		<expr_stmt><expr><name>utf_char</name> = (<name>c</name> &amp; 0x0f)</expr>;</expr_stmt>
+	    }</block></then> <else>else <if>if <condition>(<expr><name>c</name> &lt; 0xf8</expr>)</condition><then> <block>{
+		<expr_stmt><expr><name>utf_count</name> = 3</expr>;</expr_stmt>
+		<expr_stmt><expr><name>utf_char</name> = (<name>c</name> &amp; 0x07)</expr>;</expr_stmt>
+	    }</block></then> <else>else <if>if <condition>(<expr><name>c</name> &lt; 0xfc</expr>)</condition><then> <block>{
+		<expr_stmt><expr><name>utf_count</name> = 4</expr>;</expr_stmt>
+		<expr_stmt><expr><name>utf_char</name> = (<name>c</name> &amp; 0x03)</expr>;</expr_stmt>
+	    }</block></then> <else>else <if>if <condition>(<expr><name>c</name> &lt; 0xfe</expr>)</condition><then> <block>{
+		<expr_stmt><expr><name>utf_count</name> = 5</expr>;</expr_stmt>
+		<expr_stmt><expr><name>utf_char</name> = (<name>c</name> &amp; 0x01)</expr>;</expr_stmt>
+	    }</block></then> <else>else <block>{
+		<expr_stmt><expr><name>data</name>-&gt;<name>utf_data</name> = <name>UCS_REPL</name></expr>;</expr_stmt>
+		<expr_stmt><expr><name>data</name>-&gt;<name>utf_size</name> = (<name>i</name> + 1)</expr>;</expr_stmt>
+		<break>break;</break>
+	    }</block></else></if></else></if></else></if></else></if></else></if>
+	}</block></else></if></else></if>
+    }</block></for>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_TRACE</name> &gt; 1</expr></cpp:if>
+    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("UTF-8 char %04X [%d..%d]\n",
+	   <name>data</name>-&gt;<name>utf_data</name>,
+	   <name>data</name>-&gt;<name>next</name> - <name>data</name>-&gt;<name>buffer</name>,
+	   <name>data</name>-&gt;<name>next</name> - <name>data</name>-&gt;<name>buffer</name> + <name>data</name>-&gt;<name>utf_size</name> - 1)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+    <return>return <expr>(<name>data</name>-&gt;<name>utf_size</name> != 0)</expr>;</return>
+}</block></function>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<function><type><name>int</name></type>
+<name>readPtyData</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>, <param><decl><type><name>PtySelect</name> *</type> <name>select_mask</name></decl></param>, <param><decl><type><name>PtyData</name> *</type> <name>data</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>TScreen</name> *</type><name>screen</name> =<init> <expr><call><name>TScreenOf</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>int</name></type> <name>size</name> =<init> <expr>0</expr></init></decl>;</decl_stmt>
+
+<cpp:ifdef>#<cpp:directive>ifdef</cpp:directive> <name>VMS</name></cpp:ifdef>
+    <if>if <condition>(<expr>*<name>select_mask</name> &amp; <name>pty_mask</name></expr>)</condition><then> <block>{
+	<expr_stmt><expr><call><name>trimPtyData</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>data</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<if>if <condition>(<expr><name>read_queue</name>.<name>flink</name> != 0</expr>)</condition><then> <block>{
+	    <expr_stmt><expr><name>size</name> = <call><name>tt_read</name><argument_list>(<argument><expr><name>data</name>-&gt;<name>next</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <if>if <condition>(<expr><name>size</name> == 0</expr>)</condition><then> <block>{
+		<expr_stmt><expr><call><name>Panic</name><argument_list>(<argument><expr>"input: read returned zero\n"</expr></argument>, <argument><expr>0</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    }</block></then></if>
+	}</block></then> <else>else <block>{
+	    <expr_stmt><expr><name>sys</name>$<call><name>hiber</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+	}</block></else></if>
+    }</block></then></if>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else> <comment type="block">/* !VMS */</comment>
+    <if>if <condition>(<expr><call><name>FD_ISSET</name><argument_list>(<argument><expr><name>screen</name>-&gt;<name>respond</name></expr></argument>, <argument><expr><name>select_mask</name></expr></argument>)</argument_list></call></expr>)</condition><then> <block>{
+	<decl_stmt><decl><type><name>int</name></type> <name>save_err</name></decl>;</decl_stmt>
+	<expr_stmt><expr><call><name>trimPtyData</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>data</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+	<expr_stmt><expr><name>size</name> = (<name>int</name>) <call><name>read</name><argument_list>(<argument><expr><name>screen</name>-&gt;<name>respond</name></expr></argument>, <argument><expr>(<name>char</name> *) <name>data</name>-&gt;<name>last</name></expr></argument>, <argument><expr>(<name>size_t</name>) <name>FRG_SIZE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><name>save_err</name> = <name>errno</name></expr>;</expr_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr>(<call><name>defined</name><argument_list>(<argument><expr><name>i386</name></expr></argument>)</argument_list></call> &amp;&amp; <call><name>defined</name><argument_list>(<argument><expr><name>SVR4</name></expr></argument>)</argument_list></call> &amp;&amp; <call><name>defined</name><argument_list>(<argument><expr><name>sun</name></expr></argument>)</argument_list></call>) || <call><name>defined</name><argument_list>(<argument><expr><name>__CYGWIN__</name></expr></argument>)</argument_list></call></expr></cpp:if>
+	<comment type="block">/*
+	 * Yes, I know this is a majorly f*ugly hack, however it seems to
+	 * be necessary for Solaris x86.  DWH 11/15/94
+	 * Dunno why though..
+	 * (and now CYGWIN, alanh@xfree86.org 08/15/01
+	 */</comment>
+	<if>if <condition>(<expr><name>size</name> &lt;= 0</expr>)</condition><then> <block>{
+	    <if>if <condition>(<expr><name>save_err</name> == <name>EIO</name> || <name>save_err</name> == 0</expr>)</condition><then>
+		<expr_stmt><expr><call><name>Cleanup</name><argument_list>(<argument><expr>0</expr></argument>)</argument_list></call></expr>;</expr_stmt></then>
+	    <else>else <if>if <condition>(<expr>!<call><name>E_TEST</name><argument_list>(<argument><expr><name>save_err</name></expr></argument>)</argument_list></call></expr>)</condition><then>
+		<expr_stmt><expr><call><name>Panic</name><argument_list>(<argument><expr>"input: read returned unexpected error (%d)\n"</expr></argument>, <argument><expr><name>save_err</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if></else></if>
+	    <expr_stmt><expr><name>size</name> = 0</expr>;</expr_stmt>
+	}</block></then></if>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else> <comment type="block">/* !f*ugly */</comment>
+	<if>if <condition>(<expr><name>size</name> &lt; 0</expr>)</condition><then> <block>{
+	    <if>if <condition>(<expr><name>save_err</name> == <name>EIO</name></expr>)</condition><then>
+		<expr_stmt><expr><call><name>Cleanup</name><argument_list>(<argument><expr>0</expr></argument>)</argument_list></call></expr>;</expr_stmt></then>
+	    <else>else <if>if <condition>(<expr>!<call><name>E_TEST</name><argument_list>(<argument><expr><name>save_err</name></expr></argument>)</argument_list></call></expr>)</condition><then>
+		<expr_stmt><expr><call><name>Panic</name><argument_list>(<argument><expr>"input: read returned unexpected error (%d)\n"</expr></argument>, <argument><expr><name>save_err</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if></else></if>
+	    <expr_stmt><expr><name>size</name> = 0</expr>;</expr_stmt>
+	}</block></then> <else>else <if>if <condition>(<expr><name>size</name> == 0</expr>)</condition><then> <block>{
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>__UNIXOS2__</name></expr></argument>)</argument_list></call> || <call><name>defined</name><argument_list>(<argument><expr><name>__FreeBSD__</name></expr></argument>)</argument_list></call></expr></cpp:if>
+	    <expr_stmt><expr><call><name>Cleanup</name><argument_list>(<argument><expr>0</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+	    <expr_stmt><expr><call><name>Panic</name><argument_list>(<argument><expr>"input: read returned zero\n"</expr></argument>, <argument><expr>0</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+	}</block></then></if></else></if>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif> <comment type="block">/* f*ugly */</comment>
+    }</block></then></if>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif> <comment type="block">/* VMS */</comment>
+
+    <if>if <condition>(<expr><name>size</name></expr>)</condition><then> <block>{
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_TRACE</name></expr></cpp:if>
+	<decl_stmt><decl><type><name>int</name></type> <name>i</name></decl>;</decl_stmt>
+
+	<expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("read %d bytes from pty\n", <name>size</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<for>for (<init><expr><name>i</name> = 0</expr>;</init> <condition><expr><name>i</name> &lt; <name>size</name></expr>;</condition> <incr><expr><name>i</name>++</expr></incr>) <block>{
+	    <if>if <condition>(<expr>!(<name>i</name> % 16)</expr>)</condition><then>
+		<expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("%s", <name>i</name> ? "\n    " : "READ")</expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+	    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>(" %02X", <name>data</name>-&gt;<name><name>last</name><index>[<expr><name>i</name></expr>]</index></name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	}</block></for>
+	<expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("\n")</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+	<expr_stmt><expr><name>data</name>-&gt;<name>last</name> += <name>size</name></expr>;</expr_stmt>
+<cpp:ifdef>#<cpp:directive>ifdef</cpp:directive> <name>ALLOWLOGGING</name></cpp:ifdef>
+	<expr_stmt><expr><call><name>TScreenOf</name><argument_list>(<argument><expr><name>term</name></expr></argument>)</argument_list></call>-&gt;<name>logstart</name> = <name>VTbuffer</name>-&gt;<name>next</name></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+    }</block></then></if>
+
+    <return>return <expr>(<name>size</name>)</expr>;</return>
+}</block></function>
+
+<comment type="block">/*
+ * Return the next value from the input buffer.  Note that morePtyData() is
+ * always called before this function, so we can do the UTF-8 input conversion
+ * in that function and simply return the result here.
+ */</comment>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_WIDE_CHARS</name></expr></cpp:if>
+<function><type><name>IChar</name></type>
+<name>nextPtyData</name><parameter_list>(<param><decl><type><name>TScreen</name> *</type> <name>screen</name></decl></param>, <param><decl><type><name>PtyData</name> *</type> <name>data</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>IChar</name></type> <name>result</name></decl>;</decl_stmt>
+    <if>if <condition>(<expr><name>screen</name>-&gt;<name>utf8_inparse</name></expr>)</condition><then> <block>{
+	<expr_stmt><expr><name>result</name> = <call><name>skipPtyData</name><argument_list>(<argument><expr><name>data</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></then> <else>else <block>{
+	<expr_stmt><expr><name>result</name> = *((<name>data</name>)-&gt;<name>next</name>++)</expr>;</expr_stmt>
+	<if>if <condition>(<expr>!<name>screen</name>-&gt;<name>output_eight_bits</name></expr>)</condition><then> <block>{
+	    <expr_stmt><expr><name>result</name> = <call>(<name>IChar</name>) <argument_list>(<argument><expr><name>result</name> &amp; 0x7f</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	}</block></then></if>
+    }</block></else></if>
+    <expr_stmt><expr><call><name>TRACE2</name><argument_list>(<argument><expr>("nextPtyData returns %#x\n", <name>result</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <return>return <expr><name>result</name></expr>;</return>
+}</block></function>
+
+<comment type="block">/*
+ * Simply return the data and skip past it.
+ */</comment>
+<function><type><name>IChar</name></type>
+<name>skipPtyData</name><parameter_list>(<param><decl><type><name>PtyData</name> *</type> <name>data</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>IChar</name></type> <name>result</name> =<init> <expr><name>data</name>-&gt;<name>utf_data</name></expr></init></decl>;</decl_stmt>
+
+    <expr_stmt><expr><name>data</name>-&gt;<name>next</name> += <name>data</name>-&gt;<name>utf_size</name></expr>;</expr_stmt>
+    <expr_stmt><expr><name>data</name>-&gt;<name>utf_size</name> = 0</expr>;</expr_stmt>
+
+    <return>return <expr><name>result</name></expr>;</return>
+}</block></function>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_WIDE_CHARS</name></expr></cpp:if>
+<comment type="block">/*
+ * Called when UTF-8 mode has been turned on/off.
+ */</comment>
+<function><type><name>void</name></type>
+<name>switchPtyData</name><parameter_list>(<param><decl><type><name>TScreen</name> *</type> <name>screen</name></decl></param>, <param><decl><type><name>int</name></type> <name>flag</name></decl></param>)</parameter_list>
+<block>{
+    <if>if <condition>(<expr><name>screen</name>-&gt;<name>utf8_mode</name> != <name>flag</name></expr>)</condition><then> <block>{
+	<expr_stmt><expr><name>screen</name>-&gt;<name>utf8_mode</name> = <name>flag</name></expr>;</expr_stmt>
+	<expr_stmt><expr><name>screen</name>-&gt;<name>utf8_inparse</name> = <call>(<name>Boolean</name>) <argument_list>(<argument><expr><name>flag</name> != 0</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+	<expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("turning UTF-8 mode %s\n", <call><name>BtoS</name><argument_list>(<argument><expr><name>flag</name></expr></argument>)</argument_list></call>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>update_font_utf8_mode</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+    }</block></then></if>
+}</block></function>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<comment type="block">/*
+ * Allocate a buffer.
+ */</comment>
+<function><type><name>void</name></type>
+<name>initPtyData</name><parameter_list>(<param><decl><type><name>PtyData</name> **</type> <name>result</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>PtyData</name> *</type><name>data</name></decl>;</decl_stmt>
+
+    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("initPtyData given minBufSize %d, maxBufSize %d\n",
+	   <name>FRG_SIZE</name>, <name>BUF_SIZE</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+    <if>if <condition>(<expr><name>FRG_SIZE</name> &lt; 64</expr>)</condition><then>
+	<expr_stmt><expr><name>FRG_SIZE</name> = 64</expr>;</expr_stmt></then></if>
+    <if>if <condition>(<expr><name>BUF_SIZE</name> &lt; <name>FRG_SIZE</name></expr>)</condition><then>
+	<expr_stmt><expr><name>BUF_SIZE</name> = <name>FRG_SIZE</name></expr>;</expr_stmt></then></if>
+    <if>if <condition>(<expr><name>BUF_SIZE</name> % <name>FRG_SIZE</name></expr>)</condition><then>
+	<expr_stmt><expr><name>BUF_SIZE</name> = <name>BUF_SIZE</name> + <name>FRG_SIZE</name> - (<name>BUF_SIZE</name> % <name>FRG_SIZE</name>)</expr>;</expr_stmt></then></if>
+
+    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("initPtyData using minBufSize %d, maxBufSize %d\n",
+	   <name>FRG_SIZE</name>, <name>BUF_SIZE</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+    <expr_stmt><expr><name>data</name> = (<name>PtyData</name> *) <call><name>XtMalloc</name><argument_list>(<argument><expr><call>(<name>Cardinal</name>) <argument_list>(<argument><expr><call><name>sizeof</name><argument_list>(<argument><expr>*<name>data</name></expr></argument>)</argument_list></call>
+					    + <call>(<name>unsigned</name>) <argument_list>(<argument><expr><name>BUF_SIZE</name> + <name>FRG_SIZE</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+    <expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><name>data</name></expr></argument>, <argument><expr>0</expr></argument>, <argument><expr><call><name>sizeof</name><argument_list>(<argument><expr>*<name>data</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><name>data</name>-&gt;<name>next</name> = <name>data</name>-&gt;<name>buffer</name></expr>;</expr_stmt>
+    <expr_stmt><expr><name>data</name>-&gt;<name>last</name> = <name>data</name>-&gt;<name>buffer</name></expr>;</expr_stmt>
+    <expr_stmt><expr>*<name>result</name> = <name>data</name></expr>;</expr_stmt>
+}</block></function>
+
+<comment type="block">/*
+ * Initialize a buffer for the caller, using its data in 'next'.
+ */</comment>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_WIDE_CHARS</name></expr></cpp:if>
+<function><type><name>PtyData</name> *</type>
+<name>fakePtyData</name><parameter_list>(<param><decl><type><name>PtyData</name> *</type> <name>result</name></decl></param>, <param><decl><type><name>Char</name> *</type> <name>next</name></decl></param>, <param><decl><type><name>Char</name> *</type> <name>last</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>PtyData</name> *</type><name>data</name> =<init> <expr><name>result</name></expr></init></decl>;</decl_stmt>
+
+    <expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr><name>data</name></expr></argument>, <argument><expr>0</expr></argument>, <argument><expr><call><name>sizeof</name><argument_list>(<argument><expr>*<name>data</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><name>data</name>-&gt;<name>next</name> = <name>next</name></expr>;</expr_stmt>
+    <expr_stmt><expr><name>data</name>-&gt;<name>last</name> = <name>last</name></expr>;</expr_stmt>
+
+    <return>return <expr><name>data</name></expr>;</return>
+}</block></function>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<comment type="block">/*
+ * Remove used data by shifting the buffer down, to make room for more data,
+ * e.g., a continuation-read.
+ */</comment>
+<function><type><name>void</name></type>
+<name>trimPtyData</name><parameter_list>(<param><decl><type><name>XtermWidget</name> <name>xw</name></type> <name>GCC_UNUSED</name></decl></param>, <param><decl><type><name>PtyData</name> *</type> <name>data</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>int</name></type> <name>i</name></decl>;</decl_stmt>
+
+    <expr_stmt><expr><call><name>FlushLog</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+    <if>if <condition>(<expr><name>data</name>-&gt;<name>next</name> != <name>data</name>-&gt;<name>buffer</name></expr>)</condition><then> <block>{
+	<decl_stmt><decl><type><name>int</name></type> <name>n</name> =<init> <expr><call>(<name>int</name>) <argument_list>(<argument><expr><name>data</name>-&gt;<name>last</name> - <name>data</name>-&gt;<name>next</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+	<expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("shifting buffer down by %d\n", <name>n</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<for>for (<init><expr><name>i</name> = 0</expr>;</init> <condition><expr><name>i</name> &lt; <name>n</name></expr>;</condition> <incr><expr>++<name>i</name></expr></incr>) <block>{
+	    <expr_stmt><expr><name>data</name>-&gt;<name><name>buffer</name><index>[<expr><name>i</name></expr>]</index></name> = <name>data</name>-&gt;<name><name>next</name><index>[<expr><name>i</name></expr>]</index></name></expr>;</expr_stmt>
+	}</block></for>
+	<expr_stmt><expr><name>data</name>-&gt;<name>next</name> = <name>data</name>-&gt;<name>buffer</name></expr>;</expr_stmt>
+	<expr_stmt><expr><name>data</name>-&gt;<name>last</name> = <name>data</name>-&gt;<name>next</name> + <name>n</name></expr>;</expr_stmt>
+    }</block></then></if>
+
+}</block></function>
+
+<comment type="block">/*
+ * Insert new data into the input buffer so the next calls to morePtyData()
+ * and nextPtyData() will return that.
+ */</comment>
+<function><type><name>void</name></type>
+<name>fillPtyData</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>, <param><decl><type><name>PtyData</name> *</type> <name>data</name></decl></param>, <param><decl><type><name>const</name> <name>char</name> *</type><name>value</name></decl></param>, <param><decl><type><name>int</name></type> <name>length</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>int</name></type> <name>size</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>int</name></type> <name>n</name></decl>;</decl_stmt>
+
+    <comment type="block">/* remove the used portion of the buffer */</comment>
+    <expr_stmt><expr><call><name>trimPtyData</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>data</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+    <expr_stmt><expr><name>VTbuffer</name>-&gt;<name>last</name> += <name>length</name></expr>;</expr_stmt>
+    <expr_stmt><expr><name>size</name> = <call>(<name>int</name>) <argument_list>(<argument><expr><name>VTbuffer</name>-&gt;<name>last</name> - <name>VTbuffer</name>-&gt;<name>next</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+    <comment type="block">/* shift the unused portion up to make room */</comment>
+    <for>for (<init><expr><name>n</name> = <name>size</name></expr>;</init> <condition><expr><name>n</name> &gt;= <name>length</name></expr>;</condition> <incr><expr>--<name>n</name></expr></incr>)
+	<expr_stmt><expr><name>VTbuffer</name>-&gt;<name><name>next</name><index>[<expr><name>n</name></expr>]</index></name> = <name>VTbuffer</name>-&gt;<name><name>next</name><index>[<expr><name>n</name> - <name>length</name></expr>]</index></name></expr>;</expr_stmt></for>
+
+    <comment type="block">/* insert the new bytes to interpret */</comment>
+    <for>for (<init><expr><name>n</name> = 0</expr>;</init> <condition><expr><name>n</name> &lt; <name>length</name></expr>;</condition> <incr><expr><name>n</name>++</expr></incr>)
+	<expr_stmt><expr><name>VTbuffer</name>-&gt;<name><name>next</name><index>[<expr><name>n</name></expr>]</index></name> = <call><name>CharOf</name><argument_list>(<argument><expr><name><name>value</name><index>[<expr><name>n</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt></for>
+}</block></function>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_WIDE_CHARS</name></expr></cpp:if>
+<function><type><name>Char</name> *</type>
+<name>convertToUTF8</name><parameter_list>(<param><decl><type><name>Char</name> *</type> <name>lp</name></decl></param>, <param><decl><type><name>unsigned</name></type> <name>c</name></decl></param>)</parameter_list>
+<block>{
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>CH</name>(n) (Char)((c) &gt;&gt; ((n) * 8))</cpp:define>
+    <if>if <condition>(<expr><name>c</name> &lt; 0x80</expr>)</condition><then> <block>{
+	<comment type="block">/*  0*******  */</comment>
+	<expr_stmt><expr>*<name>lp</name>++ = (<name>Char</name>) <call><name>CH</name><argument_list>(<argument><expr>0</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></then> <else>else <if>if <condition>(<expr><name>c</name> &lt; 0x800</expr>)</condition><then> <block>{
+	<comment type="block">/*  110***** 10******  */</comment>
+	<expr_stmt><expr>*<name>lp</name>++ = <call>(<name>Char</name>) <argument_list>(<argument><expr>0xc0 | (<call><name>CH</name><argument_list>(<argument><expr>0</expr></argument>)</argument_list></call> &gt;&gt; 6) | ((<call><name>CH</name><argument_list>(<argument><expr>1</expr></argument>)</argument_list></call> &amp; 0x07) &lt;&lt; 2)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr>*<name>lp</name>++ = <call>(<name>Char</name>) <argument_list>(<argument><expr>0x80 | (<call><name>CH</name><argument_list>(<argument><expr>0</expr></argument>)</argument_list></call> &amp; 0x3f)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></then> <else>else <if>if <condition>(<expr><name>c</name> &lt; 0x00010000</expr>)</condition><then> <block>{
+	<comment type="block">/*  1110**** 10****** 10******  */</comment>
+	<expr_stmt><expr>*<name>lp</name>++ = <call>(<name>Char</name>) <argument_list>(<argument><expr>0xe0 | (<call>(<name>int</name>) <argument_list>(<argument><expr><call><name>CH</name><argument_list>(<argument><expr>1</expr></argument>)</argument_list></call> &amp; 0xf0</expr></argument>)</argument_list></call> &gt;&gt; 4)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr>*<name>lp</name>++ = <call>(<name>Char</name>) <argument_list>(<argument><expr>0x80 | (<call><name>CH</name><argument_list>(<argument><expr>0</expr></argument>)</argument_list></call> &gt;&gt; 6) | ((<call><name>CH</name><argument_list>(<argument><expr>1</expr></argument>)</argument_list></call> &amp; 0x0f) &lt;&lt; 2)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr>*<name>lp</name>++ = <call>(<name>Char</name>) <argument_list>(<argument><expr>0x80 | (<call><name>CH</name><argument_list>(<argument><expr>0</expr></argument>)</argument_list></call> &amp; 0x3f)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></then> <else>else <if>if <condition>(<expr><name>c</name> &lt; 0x00200000</expr>)</condition><then> <block>{
+	<expr_stmt><expr>*<name>lp</name>++ = <call>(<name>Char</name>) <argument_list>(<argument><expr>0xf0 | (<call>(<name>int</name>) <argument_list>(<argument><expr><call><name>CH</name><argument_list>(<argument><expr>2</expr></argument>)</argument_list></call> &amp; 0x1f</expr></argument>)</argument_list></call> &gt;&gt; 2)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr>*<name>lp</name>++ = <call>(<name>Char</name>) <argument_list>(<argument><expr>0x80 |
+			(<call>(<name>int</name>) <argument_list>(<argument><expr><call><name>CH</name><argument_list>(<argument><expr>1</expr></argument>)</argument_list></call> &amp; 0xf0</expr></argument>)</argument_list></call> &gt;&gt; 4) |
+			(<call>(<name>int</name>) <argument_list>(<argument><expr><call><name>CH</name><argument_list>(<argument><expr>2</expr></argument>)</argument_list></call> &amp; 0x03</expr></argument>)</argument_list></call> &lt;&lt; 4)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr>*<name>lp</name>++ = <call>(<name>Char</name>) <argument_list>(<argument><expr>0x80 | (<call><name>CH</name><argument_list>(<argument><expr>0</expr></argument>)</argument_list></call> &gt;&gt; 6) | ((<call><name>CH</name><argument_list>(<argument><expr>1</expr></argument>)</argument_list></call> &amp; 0x0f) &lt;&lt; 2)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr>*<name>lp</name>++ = <call>(<name>Char</name>) <argument_list>(<argument><expr>0x80 | (<call><name>CH</name><argument_list>(<argument><expr>0</expr></argument>)</argument_list></call> &amp; 0x3f)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></then> <else>else <if>if <condition>(<expr><name>c</name> &lt; 0x04000000</expr>)</condition><then> <block>{
+	<expr_stmt><expr>*<name>lp</name>++ = <call>(<name>Char</name>) <argument_list>(<argument><expr>0xf8 | (<call><name>CH</name><argument_list>(<argument><expr>3</expr></argument>)</argument_list></call> &amp; 0x03)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr>*<name>lp</name>++ = <call>(<name>Char</name>) <argument_list>(<argument><expr>0x80 | (<call><name>CH</name><argument_list>(<argument><expr>2</expr></argument>)</argument_list></call> &gt;&gt; 2)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr>*<name>lp</name>++ = <call>(<name>Char</name>) <argument_list>(<argument><expr>0x80 |
+			(<call>(<name>int</name>) <argument_list>(<argument><expr><call><name>CH</name><argument_list>(<argument><expr>1</expr></argument>)</argument_list></call> &amp; 0xf0</expr></argument>)</argument_list></call> &gt;&gt; 4) |
+			(<call>(<name>int</name>) <argument_list>(<argument><expr><call><name>CH</name><argument_list>(<argument><expr>2</expr></argument>)</argument_list></call> &amp; 0x03</expr></argument>)</argument_list></call> &lt;&lt; 4)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr>*<name>lp</name>++ = <call>(<name>Char</name>) <argument_list>(<argument><expr>0x80 | (<call><name>CH</name><argument_list>(<argument><expr>0</expr></argument>)</argument_list></call> &gt;&gt; 6) | ((<call><name>CH</name><argument_list>(<argument><expr>1</expr></argument>)</argument_list></call> &amp; 0x0f) &lt;&lt; 2)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr>*<name>lp</name>++ = <call>(<name>Char</name>) <argument_list>(<argument><expr>0x80 | (<call><name>CH</name><argument_list>(<argument><expr>0</expr></argument>)</argument_list></call> &amp; 0x3f)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></then> <else>else <block>{
+	<expr_stmt><expr>*<name>lp</name>++ = <call>(<name>Char</name>) <argument_list>(<argument><expr>0xfc | (<call>(<name>int</name>) <argument_list>(<argument><expr><call><name>CH</name><argument_list>(<argument><expr>3</expr></argument>)</argument_list></call> &amp; 0x40</expr></argument>)</argument_list></call> &gt;&gt; 6)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr>*<name>lp</name>++ = <call>(<name>Char</name>) <argument_list>(<argument><expr>0x80 | (<call><name>CH</name><argument_list>(<argument><expr>3</expr></argument>)</argument_list></call> &amp; 0x3f)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr>*<name>lp</name>++ = <call>(<name>Char</name>) <argument_list>(<argument><expr>0x80 | (<call><name>CH</name><argument_list>(<argument><expr>2</expr></argument>)</argument_list></call> &gt;&gt; 2)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr>*<name>lp</name>++ = <call>(<name>Char</name>) <argument_list>(<argument><expr>0x80 | (<call><name>CH</name><argument_list>(<argument><expr>1</expr></argument>)</argument_list></call> &gt;&gt; 4) | ((<call><name>CH</name><argument_list>(<argument><expr>2</expr></argument>)</argument_list></call> &amp; 0x03) &lt;&lt; 4)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr>*<name>lp</name>++ = <call>(<name>Char</name>) <argument_list>(<argument><expr>0x80 | (<call><name>CH</name><argument_list>(<argument><expr>0</expr></argument>)</argument_list></call> &gt;&gt; 6) | ((<call><name>CH</name><argument_list>(<argument><expr>1</expr></argument>)</argument_list></call> &amp; 0x0f) &lt;&lt; 2)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr>*<name>lp</name>++ = <call>(<name>Char</name>) <argument_list>(<argument><expr>0x80 | (<call><name>CH</name><argument_list>(<argument><expr>0</expr></argument>)</argument_list></call> &amp; 0x3f)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></else></if></else></if></else></if></else></if></else></if>
+    <return>return <expr><name>lp</name></expr>;</return>
+<cpp:undef>#<cpp:directive>undef</cpp:directive> <name>CH</name></cpp:undef>
+}</block></function>
+
+<comment type="block">/*
+ * Write data back to the PTY
+ */</comment>
+<function><type><name>void</name></type>
+<name>writePtyData</name><parameter_list>(<param><decl><type><name>int</name></type> <name>f</name></decl></param>, <param><decl><type><name>IChar</name> *</type> <name>d</name></decl></param>, <param><decl><type><name>unsigned</name></type> <name>len</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>unsigned</name></type> <name>n</name> =<init> <expr>(<name>len</name> &lt;&lt; 1)</expr></init></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr><name>VTbuffer</name>-&gt;<name>write_len</name> &lt;= <name>len</name></expr>)</condition><then> <block>{
+	<expr_stmt><expr><name>VTbuffer</name>-&gt;<name>write_len</name> = <name>n</name></expr>;</expr_stmt>
+	<expr_stmt><expr><name>VTbuffer</name>-&gt;<name>write_buf</name> = (<name>Char</name> *) <call><name>XtRealloc</name><argument_list>(<argument><expr>(<name>char</name> *)
+						 <name>VTbuffer</name>-&gt;<name>write_buf</name></expr></argument>, <argument><expr><name>VTbuffer</name>-&gt;<name>write_len</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></then></if>
+
+    <for>for (<init><expr><name>n</name> = 0</expr>;</init> <condition><expr><name>n</name> &lt; <name>len</name></expr>;</condition> <incr><expr><name>n</name>++</expr></incr>)
+	<expr_stmt><expr><name>VTbuffer</name>-&gt;<name><name>write_buf</name><index>[<expr><name>n</name></expr>]</index></name> = (<name>Char</name>) <name><name>d</name><index>[<expr><name>n</name></expr>]</index></name></expr>;</expr_stmt></for>
+
+    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("writePtyData %d:%s\n", <name>n</name>,
+	   <call><name>visibleChars</name><argument_list>(<argument><expr><name>VTbuffer</name>-&gt;<name>write_buf</name></expr></argument>, <argument><expr><name>n</name></expr></argument>)</argument_list></call>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>v_write</name><argument_list>(<argument><expr><name>f</name></expr></argument>, <argument><expr><name>VTbuffer</name>-&gt;<name>write_buf</name></expr></argument>, <argument><expr><name>n</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+}</block></function>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif> <comment type="block">/* OPT_WIDE_CHARS */</comment>
+
+<cpp:ifdef>#<cpp:directive>ifdef</cpp:directive> <name>NO_LEAKS</name></cpp:ifdef>
+<function><type><name>void</name></type>
+<name>noleaks_ptydata</name><parameter_list>(<param><decl><type><name>void</name></type></decl></param>)</parameter_list>
+<block>{
+    <if>if <condition>(<expr><name>VTbuffer</name> != 0</expr>)</condition><then> <block>{
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_WIDE_CHARS</name></expr></cpp:if>
+	<if>if <condition>(<expr><name>VTbuffer</name>-&gt;<name>write_buf</name> != 0</expr>)</condition><then>
+	    <expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>VTbuffer</name>-&gt;<name>write_buf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+	<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>VTbuffer</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><name>VTbuffer</name> = 0</expr>;</expr_stmt>
+    }</block></then></if>
+}</block></function>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr>0</expr></cpp:if>
+void
+test_ptydata(void)
+{
+    PtyData *data;
+    unsigned code;
+
+    initPtyData(&amp;data);
+    TRACE(("test_ptydata\n"));
+    for (code = 0; code &lt;= 0x7fffffff; ++code) {
+	int use_size;
+
+	memset(data, 0, sizeof(*data));
+	data-&gt;next = data-&gt;buffer;
+	data-&gt;last = convertToUTF8(data-&gt;buffer, code);
+
+	use_size = (data-&gt;last - data-&gt;next);
+
+	if (decodeUtf8(data)) {
+	    if (code != data-&gt;utf_data) {
+		TRACE(("code %#x -&gt;%#x\n", code, data-&gt;utf_data));
+	    } else if (use_size != data-&gt;utf_size) {
+		TRACE(("size %#x %d-&gt;%d\n", code, use_size, data-&gt;utf_size));
+	    }
+	} else {
+	    TRACE(("fail %#x\n", code));
+	}
+    }
+}
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</unit>

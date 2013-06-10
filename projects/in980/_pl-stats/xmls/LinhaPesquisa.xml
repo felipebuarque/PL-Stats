@@ -1,0 +1,105 @@
+<unit language="Java" dir="" filename="LinhaPesquisa.java"><package>package <name>in980</name>.<name>rgms</name>.<name>domain</name>;</package><import>import <name>java</name>.<name>util</name>.<name>List</name>;</import><import>import <name>javax</name>.<name>persistence</name>.<name>CascadeType</name>;</import><import>import <name>javax</name>.<name>persistence</name>.<name>Entity</name>;</import><import>import <name>javax</name>.<name>persistence</name>.<name>FetchType</name>;</import><import>import <name>javax</name>.<name>persistence</name>.<name>GeneratedValue</name>;</import><import>import <name>javax</name>.<name>persistence</name>.<name>GenerationType</name>;</import><import>import <name>javax</name>.<name>persistence</name>.<name>Id</name>;</import><import>import <name>javax</name>.<name>persistence</name>.<name>ManyToMany</name>;</import><import>import <name>javax</name>.<name>persistence</name>.<name>SequenceGenerator</name>;</import>
+
+@<expr_stmt><expr><name><name><name>Entity</name></name></name>
+@<call><name>SequenceGenerator</name><argument_list>(<argument><expr><name>name</name> = "linha_pesquisa_seq"</expr></argument>, <argument><expr><name>sequenceName</name> = "linha_pesquisa_seq"</expr></argument>)</argument_list></call>
+public class <name>LinhaPesquisa</name> <block>{
+
+	@<expr><name><name><name>Id</name></name></name>
+	@<call><name>GeneratedValue</name><argument_list>(<argument><expr><name>strategy</name> = <name>GenerationType</name>.<name>SEQUENCE</name></expr></argument>, <argument><expr><name>generator</name> = "linha_pesquisa_seq"</expr></argument>)</argument_list></call>
+	private <name>Integer</name> <name>ID</name></expr>;
+	private <expr><name>String</name><name>titulo</name></expr>;
+	private <expr><name>String</name><name>descricao</name></expr>;
+	private <expr><name>String</name><name>descricaoDetalhada</name></expr>;
+	private <expr><name>String</name><name>links</name></expr>;
+	private <expr><name>String</name><name>financiadores</name></expr>;
+	
+	@<expr><call><name>ManyToMany</name><argument_list>(
+			<argument><expr><name>targetEntity</name>=<name>Membro</name>.class</expr></argument>,
+			<argument><expr><name>cascade</name>=<block>{<expr><name>CascadeType</name>.<name>PERSIST</name></expr>, <expr><name>CascadeType</name>.<name>MERGE</name></expr>}</block></expr></argument>,
+			<argument><expr><name>mappedBy</name>="linhasPesquisa"</expr></argument>, 
+			<argument><expr><name>fetch</name>=<name>FetchType</name>.<name>LAZY</name></expr></argument>
+	)</argument_list></call>
+	private <name>List</name>&lt;<name>Membro</name>&gt; <name>membros</name></expr>;
+	
+	@<expr><call><name>ManyToMany</name><argument_list>(
+			<argument><expr><name>targetEntity</name>=<name>Publicacao</name>.class</expr></argument>,
+			<argument><expr><name>cascade</name>=<block>{<expr><name>CascadeType</name>.<name>PERSIST</name></expr>, <expr><name>CascadeType</name>.<name>MERGE</name></expr>}</block></expr></argument>,
+			<argument><expr><name>mappedBy</name>="linhasPesquisa"</expr></argument>, 
+			<argument><expr><name>fetch</name>=<name>FetchType</name>.<name>LAZY</name></expr></argument>
+	)</argument_list></call>
+	private <name>List</name>&lt;<name>Publicacao</name>&gt; <name>publicacoes</name></expr>;
+
+	public <expr><name>void</name><call><name>validateToPersist</name><argument_list>()</argument_list></call> throws <name>Exception</name> <block>{
+		<if>if <condition>(<expr><call><name>getTitulo</name><argument_list>()</argument_list></call>.<call><name>equals</name><argument_list>(<argument><expr><name>null</name></expr></argument>)</argument_list></call></expr>)</condition><then><throw>throw <expr>new <call><name>Exception</name><argument_list>(<argument><expr>"T&#195;&#173;tulo inv&#195;&#161;lido"</expr></argument>)</argument_list></call></expr>;</throw></then></if></block></expr></block></expr></expr_stmt>
+		<if>if <condition>(<expr><call><name>getDescricao</name><argument_list>()</argument_list></call> == <name>null</name></expr>)</condition><then><throw>throw <expr>new <call><name>Exception</name><argument_list>(<argument><expr>"Descri&#195;&#167;&#195;&#163;o inv&#195;&#161;lida"</expr></argument>)</argument_list></call></expr>;</throw></then></if>
+	}
+
+	<function><type><specifier>public</specifier><name>Integer</name></type><name>getID</name><parameter_list>()</parameter_list><block>{
+		<return>return <expr><name>ID</name></expr>;</return>
+	}</block></function>
+
+	<function><type><specifier>public</specifier><name>void</name></type><name>setID</name><parameter_list>(<param><decl><type><name>Integer</name></type><name>iD</name></decl></param>)</parameter_list><block>{
+		<expr_stmt><expr><name>ID</name> = <name>iD</name></expr>;</expr_stmt>
+	}</block></function>
+
+	<function><type><specifier>public</specifier><name>String</name></type><name>getTitulo</name><parameter_list>()</parameter_list><block>{
+		<return>return <expr><name>titulo</name></expr>;</return>
+	}</block></function>
+
+	<function><type><specifier>public</specifier><name>void</name></type><name>setTitulo</name><parameter_list>(<param><decl><type><name>String</name></type><name>titulo</name></decl></param>)</parameter_list><block>{
+		<expr_stmt><expr><name>this</name>.<name>titulo</name> = <name>titulo</name></expr>;</expr_stmt>
+	}</block></function>
+
+	<function><type><specifier>public</specifier><name>String</name></type><name>getDescricao</name><parameter_list>()</parameter_list><block>{
+		<return>return <expr><name>descricao</name></expr>;</return>
+	}</block></function>
+
+	<function><type><specifier>public</specifier><name>void</name></type><name>setDescricao</name><parameter_list>(<param><decl><type><name>String</name></type><name>descricao</name></decl></param>)</parameter_list><block>{
+		<expr_stmt><expr><name>this</name>.<name>descricao</name> = <name>descricao</name></expr>;</expr_stmt>
+	}</block></function>
+
+	<function><type><specifier>public</specifier><name>String</name></type><name>getDescricaoDetalhada</name><parameter_list>()</parameter_list><block>{
+		<return>return <expr><name>descricaoDetalhada</name></expr>;</return>
+	}</block></function>
+
+	<function><type><specifier>public</specifier><name>void</name></type><name>setDescricaoDetalhada</name><parameter_list>(<param><decl><type><name>String</name></type><name>descricaoDetalhada</name></decl></param>)</parameter_list><block>{
+		<expr_stmt><expr><name>this</name>.<name>descricaoDetalhada</name> = <name>descricaoDetalhada</name></expr>;</expr_stmt>
+	}</block></function>
+
+	<function><type><specifier>public</specifier><name>String</name></type><name>getLinks</name><parameter_list>()</parameter_list><block>{
+		<return>return <expr><name>links</name></expr>;</return>
+	}</block></function>
+
+	<function><type><specifier>public</specifier><name>void</name></type><name>setLinks</name><parameter_list>(<param><decl><type><name>String</name></type><name>links</name></decl></param>)</parameter_list><block>{
+		<expr_stmt><expr><name>this</name>.<name>links</name> = <name>links</name></expr>;</expr_stmt>
+	}</block></function>
+
+
+
+
+	<function><type><specifier>public</specifier><name>String</name></type><name>getFinanciadores</name><parameter_list>()</parameter_list><block>{
+		<return>return <expr><name>financiadores</name></expr>;</return>
+	}</block></function>
+
+	<function><type><specifier>public</specifier><name>void</name></type><name>setFinanciadores</name><parameter_list>(<param><decl><type><name>String</name></type><name>financiadores</name></decl></param>)</parameter_list><block>{
+		<expr_stmt><expr><name>this</name>.<name>financiadores</name> = <name>financiadores</name></expr>;</expr_stmt>
+	}</block></function>
+
+	public <expr_stmt><expr><name>List</name>&lt;<name>Membro</name>&gt; <call><name>getMembros</name><argument_list>()</argument_list></call> <block>{
+		<return>return <expr><name>membros</name></expr>;</return></block></expr></expr_stmt>
+	}
+
+	<decl_stmt><decl><type><specifier>public</specifier><name>void</name></type><name>setMembros</name>(List<argument_list>&lt;<argument><name>Membro</name></argument>&gt;</argument_list> membros) <block>{
+		<expr_stmt><expr><name>this</name>.<name>membros</name> = <name>membros</name></expr>;</expr_stmt>
+	}</block></decl></decl_stmt>
+
+	public <expr_stmt><expr><name>List</name>&lt;<name>Publicacao</name>&gt; <call><name>getPublicacoes</name><argument_list>()</argument_list></call> <block>{
+		<return>return <expr><name>publicacoes</name></expr>;</return></block></expr></expr_stmt>
+	}
+
+	<decl_stmt><decl><type><specifier>public</specifier><name>void</name></type><name>setPublicacoes</name>(List<argument_list>&lt;<argument><name>Publicacao</name></argument>&gt;</argument_list> publicacoes) <block>{
+		<expr_stmt><expr><name>this</name>.<name>publicacoes</name> = <name>publicacoes</name></expr>;</expr_stmt>
+	}</block></decl></decl_stmt>
+
+}
+</unit>

@@ -1,0 +1,29 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE hibernate-configuration PUBLIC
+          "-//Hibernate/Hibernate Configuration DTD 3.0//EN"
+          "http://hibernate.sourceforge.net/hibernate-configuration-3.0.dtd">
+<hibernate-configuration>
+	<session-factory name="in980">
+		<property name="connection.url">jdbc:postgresql://localhost/in980-rgms</property>
+		<property name="connection.username">postgres</property>
+		<property name="connection.driver_class">org.postgresql.Driver</property>
+		<property name="dialect">org.hibernate.dialect.PostgreSQLDialect</property>
+		<property name="connection.password">261082</property>
+	 	<property name="transaction.factory_class">org.hibernate.transaction.JDBCTransactionFactory</property>
+	    <property name="current_session_context_class">thread</property>
+	    <property name="hibernate.show_sql">true</property>	    
+	    <property name="hbm2ddl.auto">update</property>
+	    
+	    <mapping class="in980.rgms.domain.Membro"/>
+	    <mapping class="in980.rgms.domain.Usuario"/>
+	    <mapping class="in980.rgms.domain.Publicacao"/>
+	    <mapping class="in980.rgms.domain.ArtigoRevista"/>
+	    <mapping class="in980.rgms.domain.ArtigoConferencia"/>
+	    <mapping class="in980.rgms.domain.DissertacaoMestrado"/>
+	    <mapping class="in980.rgms.domain.TeseDoutorado"/>
+	    <mapping class="in980.rgms.domain.LinhaPesquisa"/>
+	    
+	</session-factory>
+	
+</hibernate-configuration>
+

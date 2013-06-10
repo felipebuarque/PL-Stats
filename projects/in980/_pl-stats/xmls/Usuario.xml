@@ -1,0 +1,43 @@
+<unit language="Java" dir="" filename="Usuario.java"><package>package <name>in980</name>.<name>rgms</name>.<name>domain</name>;</package><import>import <name>java</name>.<name>io</name>.<name>Serializable</name>;</import><import>import <name>javax</name>.<name>persistence</name>.<name>Entity</name>;</import><import>import <name>javax</name>.<name>persistence</name>.<name>GeneratedValue</name>;</import><import>import <name>javax</name>.<name>persistence</name>.<name>GenerationType</name>;</import><import>import <name>javax</name>.<name>persistence</name>.<name>Id</name>;</import><import>import <name>javax</name>.<name>persistence</name>.<name>SequenceGenerator</name>;</import>
+
+@<expr_stmt><expr><name><name><name>Entity</name></name></name>
+@<call><name>SequenceGenerator</name><argument_list>(<argument><expr><name>name</name> = "usuario_seq"</expr></argument>, <argument><expr><name>sequenceName</name> = "usuario_seq"</expr></argument>)</argument_list></call>
+public class <name>Usuario</name> implements <name>Serializable</name><block>{
+	
+	private <expr><name>static</name> final <name>long</name> <name>serialVersionUID</name> = 1L</expr>;
+	
+	@<expr><name><name><name>Id</name></name></name>
+	@<call><name>GeneratedValue</name><argument_list>(<argument><expr><name>strategy</name> = <name>GenerationType</name>.<name>SEQUENCE</name></expr></argument>, <argument><expr><name>generator</name> = "usuario_seq"</expr></argument>)</argument_list></call>
+	private <name>Integer</name> <name>ID</name></expr>;
+	private <expr><name>String</name><name>login</name></expr>;
+	private <expr><name>String</name><name>senha</name></expr>;
+	
+	public <expr><name>void</name><call><name>validateToPersist</name><argument_list>()</argument_list></call> throws <name>Exception</name><block>{
+    	<if>if<condition>(<expr><call><name>getSenha</name><argument_list>()</argument_list></call> == <name>null</name></expr>)</condition><then><throw>throw <expr>new <call><name>Exception</name><argument_list>(<argument><expr>"Senha invalida"</expr></argument>)</argument_list></call></expr>;</throw></then></if></block></expr></block></expr></expr_stmt>
+    }
+	
+	<function><type><specifier>public</specifier><name>Integer</name></type><name>getID</name><parameter_list>()</parameter_list><block>{
+		<return>return <expr><name>ID</name></expr>;</return>
+	}</block></function>
+	
+	<function><type><specifier>public</specifier><name>void</name></type><name>setID</name><parameter_list>(<param><decl><type><name>Integer</name></type><name>iD</name></decl></param>)</parameter_list><block>{
+		<expr_stmt><expr><name>ID</name> = <name>iD</name></expr>;</expr_stmt>
+	}</block></function>
+	
+	
+	<function><type><specifier>public</specifier><name>String</name></type><name>getSenha</name><parameter_list>()</parameter_list><block>{
+		<return>return <expr><name>senha</name></expr>;</return>
+	}</block></function>
+	
+	<function><type><specifier>public</specifier><name>void</name></type><name>setSenha</name><parameter_list>(<param><decl><type><name>String</name></type><name>senha</name></decl></param>)</parameter_list><block>{
+		<expr_stmt><expr><name>this</name>.<name>senha</name> = <name>senha</name></expr>;</expr_stmt>
+	}</block></function>
+
+	<function><type><specifier>public</specifier><name>String</name></type><name>getLogin</name><parameter_list>()</parameter_list><block>{
+		<return>return <expr><name>login</name></expr>;</return>
+	}</block></function>
+
+	<function><type><specifier>public</specifier><name>void</name></type><name>setLogin</name><parameter_list>(<param><decl><type><name>String</name></type><name>login</name></decl></param>)</parameter_list><block>{
+		<expr_stmt><expr><name>this</name>.<name>login</name> = <name>login</name></expr>;</expr_stmt>
+	}</block></function>
+}</unit>

@@ -1,0 +1,116 @@
+<unit language="Java" dir="" filename="TeseDoutoradoAction.java"><package>package <name>in980</name>.<name>rgms</name>.<name>presentation</name>.<name>actions</name>;</package><import>import <name>in980</name>.<name>rgms</name>.<name>domain</name>.<name>DissertacaoMestrado</name>;</import><import>import <name>in980</name>.<name>rgms</name>.<name>domain</name>.<name>Publicacao</name>;</import><import>import <name>in980</name>.<name>rgms</name>.<name>domain</name>.<name>TeseDoutorado</name>;</import><import>import <name>in980</name>.<name>rgms</name>.<name>persistence</name>.<name>TeseDoutoradoDAO</name>;</import><import>import <name>org</name>.<name>apache</name>.<name>struts2</name>.<name>convention</name>.<name>annotation</name>.<name>Action</name>;</import><import>import <name>org</name>.<name>apache</name>.<name>struts2</name>.<name>convention</name>.<name>annotation</name>.<name>InterceptorRef</name>;</import><import>import <name>org</name>.<name>apache</name>.<name>struts2</name>.<name>convention</name>.<name>annotation</name>.<name>ParentPackage</name>;</import><import>import <name>org</name>.<name>apache</name>.<name>struts2</name>.<name>convention</name>.<name>annotation</name>.<name>Result</name>;</import>
+
+@<expr_stmt><expr><call><name>ParentPackage</name><argument_list>(<argument><expr>"default"</expr></argument>)</argument_list></call>
+public class <name>TeseDoutoradoAction</name> extends <name>ActionPublicacaoBase</name> <block>{
+	
+	private <expr><name>Publicacao</name><name>publicacao</name></expr>;
+	private <expr><name>TeseDoutorado</name><name>teseDoutorado</name></expr>;
+
+	private <expr><name>String</name><name>msg</name></expr>;
+
+	@<expr><name><name><name>Override</name></name></name>
+	@<call><name>Action</name><argument_list>(<argument><expr><name>value</name> = "excluirteseDoutorado"</expr></argument>, <argument><expr><name>results</name> = <block>{ 
+			@<expr><call><name>Result</name><argument_list>(<argument><expr><name>name</name> = "success"</expr></argument>, 
+					<argument><expr><name>type</name>="redirectAction"</expr></argument>, 
+					<argument><expr><name>params</name>= <block>{<expr>"actionName"</expr>, <expr>"listarTodasPublicacoes"</expr>}</block></expr></argument>)</argument_list></call></expr> 
+			}</block></expr></argument>
+			<comment type="line">//#ifdef autenticacao</comment>
+			, <argument><expr><name>interceptorRefs</name> = <block>{ @<expr><call><name>InterceptorRef</name><argument_list>(<argument><expr>"autenticacao"</expr></argument>)</argument_list></call></expr>, @<expr><call><name>InterceptorRef</name><argument_list>(<argument><expr>"defaultStack"</expr></argument>)</argument_list></call></expr>}</block></expr></argument> 
+			<comment type="line">//#endif </comment>
+	)</argument_list></call>
+	public <name>String</name> <call><name>delete</name><argument_list>()</argument_list></call> <block>{
+		<try>try <block>{
+			<expr_stmt><expr>new <call><name>TeseDoutoradoDAO</name><argument_list>()</argument_list></call>.<call><name>excluir</name><argument_list>(<argument><expr><name>teseDoutorado</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+			
+		<expr_stmt/></block></try>}</block></expr> <catch>catch (<param><decl><type><name>Exception</name></type><name>e</name></decl></param>) <block>{
+			<expr_stmt><expr><call><name><name>e</name>.<name>printStackTrace</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+			
+		<expr_stmt/></block></catch>}</block></expr></expr_stmt>
+		<return>return <expr>"success"</expr>;</return>
+	}
+
+	@<expr_stmt><expr><name><name><name>Override</name></name></name>
+	@<call><name>Action</name><argument_list>(<argument><expr><name>value</name> = "inserirTeseDoutorado"</expr></argument>, <argument><expr><name>results</name> = <block>{ 
+			@<expr><call><name>Result</name><argument_list>(<argument><expr><name>location</name> = "/cadastra_tese_doutorado.jsp"</expr></argument>, 
+					<argument><expr><name>name</name> = "success"</expr></argument>)</argument_list></call></expr> 
+			}</block></expr></argument>
+			<comment type="line">//#ifdef autenticacao</comment>
+			, <argument><expr><name>interceptorRefs</name> = <block>{ @<expr><call><name>InterceptorRef</name><argument_list>(<argument><expr>"autenticacao"</expr></argument>)</argument_list></call></expr>, @<expr><call><name>InterceptorRef</name><argument_list>(<argument><expr>"defaultStack"</expr></argument>)</argument_list></call></expr>}</block></expr></argument> 
+			<comment type="line">//#endif </comment>
+	)</argument_list></call>
+	public <name>String</name> <call><name>insert</name><argument_list>()</argument_list></call> <block>{
+		<try>try <block>{
+			<expr_stmt><expr><call><name><name>teseDoutorado</name>.<name>validateToPersist</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+			<if>if<condition>(<expr><call><name><name>teseDoutorado</name>.<name>getID</name></name><argument_list>()</argument_list></call> == <name>null</name></expr>)</condition><then><block>{
+				<expr_stmt><expr>new <call><name>TeseDoutoradoDAO</name><argument_list>()</argument_list></call>.<call><name>inserir</name><argument_list>(<argument><expr><name>teseDoutorado</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+			<expr_stmt/></block></then></if></block></try>}</block></expr></expr_stmt><else>else<block>{
+				<expr_stmt><expr>new <call><name>TeseDoutoradoDAO</name><argument_list>()</argument_list></call>.<call><name>atualizar</name><argument_list>(<argument><expr><name>teseDoutorado</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+			}</block>
+			<expr_stmt><expr><call><name>setMsg</name><argument_list>(<argument><expr>"Tese inserido com sucesso"</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		</else>} <catch>catch (<param><decl><type><name>Exception</name></type><name>e</name></decl></param>) <block>{
+			<expr_stmt><expr><call><name><name>e</name>.<name>printStackTrace</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+			<expr_stmt><expr><call><name>setMsg</name><argument_list>(<argument><expr>"Erro ao inserir a Tese:"  + <call><name><name>e</name>.<name>getMessage</name></name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		}</block></catch>
+		<return>return <expr>"success"</expr>;</return>
+	}
+
+	@<function><type><name>Override</name><specifier>public</specifier><name>String</name></type><name>listAll</name><parameter_list>()</parameter_list><block>{
+		<return>return <expr><name>null</name></expr>;</return>
+	}</block></function>
+	
+	@<expr_stmt><expr><call><name>Action</name><argument_list>(<argument><expr><name>value</name> = "mostrarteseDoutorado"</expr></argument>, <argument><expr><name>results</name> = <block>{ 
+			@<expr><call><name>Result</name><argument_list>(<argument><expr><name>location</name> = "/cadastra_tese_doutorado.jsp"</expr></argument>, <argument><expr><name>name</name> = "success"</expr></argument>)</argument_list></call></expr> 
+		}</block></expr></argument>
+		<comment type="line">//#ifdef autenticacao</comment>
+		, <argument><expr><name>interceptorRefs</name> = <block>{ @<expr><call><name>InterceptorRef</name><argument_list>(<argument><expr>"autenticacao"</expr></argument>)</argument_list></call></expr>, @<expr><call><name>InterceptorRef</name><argument_list>(<argument><expr>"defaultStack"</expr></argument>)</argument_list></call></expr>}</block></expr></argument> 
+		<comment type="line">//#endif </comment>
+	)</argument_list></call>
+	public <name>String</name> <call><name>mostrarTeseDoutorado</name><argument_list>()</argument_list></call><block>{
+		<try>try <block>{
+			<if>if<condition>(<expr><name>teseDoutorado</name> != <name>null</name> &amp;&amp; <call><name><name>teseDoutorado</name>.<name>getID</name></name><argument_list>()</argument_list></call> != <name>null</name></expr>)</condition><then><block>{
+				<expr_stmt><expr><name>teseDoutorado</name> = new <call><name>TeseDoutoradoDAO</name><argument_list>()</argument_list></call>.<call><name>buscaPeloId</name><argument_list>(<argument><expr><call><name><name>teseDoutorado</name>.<name>getID</name></name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+			<expr_stmt/></block></then></if></block></try>}</block></expr></expr_stmt>
+			<comment type="line">//#ifdef informacoesContextuais</comment>
+			<else>else<block>{
+				<expr_stmt><expr><name>teseDoutorado</name> = new <call><name>TeseDoutorado</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+				<expr_stmt><expr><call><name><name>super</name>.<name>loadContextualInfo</name></name><argument_list>(<argument><expr><name>teseDoutorado</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+				<expr_stmt><expr><call><name><name>teseDoutorado</name>.<name>setEscola</name></name><argument_list>(<argument><expr><call><name>getMembroAutenticado</name><argument_list>()</argument_list></call>.<call><name>getUniversidade</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+			}</block></else>
+			<comment type="line">//#endif </comment>
+		} <catch>catch (<param><decl><type><name>Exception</name></type><name>e</name></decl></param>) <block>{
+			<expr_stmt><expr><call><name><name>e</name>.<name>printStackTrace</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+			<expr_stmt><expr><call><name>setMsg</name><argument_list>(<argument><expr>"Artigo solicitado nao existe: "</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		}</block></catch>
+		<return>return <expr>"success"</expr>;</return>
+	}
+
+	@<function><type><name>Override</name><specifier>public</specifier><name>String</name></type><name>update</name><parameter_list>()</parameter_list><block>{
+		<return>return <expr><name>null</name></expr>;</return>
+	}</block></function>
+
+	<function><type><specifier>public</specifier><name>Publicacao</name></type><name>getPublicacao</name><parameter_list>()</parameter_list><block>{
+		<return>return <expr><name>publicacao</name></expr>;</return>
+	}</block></function>
+
+	<function><type><specifier>public</specifier><name>void</name></type><name>setPublicacao</name><parameter_list>(<param><decl><type><name>Publicacao</name></type><name>publicacao</name></decl></param>)</parameter_list><block>{
+		<expr_stmt><expr><name>this</name>.<name>publicacao</name> = <name>publicacao</name></expr>;</expr_stmt>
+	}</block></function>
+
+	<function><type><specifier>public</specifier><name>String</name></type><name>getMsg</name><parameter_list>()</parameter_list><block>{
+		<return>return <expr><name>msg</name></expr>;</return>
+	}</block></function>
+
+	<function><type><specifier>public</specifier><name>void</name></type><name>setMsg</name><parameter_list>(<param><decl><type><name>String</name></type><name>msg</name></decl></param>)</parameter_list><block>{
+		<expr_stmt><expr><name>this</name>.<name>msg</name> = <name>msg</name></expr>;</expr_stmt>
+	}</block></function>
+
+		<function><type><specifier>public</specifier><name>TeseDoutorado</name></type><name>getTeseDoutorado</name><parameter_list>()</parameter_list><block>{
+		<return>return <expr><name>teseDoutorado</name></expr>;</return>
+	}</block></function>
+
+	<function><type><specifier>public</specifier><name>void</name></type><name>setTeseDoutorado</name><parameter_list>(<param><decl><type><name>TeseDoutorado</name></type><name>teseDoutorado</name></decl></param>)</parameter_list><block>{
+		<expr_stmt><expr><name>this</name>.<name>teseDoutorado</name> = <name>teseDoutorado</name></expr>;</expr_stmt>
+	}</block></function>
+	
+}
+</unit>

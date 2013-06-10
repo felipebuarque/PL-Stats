@@ -1,0 +1,254 @@
+<unit xmlns="http://www.sdml.info/srcML/src" xmlns:cpp="http://www.sdml.info/srcML/cpp" language="C" dir="" filename="linedata.c"><comment type="block">/* $XTermId: linedata.c,v 1.78 2010/04/14 23:41:10 tom Exp $ */</comment>
+
+<comment type="block">/************************************************************
+
+Copyright 2009,2010 by Thomas E. Dickey
+
+                        All Rights Reserved
+
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
+IN NO EVENT SHALL THE ABOVE LISTED COPYRIGHT HOLDER(S) BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+Except as contained in this notice, the name(s) of the above copyright
+holders shall not be used in advertising or otherwise to promote the
+sale, use or other dealings in this Software without prior written
+authorization.
+
+********************************************************/</comment>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;xterm.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;data.h&gt;</cpp:file></cpp:include>		<comment type="block">/* FIXME - needed for 'term' */</comment>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;assert.h&gt;</cpp:file></cpp:include>
+
+<comment type="block">/*
+ * Given a row-number, find the corresponding data for the line in the VT100
+ * widget.  Row numbers can be positive or negative.
+ *
+ * If the data comes from the scrollback, defer that to getScrollback().
+ */</comment>
+<function><type><name>LineData</name> *</type>
+<name>getLineData</name><parameter_list>(<param><decl><type><name>TScreen</name> *</type> <name>screen</name></decl></param>, <param><decl><type><name>int</name></type> <name>row</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>LineData</name> *</type><name>result</name> =<init> <expr>0</expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>ScrnBuf</name></type> <name>buffer</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>int</name></type> <name>max_row</name> =<init> <expr><name>screen</name>-&gt;<name>max_row</name></expr></init></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr><name>row</name> &gt;= 0</expr>)</condition><then> <block>{
+	<expr_stmt><expr><name>buffer</name> = <name>screen</name>-&gt;<name>visbuf</name></expr>;</expr_stmt>
+    }</block></then> <else>else <block>{
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_FIFO_LINES</name></expr></cpp:if>
+	<expr_stmt><expr><name>buffer</name> = 0</expr>;</expr_stmt>
+	<expr_stmt><expr><name>result</name> = <call><name>getScrollback</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr><name>row</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+	<expr_stmt><expr><name>buffer</name> = <name>screen</name>-&gt;<name>saveBuf_index</name></expr>;</expr_stmt>
+	<expr_stmt><expr><name>row</name> += <name>screen</name>-&gt;<name>savelines</name></expr>;</expr_stmt>
+	<expr_stmt><expr><name>max_row</name> += <name>screen</name>-&gt;<name>savelines</name></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+    }</block></else></if>
+    <if>if <condition>(<expr><name>row</name> &gt;= 0 &amp;&amp; <name>row</name> &lt;= <name>max_row</name></expr>)</condition><then> <block>{
+	<expr_stmt><expr><name>result</name> = (<name>LineData</name> *) <call><name>scrnHeadAddr</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr><name>buffer</name></expr></argument>, <argument><expr>(<name>unsigned</name>) <name>row</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<if>if <condition>(<expr><name>result</name> != 0</expr>)</condition><then> <block>{
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr>1</expr></cpp:if>				<comment type="block">/* FIXME - these should be done in setupLineData, etc. */</comment>
+	    <expr_stmt><expr><name>result</name>-&gt;<name>lineSize</name> = (<name>Dimension</name>) <call><name>MaxCols</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_WIDE_CHARS</name></expr></cpp:if>
+	    <if>if <condition>(<expr><name>screen</name>-&gt;<name>wide_chars</name></expr>)</condition><then> <block>{
+		<expr_stmt><expr><name>result</name>-&gt;<name>combSize</name> = (<name>Char</name>) <name>screen</name>-&gt;<name>max_combining</name></expr>;</expr_stmt>
+	    }</block></then> <else>else <block>{
+		<expr_stmt><expr><name>result</name>-&gt;<name>combSize</name> = 0</expr>;</expr_stmt>
+	    }</block></else></if>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif> <comment type="block">/* FIXME */</comment>
+	}</block></then></if>
+    }</block></then></if>
+
+    <return>return <expr><name>result</name></expr>;</return>
+}</block></function>
+
+<comment type="block">/*
+ * Copy line's data, e.g., from one screen buffer to another, given the preset
+ * pointers for the destination.
+ *
+ * TODO: optionally prune unused combining character data from the result.
+ */</comment>
+<function><type><name>void</name></type>
+<name>copyLineData</name><parameter_list>(<param><decl><type><name>LineData</name> *</type> <name>dst</name></decl></param>, <param><decl><type><name>LineData</name> *</type> <name>src</name></decl></param>)</parameter_list>
+<block>{
+    <expr_stmt><expr><name>dst</name>-&gt;<name>bufHead</name> = <name>src</name>-&gt;<name>bufHead</name></expr>;</expr_stmt>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_WIDE_CHARS</name></expr></cpp:if>
+    <expr_stmt><expr><name>dst</name>-&gt;<name>combSize</name> = <name>src</name>-&gt;<name>combSize</name></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+    <comment type="block">/*
+     * Usually we're copying the same-sized line; a memcpy is faster than
+     * several loops.
+     */</comment>
+    <if>if <condition>(<expr><name>dst</name>-&gt;<name>lineSize</name> == <name>src</name>-&gt;<name>lineSize</name></expr>)</condition><then> <block>{
+	<decl_stmt><decl><type><name>size_t</name></type> <name>size</name> =<init> <expr>(<call><name>sizeof</name><argument_list>(<argument><expr><name>dst</name>-&gt;<name><name>attribs</name><index>[<expr>0</expr>]</index></name></expr></argument>)</argument_list></call>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_ISO_COLORS</name></expr></cpp:if>
+		       + <call><name>sizeof</name><argument_list>(<argument><expr><name>dst</name>-&gt;<name><name>color</name><index>[<expr>0</expr>]</index></name></expr></argument>)</argument_list></call>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+		       + <call><name>sizeof</name><argument_list>(<argument><expr><name>dst</name>-&gt;<name><name>charData</name><index>[<expr>0</expr>]</index></name></expr></argument>)</argument_list></call>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_WIDE_CHARS</name></expr></cpp:if>
+		       + <call><name>sizeof</name><argument_list>(<argument><expr><name>dst</name>-&gt;<name><name>combData</name><index>[<expr>0</expr>]</index><index>[<expr>0</expr>]</index></name></expr></argument>)</argument_list></call> * <name>dst</name>-&gt;<name>combSize</name>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+	)</expr></init></decl>;</decl_stmt>
+
+	<expr_stmt><expr><call><name>memcpy</name><argument_list>(<argument><expr><name>dst</name>-&gt;<name>attribs</name></expr></argument>, <argument><expr><name>src</name>-&gt;<name>attribs</name></expr></argument>, <argument><expr><name>size</name> * <name>dst</name>-&gt;<name>lineSize</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></then> <else>else <block>{
+	<decl_stmt><decl><type><name>Dimension</name></type> <name>col</name></decl>;</decl_stmt>
+	<decl_stmt><decl><type><name>Dimension</name></type> <name>limit</name> =<init> <expr>((<name>dst</name>-&gt;<name>lineSize</name> &lt; <name>src</name>-&gt;<name>lineSize</name>)
+			   ? <name>dst</name>-&gt;<name>lineSize</name>
+			   : <name>src</name>-&gt;<name>lineSize</name>)</expr></init></decl>;</decl_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_WIDE_CHARS</name></expr></cpp:if>
+	<decl_stmt><decl><type><name>Char</name></type> <name>comb</name></decl>;</decl_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+	<for>for (<init><expr><name>col</name> = 0</expr>;</init> <condition><expr><name>col</name> &lt; <name>limit</name></expr>;</condition> <incr><expr>++<name>col</name></expr></incr>) <block>{
+	    <expr_stmt><expr><name>dst</name>-&gt;<name><name>attribs</name><index>[<expr><name>col</name></expr>]</index></name> = <name>src</name>-&gt;<name><name>attribs</name><index>[<expr><name>col</name></expr>]</index></name></expr>;</expr_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_ISO_COLORS</name></expr></cpp:if>
+	    <expr_stmt><expr><name>dst</name>-&gt;<name><name>color</name><index>[<expr><name>col</name></expr>]</index></name> = <name>src</name>-&gt;<name><name>color</name><index>[<expr><name>col</name></expr>]</index></name></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+	    <expr_stmt><expr><name>dst</name>-&gt;<name><name>charData</name><index>[<expr><name>col</name></expr>]</index></name> = <name>src</name>-&gt;<name><name>charData</name><index>[<expr><name>col</name></expr>]</index></name></expr>;</expr_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_WIDE_CHARS</name></expr></cpp:if>
+	    <for>for (<init><expr><name>comb</name> = 0</expr>;</init> <condition><expr><name>comb</name> &lt; <name>dst</name>-&gt;<name>combSize</name></expr>;</condition> <incr><expr>++<name>comb</name></expr></incr>) <block>{
+		<expr_stmt><expr><name>dst</name>-&gt;<name><name>combData</name><index>[<expr><name>comb</name></expr>]</index><index>[<expr><name>col</name></expr>]</index></name> = <name>src</name>-&gt;<name><name>combData</name><index>[<expr><name>comb</name></expr>]</index><index>[<expr><name>col</name></expr>]</index></name></expr>;</expr_stmt>
+	    }</block></for>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+	}</block></for>
+	<for>for (<init><expr><name>col</name> = <name>limit</name></expr>;</init> <condition><expr><name>col</name> &lt; <name>dst</name>-&gt;<name>lineSize</name></expr>;</condition> <incr><expr>++<name>col</name></expr></incr>) <block>{
+	    <expr_stmt><expr><name>dst</name>-&gt;<name><name>attribs</name><index>[<expr><name>col</name></expr>]</index></name> = 0</expr>;</expr_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_ISO_COLORS</name></expr></cpp:if>
+	    <expr_stmt><expr><name>dst</name>-&gt;<name><name>color</name><index>[<expr><name>col</name></expr>]</index></name> = 0</expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+	    <expr_stmt><expr><name>dst</name>-&gt;<name><name>charData</name><index>[<expr><name>col</name></expr>]</index></name> = 0</expr>;</expr_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_WIDE_CHARS</name></expr></cpp:if>
+	    <for>for (<init><expr><name>comb</name> = 0</expr>;</init> <condition><expr><name>comb</name> &lt; <name>dst</name>-&gt;<name>combSize</name></expr>;</condition> <incr><expr>++<name>comb</name></expr></incr>) <block>{
+		<expr_stmt><expr><name>dst</name>-&gt;<name><name>combData</name><index>[<expr><name>comb</name></expr>]</index><index>[<expr><name>col</name></expr>]</index></name> = 0</expr>;</expr_stmt>
+	    }</block></for>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+	}</block></for>
+    }</block></else></if>
+}</block></function>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_WIDE_CHARS</name></expr></cpp:if>
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>initLineExtra</name>(screen) \
+    screen-&gt;lineExtra = ((size_t) (screen-&gt;max_combining) * sizeof(IChar *))</cpp:define>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>initLineExtra</name>(screen) \
+    screen-&gt;lineExtra = 0</cpp:define>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<function><type><name>void</name></type>
+<name>initLineData</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>TScreen</name> *</type><name>screen</name> =<init> <expr><call><name>TScreenOf</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+    <expr_stmt><expr><call><name>initLineExtra</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+    <macro><name>TRACE</name><argument_list>(<argument>("initLineData %lu\n", (unsigned long) screen-&gt;lineExtra)</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+    <macro><name>TRACE</name><argument_list>(<argument>("...sizeof(LineData)  %lu\n", (unsigned long) sizeof(LineData))</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_ISO_COLORS</name></expr></cpp:if>
+    <macro><name>TRACE</name><argument_list>(<argument>("...sizeof(CellColor) %lu\n", (unsigned long) sizeof(CellColor))</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+    <macro><name>TRACE</name><argument_list>(<argument>("...sizeof(RowData)   %lu\n", (unsigned long) sizeof(RowData))</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+    <macro><name>TRACE</name><argument_list>(<argument>("...offset(lineSize)  %lu\n", (unsigned long) offsetof(LineData, lineSize))</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+    <macro><name>TRACE</name><argument_list>(<argument>("...offset(bufHead)   %lu\n", (unsigned long) offsetof(LineData, bufHead))</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_WIDE_CHARS</name></expr></cpp:if>
+    <macro><name>TRACE</name><argument_list>(<argument>("...offset(combSize)  %lu\n", (unsigned long) offsetof(LineData, combSize))</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+    <macro><name>TRACE</name><argument_list>(<argument>("...offset(attribs)   %lu\n", (unsigned long) offsetof(LineData, attribs))</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_ISO_COLORS</name></expr></cpp:if>
+    <macro><name>TRACE</name><argument_list>(<argument>("...offset(color)     %lu\n", (unsigned long) offsetof(LineData, color))</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+    <macro><name>TRACE</name><argument_list>(<argument>("...offset(charData)  %lu\n", (unsigned long) offsetof(LineData, charData))</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+    <macro><name>TRACE</name><argument_list>(<argument>("...offset(combData)  %lu\n", (unsigned long) offsetof(LineData, combData))</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+}</block></function>
+
+<comment type="block">/*
+ * CellData size depends on the "combiningChars" resource.
+ * FIXME - revise this to reduce arithmetic...
+ */</comment>
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>CellDataSize</name>(screen) (SizeOfCellData + screen-&gt;lineExtra)</cpp:define>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>CellDataAddr</name>(screen, data, cell) \
+	(CellData *)((char *)data + (cell * CellDataSize(screen)))</cpp:define>
+
+<function><type><name>CellData</name> *</type>
+<name>newCellData</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>, <param><decl><type><name>Cardinal</name></type> <name>count</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>CellData</name> *</type><name>result</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>TScreen</name> *</type><name>screen</name> =<init> <expr><call><name>TScreenOf</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+    <expr_stmt><expr><call><name>initLineExtra</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><name>result</name> = (<name>CellData</name> *) <call><name>calloc</name><argument_list>(<argument><expr>(<name>size_t</name>) <name>count</name></expr></argument>, <argument><expr>(<name>size_t</name>) <call><name>CellDataSize</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <return>return <expr><name>result</name></expr>;</return>
+}</block></function>
+
+<function><type><name>void</name></type>
+<name>saveCellData</name><parameter_list>(<param><decl><type><name>TScreen</name> *</type> <name>screen</name></decl></param>,
+	     <param><decl><type><name>CellData</name> *</type> <name>data</name></decl></param>,
+	     <param><decl><type><name>Cardinal</name></type> <name>cell</name></decl></param>,
+	     <param><decl><type><name>LineData</name> *</type> <name>ld</name></decl></param>,
+	     <param><decl><type><name>int</name></type> <name>column</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>CellData</name> *</type><name>item</name> =<init> <expr><call><name>CellDataAddr</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr><name>data</name></expr></argument>, <argument><expr><name>cell</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr><name>column</name> &lt; <call><name>MaxCols</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call></expr>)</condition><then> <block>{
+	<expr_stmt><expr><name>item</name>-&gt;<name>attribs</name> = <name>ld</name>-&gt;<name><name>attribs</name><index>[<expr><name>column</name></expr>]</index></name></expr>;</expr_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_ISO_COLORS</name></expr></cpp:if>
+	<expr_stmt><expr><name>item</name>-&gt;<name>color</name> = <name>ld</name>-&gt;<name><name>color</name><index>[<expr><name>column</name></expr>]</index></name></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+	<expr_stmt><expr><name>item</name>-&gt;<name>charData</name> = <name>ld</name>-&gt;<name><name>charData</name><index>[<expr><name>column</name></expr>]</index></name></expr>;</expr_stmt>
+	<macro><name>if_OPT_WIDE_CHARS</name><argument_list>(<argument>screen</argument>, <argument>{
+	    size_t off;
+	    item-&gt;combSize = ld-&gt;combSize;
+	    for_each_combData(off, ld) {
+		item-&gt;combData[off] = ld-&gt;combData[off][column];
+	    }
+	}</argument>)</argument_list></macro>
+    }</block></then></if>
+}</block></function>
+
+<function><type><name>void</name></type>
+<name>restoreCellData</name><parameter_list>(<param><decl><type><name>TScreen</name> *</type> <name>screen</name></decl></param>,
+		<param><decl><type><name>CellData</name> *</type> <name>data</name></decl></param>,
+		<param><decl><type><name>Cardinal</name></type> <name>cell</name></decl></param>,
+		<param><decl><type><name>LineData</name> *</type> <name>ld</name></decl></param>,
+		<param><decl><type><name>int</name></type> <name>column</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>CellData</name> *</type><name>item</name> =<init> <expr><call><name>CellDataAddr</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr><name>data</name></expr></argument>, <argument><expr><name>cell</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr><name>column</name> &lt; <call><name>MaxCols</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call></expr>)</condition><then> <block>{
+	<expr_stmt><expr><name>ld</name>-&gt;<name><name>attribs</name><index>[<expr><name>column</name></expr>]</index></name> = <name>item</name>-&gt;<name>attribs</name></expr>;</expr_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_ISO_COLORS</name></expr></cpp:if>
+	<expr_stmt><expr><name>ld</name>-&gt;<name><name>color</name><index>[<expr><name>column</name></expr>]</index></name> = <name>item</name>-&gt;<name>color</name></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+	<expr_stmt><expr><name>ld</name>-&gt;<name><name>charData</name><index>[<expr><name>column</name></expr>]</index></name> = <name>item</name>-&gt;<name>charData</name></expr>;</expr_stmt>
+	<macro><name>if_OPT_WIDE_CHARS</name><argument_list>(<argument>screen</argument>, <argument>{
+	    size_t off;
+	    ld-&gt;combSize = item-&gt;combSize;
+	    for_each_combData(off, ld) {
+		ld-&gt;combData[off][column] = item-&gt;combData[off];
+	    }
+	}</argument>)</argument_list></macro>
+    }</block></then></if>
+}</block></function>
+</unit>

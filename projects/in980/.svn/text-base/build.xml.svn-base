@@ -1,0 +1,61 @@
+<?xml version="1.0"?>
+
+
+<!-- ====================================================================== 
+     Date:     March 2010
+     
+     Project:  VelocityJSPGenerator
+     
+     Author:   Salânio Júnior
+     ====================================================================== -->
+
+
+
+<project name="${in980}" default="run" basedir=".">
+
+	<description>
+    		Velocity JSP Generator
+    </description>
+
+	<property file="build.properties" />
+
+	<path id="classpath">
+		<fileset dir="${lib.dir}" includes="**/*.jar" />
+	</path>
+
+	<taskdef resource="antenna.properties"  classpath="classpath" />
+	
+	<target name="compile">
+		<javac srcdir="${velogen.dir}" destdir="${bin.dir}" classpathref="classpath" />
+	</target>
+	
+	<target name="jar" depends="compile">
+		<jar destfile="${bin.dir}/${in980}.jar" basedir="${bin.dir}" excludes="*.jar">
+			<manifest>
+				<attribute name="Main-Class" value="${main-class}" />
+			</manifest>
+		</jar>
+	</target>
+	
+	<target name="run" depends="jar">
+		<java fork="true" classname="${main-class}">
+			<arg value="${output.dir}"/>
+			<arg value="${input.dir}"/>
+			<classpath>
+				<path refid="classpath" />
+				<path location="${bin.dir}/${in980}.jar" />
+			</classpath>
+		</java>
+	</target>
+	
+
+
+	<!--<target name="main" description="Copies the jsp files to the workspace directory" depends="run">
+		<copy todir="${output.dir}">
+			<fileset dir="${output_local.dir}" />
+		</copy>
+		<echo message="main target completed.." />
+	</target>-->
+
+</project>
+

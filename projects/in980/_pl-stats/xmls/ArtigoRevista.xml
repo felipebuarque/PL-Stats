@@ -1,0 +1,76 @@
+<unit language="Java" dir="" filename="ArtigoRevista.java"><package>package <name>in980</name>.<name>rgms</name>.<name>domain</name>;</package><import>import <name>java</name>.<name>io</name>.<name>PrintWriter</name>;</import><import>import <name>javax</name>.<name>persistence</name>.<name>Entity</name>;</import><import>import <name>javax</name>.<name>persistence</name>.<name>Inheritance</name>;</import><import>import <name>javax</name>.<name>persistence</name>.<name>InheritanceType</name>;</import><import>import <name>javax</name>.<name>persistence</name>.<name>PrimaryKeyJoinColumn</name>;</import>
+
+@<expr_stmt><expr><name><name><name>Entity</name></name></name>
+@<call><name>PrimaryKeyJoinColumn</name><argument_list>(<argument><expr><name>name</name>="ID"</expr></argument>)</argument_list></call>
+@<call><name>Inheritance</name><argument_list>(<argument><expr><name>strategy</name>=<name>InheritanceType</name>.<name>JOINED</name></expr></argument>)</argument_list></call>
+public class <name>ArtigoRevista</name> extends <name>Publicacao</name><block>{
+
+	private <expr><name>static</name> final <name>long</name> <name>serialVersionUID</name> = 1L</expr>;
+	
+	private <expr><name>String</name><name>journal</name></expr>;
+	private <expr><name>Integer</name><name>volume</name></expr>;
+	private <expr><name>Integer</name><name>paginas</name></expr>;
+	private <expr><name>String</name><name>numero</name></expr>;
+	
+	
+	public <expr><call><name>ArtigoRevista</name><argument_list>(<argument><expr><name>String</name><name>tituloPublicacao</name></expr></argument>)</argument_list></call><block>{
+		<expr><call><name>setTitulo</name><argument_list>(<argument><expr><name>tituloPublicacao</name></expr></argument>)</argument_list></call></expr>;
+	}</block>
+	
+	public <call><name>ArtigoRevista</name><argument_list>()</argument_list></call> <block>{
+		<expr><call><name>super</name><argument_list>()</argument_list></call></expr>;
+	}</block>
+	
+	
+	
+	public <name>String</name> <call><name>getJournal</name><argument_list>()</argument_list></call> <block>{
+		<return>return <expr><name>journal</name></expr>;</return></block></expr></block></expr></expr_stmt>
+	}
+	<function><type><specifier>public</specifier><name>void</name></type><name>setJournal</name><parameter_list>(<param><decl><type><name>String</name></type><name>journal</name></decl></param>)</parameter_list><block>{
+		<expr_stmt><expr><name>this</name>.<name>journal</name> = <name>journal</name></expr>;</expr_stmt>
+	}</block></function>
+	<function><type><specifier>public</specifier><name>Integer</name></type><name>getVolume</name><parameter_list>()</parameter_list><block>{
+		<return>return <expr><name>volume</name></expr>;</return>
+	}</block></function>
+	<function><type><specifier>public</specifier><name>void</name></type><name>setVolume</name><parameter_list>(<param><decl><type><name>Integer</name></type><name>volume</name></decl></param>)</parameter_list><block>{
+		<expr_stmt><expr><name>this</name>.<name>volume</name> = <name>volume</name></expr>;</expr_stmt>
+	}</block></function>
+	<function><type><specifier>public</specifier><name>Integer</name></type><name>getPaginas</name><parameter_list>()</parameter_list><block>{
+		<return>return <expr><name>paginas</name></expr>;</return>
+	}</block></function>
+	<function><type><specifier>public</specifier><name>void</name></type><name>setPaginas</name><parameter_list>(<param><decl><type><name>Integer</name></type><name>paginas</name></decl></param>)</parameter_list><block>{
+		<expr_stmt><expr><name>this</name>.<name>paginas</name> = <name>paginas</name></expr>;</expr_stmt>
+	}</block></function>
+	<function><type><specifier>public</specifier><name>String</name></type><name>getNumero</name><parameter_list>()</parameter_list><block>{
+		<return>return <expr><name>numero</name></expr>;</return>
+	}</block></function>
+	<function><type><specifier>public</specifier><name>void</name></type><name>setNumero</name><parameter_list>(<param><decl><type><name>String</name></type><name>numero</name></decl></param>)</parameter_list><block>{
+		<expr_stmt><expr><name>this</name>.<name>numero</name> = <name>numero</name></expr>;</expr_stmt>
+	}</block></function>
+
+	@<function><type><name>Override</name><specifier>public</specifier><name>String</name></type><name>getDescTipo</name><parameter_list>()</parameter_list><block>{
+		<return>return <expr>"Artigo em Revista/Periodico"</expr>;</return>
+	}</block></function>
+	
+	<function><type><specifier>public</specifier><name>String</name></type><name>getNomeDescritivo</name><parameter_list>()</parameter_list><block>{
+		<return>return <expr>"artigoRevista"</expr>;</return>
+	}</block></function>
+	
+	@<function><type><name>Override</name><specifier>protected</specifier><name>void</name></type><name>validateSubToPersist</name><parameter_list>()</parameter_list><throws>throws</throws> Exception<block>{
+		<if>if<condition>(<expr><call><name>getJournal</name><argument_list>()</argument_list></call> == <name>null</name></expr>)</condition><then><throw>throw <expr>new <call><name>Exception</name><argument_list>(<argument><expr>"Journal invalida."</expr></argument>)</argument_list></call></expr>;</throw></then></if>		
+	}</block></function>
+	
+	@<function><type><name>Override</name><specifier>protected</specifier><name>void</name></type><name>adicionaInfoBibtex</name><parameter_list>(<param><decl><type><name>PrintWriter</name></type><name>saida</name></decl></param>)</parameter_list><block>{
+		<expr_stmt><expr><call><name><name>saida</name>.<name>println</name></name><argument_list>(<argument><expr>"@article{/citacao/todo, "</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name><name>saida</name>.<name>println</name></name><argument_list>(<argument><expr>"author = \" "+ <call><name>getStringAutoresMembros</name><argument_list>()</argument_list></call> +" \","</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name><name>saida</name>.<name>println</name></name><argument_list>(<argument><expr>"title = \" "+ <call><name>getTitulo</name><argument_list>()</argument_list></call> +" \","</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name><name>saida</name>.<name>println</name></name><argument_list>(<argument><expr>"journal = \" "+ <call><name>getJournal</name><argument_list>()</argument_list></call> +" \","</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name><name>saida</name>.<name>println</name></name><argument_list>(<argument><expr>"year = \" "+ <call><name>getAno</name><argument_list>()</argument_list></call>  +" \","</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name><name>saida</name>.<name>println</name></name><argument_list>(<argument><expr>"volume = \" "+ <call><name>getVolume</name><argument_list>()</argument_list></call> +" \","</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name><name>saida</name>.<name>println</name></name><argument_list>(<argument><expr>"number = \" "+ <call><name>getNumero</name><argument_list>()</argument_list></call> +" \","</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name><name>saida</name>.<name>println</name></name><argument_list>(<argument><expr>"pages = \" "+ <call><name>getPaginas</name><argument_list>()</argument_list></call> +" \","</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name><name>saida</name>.<name>println</name></name><argument_list>(<argument><expr>"}"</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	}</block></function>
+
+}
+</unit>

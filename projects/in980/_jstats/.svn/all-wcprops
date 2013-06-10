@@ -1,0 +1,227 @@
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/_jstats
+END
+Main.xml
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/_jstats/Main.xml
+END
+Publicacao.xml
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/_jstats/Publicacao.xml
+END
+in980.csv
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/_jstats/in980.csv
+END
+TeseDoutorado.xml
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/_jstats/TeseDoutorado.xml
+END
+TipoMembro.xml
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/_jstats/TipoMembro.xml
+END
+ListarPublicacaoAction.xml
+K 25
+svn:wc:ra_dav:version-url
+V 109
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/_jstats/ListarPublicacaoAction.xml
+END
+HibernateUtils.xml
+K 25
+svn:wc:ra_dav:version-url
+V 101
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/_jstats/HibernateUtils.xml
+END
+ArtigoConferenciaDAO.xml
+K 25
+svn:wc:ra_dav:version-url
+V 107
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/_jstats/ArtigoConferenciaDAO.xml
+END
+MembroAction.xml
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/_jstats/MembroAction.xml
+END
+ActionPublicacaoBase.xml
+K 25
+svn:wc:ra_dav:version-url
+V 107
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/_jstats/ActionPublicacaoBase.xml
+END
+MudaLocaleLingua.xml
+K 25
+svn:wc:ra_dav:version-url
+V 103
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/_jstats/MudaLocaleLingua.xml
+END
+UsuarioDAO.xml
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/_jstats/UsuarioDAO.xml
+END
+OpenSessionFilter.xml
+K 25
+svn:wc:ra_dav:version-url
+V 104
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/_jstats/OpenSessionFilter.xml
+END
+DissertacaoMestrado.xml
+K 25
+svn:wc:ra_dav:version-url
+V 106
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/_jstats/DissertacaoMestrado.xml
+END
+MembroDAO.xml
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/_jstats/MembroDAO.xml
+END
+ArtigoRevista.xml
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/_jstats/ArtigoRevista.xml
+END
+DissertacaoMestradoDAO.xml
+K 25
+svn:wc:ra_dav:version-url
+V 109
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/_jstats/DissertacaoMestradoDAO.xml
+END
+AutenticacaoInterceptor.xml
+K 25
+svn:wc:ra_dav:version-url
+V 110
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/_jstats/AutenticacaoInterceptor.xml
+END
+Dao.xml
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/_jstats/Dao.xml
+END
+TeseDoutoradoAction.xml
+K 25
+svn:wc:ra_dav:version-url
+V 106
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/_jstats/TeseDoutoradoAction.xml
+END
+ArtigoConferencia.xml
+K 25
+svn:wc:ra_dav:version-url
+V 104
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/_jstats/ArtigoConferencia.xml
+END
+PublicacaoDAO.xml
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/_jstats/PublicacaoDAO.xml
+END
+DissertacaoMestradoAction.xml
+K 25
+svn:wc:ra_dav:version-url
+V 112
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/_jstats/DissertacaoMestradoAction.xml
+END
+VelocityParser.xml
+K 25
+svn:wc:ra_dav:version-url
+V 101
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/_jstats/VelocityParser.xml
+END
+FileUtil.xml
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/_jstats/FileUtil.xml
+END
+LinhaPesquisa.xml
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/_jstats/LinhaPesquisa.xml
+END
+ArtigoRevistaAction.xml
+K 25
+svn:wc:ra_dav:version-url
+V 106
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/_jstats/ArtigoRevistaAction.xml
+END
+ActionCRUDBase.xml
+K 25
+svn:wc:ra_dav:version-url
+V 101
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/_jstats/ActionCRUDBase.xml
+END
+ArtigoRevistaDAO.xml
+K 25
+svn:wc:ra_dav:version-url
+V 103
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/_jstats/ArtigoRevistaDAO.xml
+END
+ArtigoConferenciaAction.xml
+K 25
+svn:wc:ra_dav:version-url
+V 110
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/_jstats/ArtigoConferenciaAction.xml
+END
+Membro.xml
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/_jstats/Membro.xml
+END
+AutenticacaoAction.xml
+K 25
+svn:wc:ra_dav:version-url
+V 105
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/_jstats/AutenticacaoAction.xml
+END
+Usuario.xml
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/_jstats/Usuario.xml
+END
+LinhaPesquisaDAO.xml
+K 25
+svn:wc:ra_dav:version-url
+V 103
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/_jstats/LinhaPesquisaDAO.xml
+END
+RelatorioMembroAction.xml
+K 25
+svn:wc:ra_dav:version-url
+V 108
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/_jstats/RelatorioMembroAction.xml
+END
+LinhaPesquisaAction.xml
+K 25
+svn:wc:ra_dav:version-url
+V 106
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/_jstats/LinhaPesquisaAction.xml
+END
+TeseDoutoradoDAO.xml
+K 25
+svn:wc:ra_dav:version-url
+V 103
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/_jstats/TeseDoutoradoDAO.xml
+END

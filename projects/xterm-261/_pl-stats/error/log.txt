@@ -1,0 +1,7 @@
+Date and time: 2013-06-09 20:41:09.212925
+Filename: None
+
+Exception (getStatistics): Document is empty, line 1, column 1
+
+----------------------------------------------------
+

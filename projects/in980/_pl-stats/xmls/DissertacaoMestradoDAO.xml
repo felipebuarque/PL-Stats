@@ -1,0 +1,26 @@
+<unit language="Java" dir="" filename="DissertacaoMestradoDAO.java"><package>package <name>in980</name>.<name>rgms</name>.<name>persistence</name>;</package><import>import <name>in980</name>.<name>rgms</name>.<name>domain</name>.<name>DissertacaoMestrado</name>;</import><import>import <name>java</name>.<name>util</name>.<name>List</name>;</import><import>import <name>org</name>.<name>hibernate</name>.<name>Session</name>;</import><decl_stmt><decl><type><specifier>public</specifier> class</type><name>DissertacaoMestradoDAO</name> extends <name>Dao</name>&lt;<name>DissertacaoMestrado</name>&gt;<block>{
+
+	@<function><type><name>Override</name><specifier>protected</specifier><name>String</name></type><name>getTabela</name><parameter_list>()</parameter_list><block>{
+		<return>return <expr>"DissertacaoMestrado"</expr>;</return>
+	}</block></function>
+
+	@<expr_stmt><expr><call><name>SuppressWarnings</name><argument_list>(<argument><expr>"unchecked"</expr></argument>)</argument_list></call>
+	@<name>Override</name>
+	protected <name>Class</name> <call><name>getTipoClasse</name><argument_list>()</argument_list></call> <block>{
+		<return>return <expr><name>DissertacaoMestrado</name>.class</expr>;</return></block></expr></expr_stmt>
+	}</block></decl></decl_stmt>
+
+	@<expr_stmt><expr><call><name>SuppressWarnings</name><argument_list>(<argument><expr>"unchecked"</expr></argument>)</argument_list></call>
+	@<name>Override</name>
+	protected <name>List</name>&lt;<name>DissertacaoMestrado</name>&gt; <call><name>montaLista</name><argument_list>(<argument><expr><name>DissertacaoMestrado</name><name>object</name></expr></argument>,
+			<argument><expr><name>Session</name><name>s</name></expr></argument>)</argument_list></call> <block>{
+		<expr><name>List</name>&lt;<name>DissertacaoMestrado</name>&gt; <name>listaRetorno</name> = <call><name><name>s</name>.<name>createQuery</name></name><argument_list>(
+		<argument><expr>"from Publicacao t where t.titulo like :titulo "</expr></argument>)</argument_list></call>
+			.<call><name>setString</name><argument_list>(<argument><expr>"titulo"</expr></argument>, <argument><expr>"%" + <call><name><name>object</name>.<name>getTitulo</name></name><argument_list>()</argument_list></call> + "%"</expr></argument>)</argument_list></call>
+			.<call><name>list</name><argument_list>()</argument_list></call></expr>;
+		<return>return <expr><name>listaRetorno</name></expr>;</return></block></expr></expr_stmt>
+	}
+
+	
+}
+</unit>

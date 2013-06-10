@@ -1,0 +1,2 @@
+### Load custom default resource bundles
+struts.custom.i18n.resources=in980-rgms

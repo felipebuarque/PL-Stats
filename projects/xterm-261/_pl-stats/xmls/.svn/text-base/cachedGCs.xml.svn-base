@@ -1,0 +1,866 @@
+<unit xmlns="http://www.sdml.info/srcML/src" xmlns:cpp="http://www.sdml.info/srcML/cpp" language="C" dir="" filename="cachedGCs.c"><comment type="block">/* $XTermId: cachedGCs.c,v 1.59 2010/04/15 00:00:17 tom Exp $ */</comment>
+
+<comment type="block">/************************************************************
+
+Copyright 2007-2009,2010 by Thomas E. Dickey
+
+                        All Rights Reserved
+
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE ABOVE LISTED COPYRIGHT HOLDER(S) BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+Except as contained in this notice, the name(s) of the above copyright
+holders shall not be used in advertising or otherwise to promote the
+sale, use or other dealings in this Software without prior written
+authorization.
+
+********************************************************/</comment>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;data.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;xstrings.h&gt;</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;X11/Xmu/Drawing.h&gt;</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdio.h&gt;</cpp:file></cpp:include>
+
+<comment type="block">/*
+ * hide (or eliminate) calls to
+ *	XCreateGC()
+ *	XFreeGC()
+ *	XGetGCValues()
+ *	XSetBackground()
+ *	XSetFont()
+ *	XSetForeground()
+ *	XtGetGC()
+ *	XtReleaseGC()
+ * by associating an integer with each GC, maintaining a cache which
+ * reflects frequency of use rather than most recent usage.
+ *
+ * FIXME: XTermFonts should hold gc, font, fs.
+ */</comment>
+<typedef>typedef <type><struct>struct <block>{
+    <decl_stmt><decl><type><name>GC</name></type> <name>gc</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>unsigned</name></type> <name>used</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>unsigned</name></type> <name>cset</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>XTermFonts</name> *</type><name>font</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>Pixel</name></type> <name>tile</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>Pixel</name></type> <name>fg</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>Pixel</name></type> <name>bg</name></decl>;</decl_stmt>
+}</block></struct></type> <name>CgsCacheData</name>;</typedef>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>DEPTH</name> 8</cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>ITEM</name>()      (int) (me-&gt;data - me-&gt;list)</cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>LIST</name>(item)  me-&gt;list[item]</cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>LINK</name>(item)  me-&gt;data = (me-&gt;list + (item))</cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>THIS</name>(field) me-&gt;data-&gt;field</cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>NEXT</name>(field) me-&gt;next.field</cpp:define>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>HaveFont</name>(font) (Boolean) ((font) != 0 &amp;&amp; (font)-&gt;fs != 0)</cpp:define>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>GC_CSet</name> <name>GCFunction</name></cpp:define>
+
+<typedef>typedef <type><struct>struct <block>{
+    <decl_stmt><decl><type><name>CgsCacheData</name></type> <name><name>list</name><index>[<expr><name>DEPTH</name></expr>]</index></name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>CgsCacheData</name> *</type><name>data</name></decl>;</decl_stmt>		<comment type="block">/* points to current list[] entry */</comment>
+    <decl_stmt><decl><type><name>XtGCMask</name></type> <name>mask</name></decl>;</decl_stmt>		<comment type="block">/* changes since the last getCgsGC() */</comment>
+    <decl_stmt><decl><type><name>CgsCacheData</name></type> <name>next</name></decl>;</decl_stmt>		<comment type="block">/* updated values, apply in getCgsGC() */</comment>
+}</block></struct></type> <name>CgsCache</name>;</typedef>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_TRACE</name></expr></cpp:if>
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>CASE</name>(name) case gc##name: result = #name; break</cpp:define>
+<function><type><name>static</name> <name>const</name> <name>char</name> *</type>
+<name>traceCgsEnum</name><parameter_list>(<param><decl><type><name>CgsEnum</name></type> <name>value</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>const</name> <name>char</name> *</type><name>result</name> =<init> <expr>"?"</expr></init></decl>;</decl_stmt>
+    <switch>switch <condition>(<expr><name>value</name></expr>)</condition> <block>{
+	<expr_stmt><expr><call><name>CASE</name><argument_list>(<argument><expr><name>Norm</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASE</name><argument_list>(<argument><expr><name>Bold</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASE</name><argument_list>(<argument><expr><name>NormReverse</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASE</name><argument_list>(<argument><expr><name>BoldReverse</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_BOX_CHARS</name></expr></cpp:if>
+	<expr_stmt><expr><call><name>CASE</name><argument_list>(<argument><expr><name>Line</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASE</name><argument_list>(<argument><expr><name>Dots</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_DEC_CHRSET</name></expr></cpp:if>
+	<expr_stmt><expr><call><name>CASE</name><argument_list>(<argument><expr><name>CNorm</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASE</name><argument_list>(<argument><expr><name>CBold</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_WIDE_CHARS</name></expr></cpp:if>
+	<expr_stmt><expr><call><name>CASE</name><argument_list>(<argument><expr><name>Wide</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASE</name><argument_list>(<argument><expr><name>WBold</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASE</name><argument_list>(<argument><expr><name>WideReverse</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASE</name><argument_list>(<argument><expr><name>WBoldReverse</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+	<expr_stmt><expr><call><name>CASE</name><argument_list>(<argument><expr><name>VTcursNormal</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASE</name><argument_list>(<argument><expr><name>VTcursFilled</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASE</name><argument_list>(<argument><expr><name>VTcursReverse</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>CASE</name><argument_list>(<argument><expr><name>VTcursOutline</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_TEK4014</name></expr></cpp:if>
+	<expr_stmt><expr><call><name>CASE</name><argument_list>(<argument><expr><name>TKcurs</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+	<expr_stmt><expr><call><name>CASE</name><argument_list>(<argument><expr><name>MAX</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></switch>
+    <return>return <expr><name>result</name></expr>;</return>
+}</block></function>
+
+<cpp:undef>#<cpp:directive>undef</cpp:directive> <name>CASE</name></cpp:undef>
+
+<function><type><name>static</name> <name>const</name> <name>char</name> *</type>
+<name>traceVTwin</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>, <param><decl><type><name>VTwin</name> *</type> <name>value</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>const</name> <name>char</name> *</type><name>result</name> =<init> <expr>"?"</expr></init></decl>;</decl_stmt>
+    <if>if <condition>(<expr><name>value</name> == 0</expr>)</condition><then>
+	<expr_stmt><expr><name>result</name> = "null"</expr>;</expr_stmt></then>
+    <else>else <if>if <condition>(<expr><name>value</name> == &amp;(<call><name>TScreenOf</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call>-&gt;<name>fullVwin</name>)</expr>)</condition><then>
+	<expr_stmt><expr><name>result</name> = "fullVwin"</expr>;</expr_stmt></then>
+<cpp:ifndef>#<cpp:directive>ifndef</cpp:directive> <name>NO_ACTIVE_ICON</name></cpp:ifndef>
+    <else>else <if>if <condition>(<expr><name>value</name> == &amp;(<call><name>TScreenOf</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call>-&gt;<name>iconVwin</name>)</expr>)</condition><then>
+	<expr_stmt><expr><name>result</name> = "iconVwin"</expr>;</expr_stmt></then></if></else></if></else></if>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+    <return>return <expr><name>result</name></expr>;</return>
+}</block></function>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_TRACE</name> &gt; 1</expr></cpp:if>
+<function><type><name>static</name> <name>String</name></type>
+<name>traceCSet</name><parameter_list>(<param><decl><type><name>unsigned</name></type> <name>cset</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>static</name> <name>char</name></type> <name><name>result</name><index>[<expr>80</expr>]</index></name></decl>;</decl_stmt>
+    <switch>switch <condition>(<expr><name>cset</name></expr>)</condition> <block>{
+    <case>case <expr><name>CSET_SWL</name></expr>:
+	<expr_stmt><expr><call><name>strcpy</name><argument_list>(<argument><expr><name>result</name></expr></argument>, <argument><expr>"SWL"</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<break>break;</break>
+    </case><case>case <expr><name>CSET_DHL_TOP</name></expr>:
+	<expr_stmt><expr><call><name>strcpy</name><argument_list>(<argument><expr><name>result</name></expr></argument>, <argument><expr>"DHL_TOP"</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<break>break;</break>
+    </case><case>case <expr><name>CSET_DHL_BOT</name></expr>:
+	<expr_stmt><expr><call><name>strcpy</name><argument_list>(<argument><expr><name>result</name></expr></argument>, <argument><expr>"DHL_BOT"</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<break>break;</break>
+    </case><case>case <expr><name>CSET_DWL</name></expr>:
+	<expr_stmt><expr><call><name>strcpy</name><argument_list>(<argument><expr><name>result</name></expr></argument>, <argument><expr>"DWL"</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<break>break;</break>
+    </case><default>default:
+	<expr_stmt><expr><call><name>sprintf</name><argument_list>(<argument><expr><name>result</name></expr></argument>, <argument><expr>"%#x"</expr></argument>, <argument><expr><name>cset</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<break>break;</break>
+    </default>}</block></switch>
+    <return>return <expr><name>result</name></expr>;</return>
+}</block></function>
+
+<function><type><name>static</name> <name>String</name></type>
+<name>traceFont</name><parameter_list>(<param><decl><type><name>XTermFonts</name> *</type> <name>font</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>static</name> <name>char</name></type> <name><name>result</name><index>[<expr>80</expr>]</index></name></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr><call><name>HaveFont</name><argument_list>(<argument><expr><name>font</name></expr></argument>)</argument_list></call></expr>)</condition><then> <block>{
+	<decl_stmt><decl><type><name>XFontStruct</name> *</type><name>fs</name> =<init> <expr><name>font</name>-&gt;<name>fs</name></expr></init></decl>;</decl_stmt>
+	<macro><name>sprintf</name><argument_list>(<argument>result</argument>, <argument>"%p(%dx%d %d %#lx)"</argument>,
+		<argument>fs</argument>,
+		<argument>fs-&gt;max_bounds.width</argument>,
+		<argument>fs-&gt;max_bounds.ascent + fs-&gt;max_bounds.descent</argument>,
+		<argument>fs-&gt;max_bounds.descent</argument>,
+		<argument>(unsigned long) (fs-&gt;fid)</argument>)</argument_list></macro><empty_stmt>;</empty_stmt>
+    }</block></then> <else>else <block>{
+	<expr_stmt><expr><call><name>strcpy</name><argument_list>(<argument><expr><name>result</name></expr></argument>, <argument><expr>"null"</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></else></if>
+    <return>return <expr><name>result</name></expr>;</return>
+}</block></function>
+
+<function><type><name>static</name> <name>String</name></type>
+<name>tracePixel</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>, <param><decl><type><name>Pixel</name></type> <name>value</name></decl></param>)</parameter_list>
+<block>{
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>CASE</name>(name) { name, #name }</cpp:define>
+    <decl_stmt><decl><type><name>static</name></type> struct <block>{
+	<decl_stmt><decl><type><name>TermColors</name></type> <name>code</name></decl>;</decl_stmt>
+	<decl_stmt><decl><type><name>String</name></type> <name>name</name></decl>;</decl_stmt>
+    }</block></decl></decl_stmt> <expr_stmt><expr><name><name>t_colors</name><index>[]</index></name> = <block>{
+	<expr><call><name>CASE</name><argument_list>(<argument><expr><name>TEXT_FG</name></expr></argument>)</argument_list></call></expr>,
+	    <expr><call><name>CASE</name><argument_list>(<argument><expr><name>TEXT_BG</name></expr></argument>)</argument_list></call></expr>,
+	    <expr><call><name>CASE</name><argument_list>(<argument><expr><name>TEXT_CURSOR</name></expr></argument>)</argument_list></call></expr>,
+	    <expr><call><name>CASE</name><argument_list>(<argument><expr><name>MOUSE_FG</name></expr></argument>)</argument_list></call></expr>,
+	    <expr><call><name>CASE</name><argument_list>(<argument><expr><name>MOUSE_BG</name></expr></argument>)</argument_list></call></expr>,
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_TEK4014</name></expr></cpp:if>
+	    <expr><call><name>CASE</name><argument_list>(<argument><expr><name>TEK_FG</name></expr></argument>)</argument_list></call></expr>,
+	    <expr><call><name>CASE</name><argument_list>(<argument><expr><name>TEK_BG</name></expr></argument>)</argument_list></call></expr>,
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_HIGHLIGHT_COLOR</name></expr></cpp:if>
+	    <expr><call><name>CASE</name><argument_list>(<argument><expr><name>HIGHLIGHT_BG</name></expr></argument>)</argument_list></call></expr>,
+	    <expr><call><name>CASE</name><argument_list>(<argument><expr><name>HIGHLIGHT_FG</name></expr></argument>)</argument_list></call></expr>,
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_TEK4014</name></expr></cpp:if>
+	    <expr><call><name>CASE</name><argument_list>(<argument><expr><name>TEK_CURSOR</name></expr></argument>)</argument_list></call></expr>,
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+    }</block></expr>;</expr_stmt>
+    <decl_stmt><decl><type><name>TScreen</name> *</type><name>screen</name> =<init> <expr><call><name>TScreenOf</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>String</name></type> <name>result</name> =<init> <expr>0</expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>int</name></type> <name>n</name></decl>;</decl_stmt>
+
+    <for>for (<init><expr><name>n</name> = 0</expr>;</init> <condition><expr><name>n</name> &lt; <name>NCOLORS</name></expr>;</condition> <incr><expr>++<name>n</name></expr></incr>) <block>{
+	<if>if <condition>(<expr><name>value</name> == <call><name>T_COLOR</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr><name><name>t_colors</name><index>[<expr><name>n</name></expr>]</index></name>.<name>code</name></expr></argument>)</argument_list></call></expr>)</condition><then> <block>{
+	    <expr_stmt><expr><name>result</name> = <name><name>t_colors</name><index>[<expr><name>n</name></expr>]</index></name>.<name>name</name></expr>;</expr_stmt>
+	    <break>break;</break>
+	}</block></then></if>
+    }</block></for>
+
+    <if>if <condition>(<expr><name>result</name> == 0</expr>)</condition><then> <block>{
+	<for>for (<init><expr><name>n</name> = 0</expr>;</init> <condition><expr><name>n</name> &lt; <name>MAXCOLORS</name></expr>;</condition> <incr><expr>++<name>n</name></expr></incr>) <block>{
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_COLOR_RES</name></expr></cpp:if>
+	    <if>if <condition>(<expr><name>screen</name>-&gt;<name><name>Acolors</name><index>[<expr><name>n</name></expr>]</index></name>.<name>mode</name> &gt; 0
+		&amp;&amp; <name>value</name> == <name>screen</name>-&gt;<name><name>Acolors</name><index>[<expr><name>n</name></expr>]</index></name>.<name>value</name></expr>)</condition><then> <block>{
+		<expr_stmt><expr><name>result</name> = <name>screen</name>-&gt;<name><name>Acolors</name><index>[<expr><name>n</name></expr>]</index></name>.<name>resource</name></expr>;</expr_stmt>
+		<break>break;</break>
+	    }</block></then></if>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+	    <if>if <condition>(<expr><name>value</name> == <name>screen</name>-&gt;<name><name>Acolors</name><index>[<expr><name>n</name></expr>]</index></name></expr>)</condition><then> <block>{
+		<decl_stmt><decl><type><name>char</name></type> <name><name>temp</name><index>[<expr>80</expr>]</index></name></decl>;</decl_stmt>
+		<expr_stmt><expr><call><name>sprintf</name><argument_list>(<argument><expr><name>temp</name></expr></argument>, <argument><expr>"Acolors[%d]"</expr></argument>, <argument><expr><name>n</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><name>result</name> = <call><name>x_strdup</name><argument_list>(<argument><expr><name>temp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<break>break;</break>
+	    }</block></then></if>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+	}</block></for>
+    }</block></then></if>
+
+    <if>if <condition>(<expr><name>result</name> == 0</expr>)</condition><then> <block>{
+	<decl_stmt><decl><type><name>char</name></type> <name><name>temp</name><index>[<expr>80</expr>]</index></name></decl>;</decl_stmt>
+	<expr_stmt><expr><call><name>sprintf</name><argument_list>(<argument><expr><name>temp</name></expr></argument>, <argument><expr>"%#lx"</expr></argument>, <argument><expr><name>value</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><name>result</name> = <call><name>x_strdup</name><argument_list>(<argument><expr><name>temp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></then></if>
+
+    <return>return <expr><name>result</name></expr>;</return>
+}</block></function>
+
+<cpp:undef>#<cpp:directive>undef</cpp:directive> <name>CASE</name></cpp:undef>
+
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif> <comment type="block">/* OPT_TRACE &gt; 1 */</comment>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif> <comment type="block">/* OPT_TRACE */</comment>
+
+<function><type><name>static</name> <name>CgsCache</name> *</type>
+<name>allocCache</name><parameter_list>(<param><decl><type><name>void</name> **</type><name>cache_pointer</name></decl></param>)</parameter_list>
+<block>{
+    <if>if <condition>(<expr>*<name>cache_pointer</name> == 0</expr>)</condition><then> <block>{
+	<expr_stmt><expr>*<name>cache_pointer</name> = <call><name>TypeCallocN</name><argument_list>(<argument><expr><name>CgsCache</name></expr></argument>, <argument><expr><name>gcMAX</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("allocCache %p\n", *<name>cache_pointer</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></then></if>
+    <return>return <expr>*((<name>CgsCache</name> **) <name>cache_pointer</name>)</expr>;</return>
+}</block></function>
+
+<function><type><name>static</name> <name>int</name></type>
+<name>dataIndex</name><parameter_list>(<param><decl><type><name>CgsCache</name> *</type> <name>me</name></decl></param>)</parameter_list>
+<block>{
+    <return>return <expr><call><name>ITEM</name><argument_list>()</argument_list></call></expr>;</return>
+}</block></function>
+
+<function><type><name>static</name> <name>void</name></type>
+<name>relinkData</name><parameter_list>(<param><decl><type><name>CgsCache</name> *</type> <name>me</name></decl></param>, <param><decl><type><name>int</name></type> <name>item</name></decl></param>)</parameter_list>
+<block>{
+    <expr_stmt><expr><call><name>LINK</name><argument_list>(<argument><expr><name>item</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+}</block></function>
+
+<comment type="block">/*
+ * Returns the appropriate cache pointer.
+ */</comment>
+<function><type><name>static</name> <name>CgsCache</name> *</type>
+<name>myCache</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>, <param><decl><type><name>VTwin</name> *</type> <name>cgsWin</name></decl></param>, <param><decl><type><name>CgsEnum</name></type> <name>cgsId</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>CgsCache</name> *</type><name>result</name> =<init> <expr>0</expr></init></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr>(<name>int</name>) <name>cgsId</name> &gt;= 0 &amp;&amp; <name>cgsId</name> &lt; <name>gcMAX</name></expr>)</condition><then> <block>{
+<cpp:ifdef>#<cpp:directive>ifdef</cpp:directive> <name>NO_ACTIVE_ICON</name></cpp:ifdef>
+	<expr_stmt><expr>(<name>void</name>) <name>xw</name></expr>;</expr_stmt>
+	<expr_stmt><expr>(<name>void</name>) <name>cgsWin</name></expr>;</expr_stmt>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+	<if>if <condition>(<expr><name>cgsWin</name> == &amp;(<call><name>TScreenOf</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call>-&gt;<name>iconVwin</name>)</expr>)</condition><then>
+	    <expr_stmt><expr><name>result</name> = <call><name>allocCache</name><argument_list>(<argument><expr>&amp;(<call><name>TScreenOf</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call>-&gt;<name>icon_cgs_cache</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt></then>
+	<else>else
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+	    <expr_stmt><expr><name>result</name> = <call><name>allocCache</name><argument_list>(<argument><expr>&amp;(<call><name>TScreenOf</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call>-&gt;<name>main_cgs_cache</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt></else></if>
+
+	<expr_stmt><expr><name>result</name> += <name>cgsId</name></expr>;</expr_stmt>
+	<if>if <condition>(<expr><name>result</name>-&gt;<name>data</name> == 0</expr>)</condition><then> <block>{
+	    <expr_stmt><expr><name>result</name>-&gt;<name>data</name> = <name>result</name>-&gt;<name>list</name></expr>;</expr_stmt>
+	}</block></then></if>
+    }</block></then></if>
+
+    <return>return <expr><name>result</name></expr>;</return>
+}</block></function>
+
+<function><type><name>static</name> <name>Display</name> *</type>
+<name>myDisplay</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>)</parameter_list>
+<block>{
+    <return>return <expr><call><name>TScreenOf</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call>-&gt;<name>display</name></expr>;</return>
+}</block></function>
+
+<function><type><name>static</name> <name>Drawable</name></type>
+<name>myDrawable</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>, <param><decl><type><name>VTwin</name> *</type> <name>cgsWin</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>Drawable</name></type> <name>drawable</name> =<init> <expr>0</expr></init></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr><name>cgsWin</name> != 0 &amp;&amp; <name>cgsWin</name>-&gt;<name>window</name> != 0</expr>)</condition><then>
+	<expr_stmt><expr><name>drawable</name> = <name>cgsWin</name>-&gt;<name>window</name></expr>;</expr_stmt></then></if>
+    <if>if <condition>(<expr><name>drawable</name> == 0</expr>)</condition><then>
+	<expr_stmt><expr><name>drawable</name> = <call><name>RootWindowOfScreen</name><argument_list>(<argument><expr><call><name>XtScreen</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+    <return>return <expr><name>drawable</name></expr>;</return>
+}</block></function>
+
+<function><type><name>static</name> <name>GC</name></type>
+<name>newCache</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>, <param><decl><type><name>VTwin</name> *</type> <name>cgsWin</name></decl></param>, <param><decl><type><name>CgsEnum</name></type> <name>cgsId</name></decl></param>, <param><decl><type><name>CgsCache</name> *</type> <name>me</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>XGCValues</name></type> <name>xgcv</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>XtGCMask</name></type> <name>mask</name></decl>;</decl_stmt>
+
+    <expr_stmt><expr><call><name>THIS</name><argument_list>(<argument><expr><name>font</name></expr></argument>)</argument_list></call> = <call><name>NEXT</name><argument_list>(<argument><expr><name>font</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>THIS</name><argument_list>(<argument><expr><name>cset</name></expr></argument>)</argument_list></call> = <call><name>NEXT</name><argument_list>(<argument><expr><name>cset</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>THIS</name><argument_list>(<argument><expr><name>fg</name></expr></argument>)</argument_list></call> = <call><name>NEXT</name><argument_list>(<argument><expr><name>fg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>THIS</name><argument_list>(<argument><expr><name>bg</name></expr></argument>)</argument_list></call> = <call><name>NEXT</name><argument_list>(<argument><expr><name>bg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+    <expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr>&amp;<name>xgcv</name></expr></argument>, <argument><expr>0</expr></argument>, <argument><expr><call><name>sizeof</name><argument_list>(<argument><expr><name>xgcv</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><name>xgcv</name>.<name>font</name> = <call><name>NEXT</name><argument_list>(<argument><expr><name>font</name></expr></argument>)</argument_list></call>-&gt;<name>fs</name>-&gt;<name>fid</name></expr>;</expr_stmt>
+    <expr_stmt><expr><name>mask</name> = (<name>GCForeground</name> | <name>GCBackground</name> | <name>GCFont</name>)</expr>;</expr_stmt>
+
+    <switch>switch <condition>(<expr><name>cgsId</name></expr>)</condition> <block>{
+    <case>case <expr><name>gcNorm</name></expr>:
+    </case><case>case <expr><name>gcBold</name></expr>:
+    </case><case>case <expr><name>gcNormReverse</name></expr>:
+    </case><case>case <expr><name>gcBoldReverse</name></expr>:
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_WIDE_CHARS</name></expr></cpp:if>
+    </case><case>case <expr><name>gcWide</name></expr>:
+    </case><case>case <expr><name>gcWBold</name></expr>:
+    </case><case>case <expr><name>gcWideReverse</name></expr>:
+    </case><case>case <expr><name>gcWBoldReverse</name></expr>:
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+	<expr_stmt><expr><name>mask</name> |= (<name>GCGraphicsExposures</name> | <name>GCFunction</name>)</expr>;</expr_stmt>
+	<expr_stmt><expr><name>xgcv</name>.<name>graphics_exposures</name> = <name>True</name></expr>;</expr_stmt>		<comment type="block">/* default */</comment>
+	<expr_stmt><expr><name>xgcv</name>.<name>function</name> = <name>GXcopy</name></expr>;</expr_stmt>
+	<break>break;</break>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_BOX_CHARS</name></expr></cpp:if>
+    </case><case>case <expr><name>gcLine</name></expr>:
+	<expr_stmt><expr><name>mask</name> |= (<name>GCGraphicsExposures</name> | <name>GCFunction</name>)</expr>;</expr_stmt>
+	<expr_stmt><expr><name>xgcv</name>.<name>graphics_exposures</name> = <name>True</name></expr>;</expr_stmt>		<comment type="block">/* default */</comment>
+	<expr_stmt><expr><name>xgcv</name>.<name>function</name> = <name>GXcopy</name></expr>;</expr_stmt>
+	<break>break;</break>
+    </case><case>case <expr><name>gcDots</name></expr>:
+	<expr_stmt><expr><name>xgcv</name>.<name>fill_style</name> = <name>FillTiled</name></expr>;</expr_stmt>
+	<expr_stmt><expr><name>xgcv</name>.<name>tile</name> =
+	    <call><name>XmuCreateStippledPixmap</name><argument_list>(<argument><expr><call><name>XtScreen</name><argument_list>(<argument><expr>(<name>Widget</name>) <name>xw</name></expr></argument>)</argument_list></call></expr></argument>,
+				    <argument><expr><call><name>THIS</name><argument_list>(<argument><expr><name>fg</name></expr></argument>)</argument_list></call></expr></argument>,
+				    <argument><expr><call><name>THIS</name><argument_list>(<argument><expr><name>bg</name></expr></argument>)</argument_list></call></expr></argument>,
+				    <argument><expr><name>xw</name>-&gt;<name>core</name>.<name>depth</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>THIS</name><argument_list>(<argument><expr><name>tile</name></expr></argument>)</argument_list></call> = <name>xgcv</name>.<name>tile</name></expr>;</expr_stmt>
+	<expr_stmt><expr><name>mask</name> = (<name>GCForeground</name> | <name>GCBackground</name>)</expr>;</expr_stmt>
+	<expr_stmt><expr><name>mask</name> |= (<name>GCGraphicsExposures</name> | <name>GCFunction</name> | <name>GCTile</name> | <name>GCFillStyle</name>)</expr>;</expr_stmt>
+	<expr_stmt><expr><name>xgcv</name>.<name>graphics_exposures</name> = <name>True</name></expr>;</expr_stmt>		<comment type="block">/* default */</comment>
+	<expr_stmt><expr><name>xgcv</name>.<name>function</name> = <name>GXcopy</name></expr>;</expr_stmt>
+	<break>break;</break>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_DEC_CHRSET</name></expr></cpp:if>
+    </case><case>case <expr><name>gcCNorm</name></expr>:
+    </case><case>case <expr><name>gcCBold</name></expr>:
+	<break>break;</break>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+    </case><case>case <expr><name>gcVTcursNormal</name></expr>:	<comment type="block">/* FALLTHRU */</comment>
+    </case><case>case <expr><name>gcVTcursFilled</name></expr>:	<comment type="block">/* FALLTHRU */</comment>
+    </case><case>case <expr><name>gcVTcursReverse</name></expr>:	<comment type="block">/* FALLTHRU */</comment>
+    </case><case>case <expr><name>gcVTcursOutline</name></expr>:	<comment type="block">/* FALLTHRU */</comment>
+	<break>break;</break>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_TEK4014</name></expr></cpp:if>
+    </case><case>case <expr><name>gcTKcurs</name></expr>:		<comment type="block">/* FALLTHRU */</comment>
+	<comment type="block">/* FIXME */</comment>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+    </case><case>case <expr><name>gcMAX</name></expr>:		<comment type="block">/* should not happen */</comment>
+	<return>return <expr>0</expr>;</return>
+    </case>}</block></switch>
+    <expr_stmt><expr><name>xgcv</name>.<name>foreground</name> = <call><name>NEXT</name><argument_list>(<argument><expr><name>fg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><name>xgcv</name>.<name>background</name> = <call><name>NEXT</name><argument_list>(<argument><expr><name>bg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+    <expr_stmt><expr><call><name>THIS</name><argument_list>(<argument><expr><name>gc</name></expr></argument>)</argument_list></call> = <call><name>XCreateGC</name><argument_list>(<argument><expr><call><name>myDisplay</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><call><name>myDrawable</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>cgsWin</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name>mask</name></expr></argument>, <argument><expr>&amp;<name>xgcv</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("getCgsGC(%s) created gc %p(%d)\n",
+	   <call><name>traceCgsEnum</name><argument_list>(<argument><expr><name>cgsId</name></expr></argument>)</argument_list></call>, (<name>void</name> *) <call><name>THIS</name><argument_list>(<argument><expr><name>gc</name></expr></argument>)</argument_list></call>, <call><name>ITEM</name><argument_list>()</argument_list></call>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+    <expr_stmt><expr><call><name>THIS</name><argument_list>(<argument><expr><name>used</name></expr></argument>)</argument_list></call> = 0</expr>;</expr_stmt>
+    <return>return <expr><call><name>THIS</name><argument_list>(<argument><expr><name>gc</name></expr></argument>)</argument_list></call></expr>;</return>
+}</block></function>
+
+<function><type><name>static</name> <name>Boolean</name></type>
+<name>SameFont</name><parameter_list>(<param><decl><type><name>XTermFonts</name> *</type> <name>a</name></decl></param>, <param><decl><type><name>XTermFonts</name> *</type> <name>b</name></decl></param>)</parameter_list>
+<block>{
+    <return>return <expr><call>(<name>Boolean</name>) <argument_list>(<argument><expr><call><name>HaveFont</name><argument_list>(<argument><expr><name>a</name></expr></argument>)</argument_list></call>
+		      &amp;&amp; <call><name>HaveFont</name><argument_list>(<argument><expr><name>b</name></expr></argument>)</argument_list></call>
+		      &amp;&amp; ((<name>a</name>-&gt;<name>fs</name> == <name>b</name>-&gt;<name>fs</name>)
+			  || !<call><name>memcmp</name><argument_list>(<argument><expr><name>a</name>-&gt;<name>fs</name></expr></argument>, <argument><expr><name>b</name>-&gt;<name>fs</name></expr></argument>, <argument><expr><call><name>sizeof</name><argument_list>(<argument><expr>*(<name>a</name>-&gt;<name>fs</name>)</expr></argument>)</argument_list></call></expr></argument>)</argument_list></call>)</expr></argument>)</argument_list></call></expr>;</return>
+}</block></function>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>SameColor</name>(a,b) ((a) == (b))</cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>SameCSet</name>(a,b)  ((a) == (b))</cpp:define>
+
+<function><type><name>static</name> <name>GC</name></type>
+<name>chgCache</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>, <param><decl><type><name>CgsEnum</name> <name>cgsId</name></type> <name>GCC_UNUSED</name></decl></param>, <param><decl><type><name>CgsCache</name> *</type> <name>me</name></decl></param>, <param><decl><type><name>Bool</name></type> <name>both</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>XGCValues</name></type> <name>xgcv</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>XtGCMask</name></type> <name>mask</name> =<init> <expr>(<name>GCForeground</name> | <name>GCBackground</name> | <name>GCFont</name>)</expr></init></decl>;</decl_stmt>
+
+    <expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr>&amp;<name>xgcv</name></expr></argument>, <argument><expr>0</expr></argument>, <argument><expr><call><name>sizeof</name><argument_list>(<argument><expr><name>xgcv</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+    <expr_stmt><expr><call><name>TRACE2</name><argument_list>(<argument><expr>("chgCache(%s) old data fg=%s, bg=%s, font=%s cset %s\n",
+	    <call><name>traceCgsEnum</name><argument_list>(<argument><expr><name>cgsId</name></expr></argument>)</argument_list></call>,
+	    <call><name>tracePixel</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><call><name>THIS</name><argument_list>(<argument><expr><name>fg</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call>,
+	    <call><name>tracePixel</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><call><name>THIS</name><argument_list>(<argument><expr><name>bg</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call>,
+	    <call><name>traceFont</name><argument_list>(<argument><expr><call><name>THIS</name><argument_list>(<argument><expr><name>font</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call>,
+	    <call><name>traceCSet</name><argument_list>(<argument><expr><call><name>THIS</name><argument_list>(<argument><expr><name>cset</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_TRACE</name> &gt; 1</expr></cpp:if>
+    <if>if <condition>(<expr>!<call><name>SameFont</name><argument_list>(<argument><expr><call><name>THIS</name><argument_list>(<argument><expr><name>font</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><call><name>NEXT</name><argument_list>(<argument><expr><name>font</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>)</condition><then>
+	<expr_stmt><expr><call><name>TRACE2</name><argument_list>(<argument><expr>("...chgCache new font=%s\n", <call><name>traceFont</name><argument_list>(<argument><expr><call><name>NEXT</name><argument_list>(<argument><expr><name>font</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call>)</expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+    <if>if <condition>(<expr>!<call><name>SameCSet</name><argument_list>(<argument><expr><call><name>THIS</name><argument_list>(<argument><expr><name>cset</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><call><name>NEXT</name><argument_list>(<argument><expr><name>cset</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>)</condition><then>
+	<expr_stmt><expr><call><name>TRACE2</name><argument_list>(<argument><expr>("...chgCache new cset=%s\n", <call><name>traceCSet</name><argument_list>(<argument><expr><call><name>NEXT</name><argument_list>(<argument><expr><name>cset</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call>)</expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+    <if>if <condition>(<expr>!<call><name>SameColor</name><argument_list>(<argument><expr><call><name>THIS</name><argument_list>(<argument><expr><name>fg</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><call><name>NEXT</name><argument_list>(<argument><expr><name>fg</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>)</condition><then>
+	<expr_stmt><expr><call><name>TRACE2</name><argument_list>(<argument><expr>("...chgCache new fg=%s\n", <call><name>tracePixel</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><call><name>NEXT</name><argument_list>(<argument><expr><name>fg</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call>)</expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+    <if>if <condition>(<expr>!<call><name>SameColor</name><argument_list>(<argument><expr><call><name>THIS</name><argument_list>(<argument><expr><name>bg</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><call><name>NEXT</name><argument_list>(<argument><expr><name>bg</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>)</condition><then>
+	<expr_stmt><expr><call><name>TRACE2</name><argument_list>(<argument><expr>("...chgCache new bg=%s\n", <call><name>tracePixel</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><call><name>NEXT</name><argument_list>(<argument><expr><name>bg</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call>)</expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+    <if>if <condition>(<expr><name>both</name></expr>)</condition><then> <block>{
+	<expr_stmt><expr><call><name>THIS</name><argument_list>(<argument><expr><name>font</name></expr></argument>)</argument_list></call> = <call><name>NEXT</name><argument_list>(<argument><expr><name>font</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>THIS</name><argument_list>(<argument><expr><name>cset</name></expr></argument>)</argument_list></call> = <call><name>NEXT</name><argument_list>(<argument><expr><name>cset</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></then></if>
+    <expr_stmt><expr><call><name>THIS</name><argument_list>(<argument><expr><name>fg</name></expr></argument>)</argument_list></call> = <call><name>NEXT</name><argument_list>(<argument><expr><name>fg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>THIS</name><argument_list>(<argument><expr><name>bg</name></expr></argument>)</argument_list></call> = <call><name>NEXT</name><argument_list>(<argument><expr><name>bg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+    <expr_stmt><expr><name>xgcv</name>.<name>font</name> = <call><name>THIS</name><argument_list>(<argument><expr><name>font</name></expr></argument>)</argument_list></call>-&gt;<name>fs</name>-&gt;<name>fid</name></expr>;</expr_stmt>
+    <expr_stmt><expr><name>xgcv</name>.<name>foreground</name> = <call><name>THIS</name><argument_list>(<argument><expr><name>fg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><name>xgcv</name>.<name>background</name> = <call><name>THIS</name><argument_list>(<argument><expr><name>bg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+    <expr_stmt><expr><call><name>XChangeGC</name><argument_list>(<argument><expr><call><name>myDisplay</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><call><name>THIS</name><argument_list>(<argument><expr><name>gc</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name>mask</name></expr></argument>, <argument><expr>&amp;<name>xgcv</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>TRACE2</name><argument_list>(<argument><expr>("...chgCache(%s) updated gc %p(%d)\n",
+	    <call><name>traceCgsEnum</name><argument_list>(<argument><expr><name>cgsId</name></expr></argument>)</argument_list></call>, <call><name>THIS</name><argument_list>(<argument><expr><name>gc</name></expr></argument>)</argument_list></call>, <call><name>ITEM</name><argument_list>()</argument_list></call>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+    <expr_stmt><expr><call><name>THIS</name><argument_list>(<argument><expr><name>used</name></expr></argument>)</argument_list></call> = 0</expr>;</expr_stmt>
+    <return>return <expr><call><name>THIS</name><argument_list>(<argument><expr><name>gc</name></expr></argument>)</argument_list></call></expr>;</return>
+}</block></function>
+<comment type="block">/*
+ * Use the "setCgsXXXX()" calls to initialize parameters for a new GC.
+ */</comment>
+<function><type><name>void</name></type>
+<name>setCgsFore</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>, <param><decl><type><name>VTwin</name> *</type> <name>cgsWin</name></decl></param>, <param><decl><type><name>CgsEnum</name></type> <name>cgsId</name></decl></param>, <param><decl><type><name>Pixel</name></type> <name>fg</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>CgsCache</name> *</type><name>me</name></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr>(<name>me</name> = <call><name>myCache</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>cgsWin</name></expr></argument>, <argument><expr><name>cgsId</name></expr></argument>)</argument_list></call>) != 0</expr>)</condition><then> <block>{
+	<expr_stmt><expr><call><name>NEXT</name><argument_list>(<argument><expr><name>fg</name></expr></argument>)</argument_list></call> = <name>fg</name></expr>;</expr_stmt>
+	<expr_stmt><expr><name>me</name>-&gt;<name>mask</name> |= <name>GCForeground</name></expr>;</expr_stmt>
+    }</block></then></if>
+}</block></function>
+
+<function><type><name>void</name></type>
+<name>setCgsBack</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>, <param><decl><type><name>VTwin</name> *</type> <name>cgsWin</name></decl></param>, <param><decl><type><name>CgsEnum</name></type> <name>cgsId</name></decl></param>, <param><decl><type><name>Pixel</name></type> <name>bg</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>CgsCache</name> *</type><name>me</name></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr>(<name>me</name> = <call><name>myCache</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>cgsWin</name></expr></argument>, <argument><expr><name>cgsId</name></expr></argument>)</argument_list></call>) != 0</expr>)</condition><then> <block>{
+	<expr_stmt><expr><call><name>NEXT</name><argument_list>(<argument><expr><name>bg</name></expr></argument>)</argument_list></call> = <name>bg</name></expr>;</expr_stmt>
+	<expr_stmt><expr><name>me</name>-&gt;<name>mask</name> |= <name>GCBackground</name></expr>;</expr_stmt>
+    }</block></then></if>
+}</block></function>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_DEC_CHRSET</name></expr></cpp:if>
+<function><type><name>void</name></type>
+<name>setCgsCSet</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>, <param><decl><type><name>VTwin</name> *</type> <name>cgsWin</name></decl></param>, <param><decl><type><name>CgsEnum</name></type> <name>cgsId</name></decl></param>, <param><decl><type><name>unsigned</name></type> <name>cset</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>CgsCache</name> *</type><name>me</name></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr>(<name>me</name> = <call><name>myCache</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>cgsWin</name></expr></argument>, <argument><expr><name>cgsId</name></expr></argument>)</argument_list></call>) != 0</expr>)</condition><then> <block>{
+	<expr_stmt><expr><call><name>NEXT</name><argument_list>(<argument><expr><name>cset</name></expr></argument>)</argument_list></call> = <name>cset</name></expr>;</expr_stmt>
+	<expr_stmt><expr><name>me</name>-&gt;<name>mask</name> |= <name>GC_CSet</name></expr>;</expr_stmt>
+    }</block></then></if>
+}</block></function>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>setCgsCSet</name>(xw, cgsWin, dstCgsId, cset)</cpp:define>	<comment type="block">/* nothing */</comment>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<function><type><name>void</name></type>
+<name>setCgsFont</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>, <param><decl><type><name>VTwin</name> *</type> <name>cgsWin</name></decl></param>, <param><decl><type><name>CgsEnum</name></type> <name>cgsId</name></decl></param>, <param><decl><type><name>XTermFonts</name> *</type> <name>font</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>CgsCache</name> *</type><name>me</name></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr>(<name>me</name> = <call><name>myCache</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>cgsWin</name></expr></argument>, <argument><expr><name>cgsId</name></expr></argument>)</argument_list></call>) != 0</expr>)</condition><then> <block>{
+	<if>if <condition>(<expr>!<call><name>HaveFont</name><argument_list>(<argument><expr><name>font</name></expr></argument>)</argument_list></call></expr>)</condition><then> <block>{
+	    <if>if <condition>(<expr><name>cgsId</name> != <name>gcNorm</name></expr>)</condition><then>
+		<expr_stmt><expr>(<name>void</name>) <call><name>getCgsGC</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>cgsWin</name></expr></argument>, <argument><expr><name>gcNorm</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+<cpp:ifndef>#<cpp:directive>ifndef</cpp:directive> <name>NO_ACTIVE_ICON</name></cpp:ifndef>
+	    <if>if <condition>(<expr><name>cgsWin</name> == &amp;(<call><name>TScreenOf</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call>-&gt;<name>iconVwin</name>)</expr>)</condition><then>
+		<expr_stmt><expr><name>font</name> = &amp;(<call><name>TScreenOf</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call>-&gt;<name>fnt_icon</name>)</expr>;</expr_stmt></then>
+	    <else>else
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+		<expr_stmt><expr><name>font</name> = &amp;(<call><name>TScreenOf</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call>-&gt;<name><name>fnts</name><index>[<expr><name>fNorm</name></expr>]</index></name>)</expr>;</expr_stmt></else></if>
+	}</block></then></if>
+	<if>if <condition>(<expr><call><name>HaveFont</name><argument_list>(<argument><expr><name>font</name></expr></argument>)</argument_list></call> &amp;&amp; <call><name>okFont</name><argument_list>(<argument><expr><name>font</name>-&gt;<name>fs</name></expr></argument>)</argument_list></call></expr>)</condition><then> <block>{
+	    <expr_stmt><expr><call><name>TRACE2</name><argument_list>(<argument><expr>("...updated next font in %p for %s to %s\n",
+		    <name>me</name>, <call><name>traceCgsEnum</name><argument_list>(<argument><expr><name>cgsId</name></expr></argument>)</argument_list></call>, <call><name>traceFont</name><argument_list>(<argument><expr><name>font</name></expr></argument>)</argument_list></call>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><call><name>TRACE2</name><argument_list>(<argument><expr>("...next font was %s\n", <call><name>traceFont</name><argument_list>(<argument><expr><call><name>NEXT</name><argument_list>(<argument><expr><name>font</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><call><name>NEXT</name><argument_list>(<argument><expr><name>font</name></expr></argument>)</argument_list></call> = <name>font</name></expr>;</expr_stmt>
+	    <expr_stmt><expr><name>me</name>-&gt;<name>mask</name> |= <name>GCFont</name></expr>;</expr_stmt>
+	}</block></then> <else>else <block>{
+	    <expr_stmt><expr><call><name>TRACE2</name><argument_list>(<argument><expr>("...NOT updated font for %s\n",
+		    <call><name>traceCgsEnum</name><argument_list>(<argument><expr><name>cgsId</name></expr></argument>)</argument_list></call>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	}</block></else></if>
+    }</block></then></if>
+}</block></function>
+
+<comment type="block">/*
+ * Discard all of the font information, e.g., we are resizing the font.
+ * Keep the GC's so we can simply change them rather than creating new ones.
+ */</comment>
+<function><type><name>void</name></type>
+<name>clrCgsFonts</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>, <param><decl><type><name>VTwin</name> *</type> <name>cgsWin</name></decl></param>, <param><decl><type><name>XTermFonts</name> *</type> <name>font</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>CgsCache</name> *</type><name>me</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>int</name></type> <name>j</name>, <name>k</name></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr><call><name>HaveFont</name><argument_list>(<argument><expr><name>font</name></expr></argument>)</argument_list></call></expr>)</condition><then> <block>{
+	<macro><name>for_each_gc</name><argument_list>(<argument>j</argument>)</argument_list></macro> <block>{
+	    <if>if <condition>(<expr>(<name>me</name> = <call><name>myCache</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>cgsWin</name></expr></argument>, <argument><expr>(<name>CgsEnum</name>) <name>j</name></expr></argument>)</argument_list></call>) != 0</expr>)</condition><then> <block>{
+		<for>for (<init><expr><name>k</name> = 0</expr>;</init> <condition><expr><name>k</name> &lt; <name>DEPTH</name></expr>;</condition> <incr><expr>++<name>k</name></expr></incr>) <block>{
+		    <if>if <condition>(<expr><call><name>SameFont</name><argument_list>(<argument><expr><call><name>LIST</name><argument_list>(<argument><expr><name>k</name></expr></argument>)</argument_list></call>.<name>font</name></expr></argument>, <argument><expr><name>font</name></expr></argument>)</argument_list></call></expr>)</condition><then> <block>{
+			<expr_stmt><expr><call><name>TRACE2</name><argument_list>(<argument><expr>("clrCgsFonts %s gc %p(%d) %s\n",
+				<call><name>traceCgsEnum</name><argument_list>(<argument><expr>(<name>CgsEnum</name>) <name>j</name></expr></argument>)</argument_list></call>,
+				<call><name>LIST</name><argument_list>(<argument><expr><name>k</name></expr></argument>)</argument_list></call>.<name>gc</name>,
+				<name>k</name>,
+				<call><name>traceFont</name><argument_list>(<argument><expr><name>font</name></expr></argument>)</argument_list></call>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+			<expr_stmt><expr><call><name>LIST</name><argument_list>(<argument><expr><name>k</name></expr></argument>)</argument_list></call>.<name>font</name> = 0</expr>;</expr_stmt>
+			<expr_stmt><expr><call><name>LIST</name><argument_list>(<argument><expr><name>k</name></expr></argument>)</argument_list></call>.<name>cset</name> = 0</expr>;</expr_stmt>
+		    }</block></then></if>
+		}</block></for>
+		<if>if <condition>(<expr><call><name>SameFont</name><argument_list>(<argument><expr><call><name>NEXT</name><argument_list>(<argument><expr><name>font</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name>font</name></expr></argument>)</argument_list></call></expr>)</condition><then> <block>{
+		    <expr_stmt><expr><call><name>TRACE2</name><argument_list>(<argument><expr>("clrCgsFonts %s next %s\n",
+			    <call><name>traceCgsEnum</name><argument_list>(<argument><expr>(<name>CgsEnum</name>) <name>j</name></expr></argument>)</argument_list></call>,
+			    <call><name>traceFont</name><argument_list>(<argument><expr><name>font</name></expr></argument>)</argument_list></call>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		    <expr_stmt><expr><call><name>NEXT</name><argument_list>(<argument><expr><name>font</name></expr></argument>)</argument_list></call> = 0</expr>;</expr_stmt>
+		    <expr_stmt><expr><call><name>NEXT</name><argument_list>(<argument><expr><name>cset</name></expr></argument>)</argument_list></call> = 0</expr>;</expr_stmt>
+		    <expr_stmt><expr><name>me</name>-&gt;<name>mask</name> &amp;= (<name>unsigned</name>) ~(<name>GCFont</name> | <name>GC_CSet</name>)</expr>;</expr_stmt>
+		}</block></then></if>
+	    }</block></then></if>
+	}</block>
+    }</block></then></if>
+}</block></function>
+
+<comment type="block">/*
+ * Return a GC associated with the given id, allocating if needed.
+ */</comment>
+<function><type><name>GC</name></type>
+<name>getCgsGC</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>, <param><decl><type><name>VTwin</name> *</type> <name>cgsWin</name></decl></param>, <param><decl><type><name>CgsEnum</name></type> <name>cgsId</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>CgsCache</name> *</type><name>me</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>GC</name></type> <name>result</name> =<init> <expr>0</expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>int</name></type> <name>j</name>, <name>k</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>unsigned</name></type> <name>used</name> =<init> <expr>0</expr></init></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr>(<name>me</name> = <call><name>myCache</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>cgsWin</name></expr></argument>, <argument><expr><name>cgsId</name></expr></argument>)</argument_list></call>) != 0</expr>)</condition><then> <block>{
+	<expr_stmt><expr><call><name>TRACE2</name><argument_list>(<argument><expr>("getCgsGC(%s, %s)\n",
+		<call><name>traceVTwin</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>cgsWin</name></expr></argument>)</argument_list></call>, <call><name>traceCgsEnum</name><argument_list>(<argument><expr><name>cgsId</name></expr></argument>)</argument_list></call>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<if>if <condition>(<expr><name>me</name>-&gt;<name>mask</name> != 0</expr>)</condition><then> <block>{
+
+	    <comment type="block">/* fill in the unchanged fields */</comment>
+	    <if>if <condition>(<expr>!(<name>me</name>-&gt;<name>mask</name> &amp; <name>GC_CSet</name>)</expr>)</condition><then>
+		<expr_stmt><expr><call><name>NEXT</name><argument_list>(<argument><expr><name>cset</name></expr></argument>)</argument_list></call> = 0</expr>;</expr_stmt></then></if>	<comment type="block">/* OPT_DEC_CHRSET */</comment>
+	    <if>if <condition>(<expr>!(<name>me</name>-&gt;<name>mask</name> &amp; <name>GCFont</name>)</expr>)</condition><then>
+		<expr_stmt><expr><call><name>NEXT</name><argument_list>(<argument><expr><name>font</name></expr></argument>)</argument_list></call> = <call><name>THIS</name><argument_list>(<argument><expr><name>font</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+	    <if>if <condition>(<expr>!(<name>me</name>-&gt;<name>mask</name> &amp; <name>GCForeground</name>)</expr>)</condition><then>
+		<expr_stmt><expr><call><name>NEXT</name><argument_list>(<argument><expr><name>fg</name></expr></argument>)</argument_list></call> = <call><name>THIS</name><argument_list>(<argument><expr><name>fg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+	    <if>if <condition>(<expr>!(<name>me</name>-&gt;<name>mask</name> &amp; <name>GCBackground</name>)</expr>)</condition><then>
+		<expr_stmt><expr><call><name>NEXT</name><argument_list>(<argument><expr><name>bg</name></expr></argument>)</argument_list></call> = <call><name>THIS</name><argument_list>(<argument><expr><name>bg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+
+	    <if>if <condition>(<expr><call><name>NEXT</name><argument_list>(<argument><expr><name>font</name></expr></argument>)</argument_list></call> == 0</expr>)</condition><then> <block>{
+		<expr_stmt><expr><call><name>setCgsFont</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>cgsWin</name></expr></argument>, <argument><expr><name>cgsId</name></expr></argument>, <argument><expr>0</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    }</block></then></if>
+
+	    <expr_stmt><expr><call><name>TRACE2</name><argument_list>(<argument><expr>("...Cgs new data fg=%s, bg=%s, font=%s cset %s\n",
+		    <call><name>tracePixel</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><call><name>NEXT</name><argument_list>(<argument><expr><name>fg</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call>,
+		    <call><name>tracePixel</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><call><name>NEXT</name><argument_list>(<argument><expr><name>bg</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call>,
+		    <call><name>traceFont</name><argument_list>(<argument><expr><call><name>NEXT</name><argument_list>(<argument><expr><name>font</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call>,
+		    <call><name>traceCSet</name><argument_list>(<argument><expr><call><name>NEXT</name><argument_list>(<argument><expr><name>cset</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+	    <comment type="block">/* try to find the given data in an already-created GC */</comment>
+	    <for>for (<init><expr><name>j</name> = 0</expr>;</init> <condition><expr><name>j</name> &lt; <name>DEPTH</name></expr>;</condition> <incr><expr>++<name>j</name></expr></incr>) <block>{
+		<if>if <condition>(<expr><call><name>LIST</name><argument_list>(<argument><expr><name>j</name></expr></argument>)</argument_list></call>.<name>gc</name> != 0
+		    &amp;&amp; <call><name>SameFont</name><argument_list>(<argument><expr><call><name>LIST</name><argument_list>(<argument><expr><name>j</name></expr></argument>)</argument_list></call>.<name>font</name></expr></argument>, <argument><expr><call><name>NEXT</name><argument_list>(<argument><expr><name>font</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call>
+		    &amp;&amp; <call><name>SameCSet</name><argument_list>(<argument><expr><call><name>LIST</name><argument_list>(<argument><expr><name>j</name></expr></argument>)</argument_list></call>.<name>cset</name></expr></argument>, <argument><expr><call><name>NEXT</name><argument_list>(<argument><expr><name>cset</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call>
+		    &amp;&amp; <call><name>SameColor</name><argument_list>(<argument><expr><call><name>LIST</name><argument_list>(<argument><expr><name>j</name></expr></argument>)</argument_list></call>.<name>fg</name></expr></argument>, <argument><expr><call><name>NEXT</name><argument_list>(<argument><expr><name>fg</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call>
+		    &amp;&amp; <call><name>SameColor</name><argument_list>(<argument><expr><call><name>LIST</name><argument_list>(<argument><expr><name>j</name></expr></argument>)</argument_list></call>.<name>bg</name></expr></argument>, <argument><expr><call><name>NEXT</name><argument_list>(<argument><expr><name>bg</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>)</condition><then> <block>{
+		    <expr_stmt><expr><call><name>LINK</name><argument_list>(<argument><expr><name>j</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		    <expr_stmt><expr><name>result</name> = <call><name>THIS</name><argument_list>(<argument><expr><name>gc</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		    <expr_stmt><expr><call><name>TRACE2</name><argument_list>(<argument><expr>("getCgsGC existing %p(%d)\n", <name>result</name>, <call><name>ITEM</name><argument_list>()</argument_list></call>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		    <break>break;</break>
+		}</block></then></if>
+	    }</block></for>
+
+	    <if>if <condition>(<expr><name>result</name> == 0</expr>)</condition><then> <block>{
+		<comment type="block">/* try to find an empty slot, to create a new GC */</comment>
+		<expr_stmt><expr><name>used</name> = 0</expr>;</expr_stmt>
+		<for>for (<init><expr><name>j</name> = 0</expr>;</init> <condition><expr><name>j</name> &lt; <name>DEPTH</name></expr>;</condition> <incr><expr>++<name>j</name></expr></incr>) <block>{
+		    <if>if <condition>(<expr><call><name>LIST</name><argument_list>(<argument><expr><name>j</name></expr></argument>)</argument_list></call>.<name>gc</name> == 0</expr>)</condition><then> <block>{
+			<expr_stmt><expr><call><name>LINK</name><argument_list>(<argument><expr><name>j</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+			<expr_stmt><expr><name>result</name> = <call><name>newCache</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>cgsWin</name></expr></argument>, <argument><expr><name>cgsId</name></expr></argument>, <argument><expr><name>me</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+			<break>break;</break>
+		    }</block></then></if>
+		    <if>if <condition>(<expr><name>used</name> &lt; <call><name>LIST</name><argument_list>(<argument><expr><name>j</name></expr></argument>)</argument_list></call>.<name>used</name></expr>)</condition><then>
+			<expr_stmt><expr><name>used</name> = <call><name>LIST</name><argument_list>(<argument><expr><name>j</name></expr></argument>)</argument_list></call>.<name>used</name></expr>;</expr_stmt></then></if>
+		}</block></for>
+	    }</block></then></if>
+
+	    <if>if <condition>(<expr><name>result</name> == 0</expr>)</condition><then> <block>{
+		<comment type="block">/* if none were empty, pick the least-used slot, to modify */</comment>
+		<for>for (<init><expr><name>j</name> = 0</expr>, <expr><name>k</name> = -1</expr>;</init> <condition><expr><name>j</name> &lt; <name>DEPTH</name></expr>;</condition> <incr><expr>++<name>j</name></expr></incr>) <block>{
+		    <if>if <condition>(<expr><name>used</name> &gt;= <call><name>LIST</name><argument_list>(<argument><expr><name>j</name></expr></argument>)</argument_list></call>.<name>used</name></expr>)</condition><then> <block>{
+			<expr_stmt><expr><name>used</name> = <call><name>LIST</name><argument_list>(<argument><expr><name>j</name></expr></argument>)</argument_list></call>.<name>used</name></expr>;</expr_stmt>
+			<expr_stmt><expr><name>k</name> = <name>j</name></expr>;</expr_stmt>
+		    }</block></then></if>
+		}</block></for>
+		<expr_stmt><expr><call><name>LINK</name><argument_list>(<argument><expr><name>k</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>TRACE2</name><argument_list>(<argument><expr>("...getCgsGC least-used(%d) was %d\n", <name>k</name>, <call><name>THIS</name><argument_list>(<argument><expr><name>used</name></expr></argument>)</argument_list></call>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><name>result</name> = <call><name>chgCache</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>cgsId</name></expr></argument>, <argument><expr><name>me</name></expr></argument>, <argument><expr><name>True</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    }</block></then></if>
+	    <expr_stmt><expr><name>me</name>-&gt;<name>next</name> = *(<name>me</name>-&gt;<name>data</name>)</expr>;</expr_stmt>
+	}</block></then> <else>else <block>{
+	    <expr_stmt><expr><name>result</name> = <call><name>THIS</name><argument_list>(<argument><expr><name>gc</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	}</block></else></if>
+	<expr_stmt><expr><name>me</name>-&gt;<name>mask</name> = 0</expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>THIS</name><argument_list>(<argument><expr><name>used</name></expr></argument>)</argument_list></call> += 1</expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>TRACE2</name><argument_list>(<argument><expr>("...getCgsGC(%s, %s) gc %p(%d), used %d\n",
+		<call><name>traceVTwin</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>cgsWin</name></expr></argument>)</argument_list></call>,
+		<call><name>traceCgsEnum</name><argument_list>(<argument><expr><name>cgsId</name></expr></argument>)</argument_list></call>, <name>result</name>, <call><name>ITEM</name><argument_list>()</argument_list></call>, <call><name>THIS</name><argument_list>(<argument><expr><name>used</name></expr></argument>)</argument_list></call>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></then></if>
+    <return>return <expr><name>result</name></expr>;</return>
+}</block></function>
+
+<comment type="block">/*
+ * Return the font for the given GC.
+ */</comment>
+<function><type><name>CgsEnum</name></type>
+<name>getCgsId</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>, <param><decl><type><name>VTwin</name> *</type> <name>cgsWin</name></decl></param>, <param><decl><type><name>GC</name></type> <name>gc</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>int</name></type> <name>n</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>CgsEnum</name></type> <name>result</name> =<init> <expr><name>gcNorm</name></expr></init></decl>;</decl_stmt>
+
+    <macro><name>for_each_gc</name><argument_list>(<argument>n</argument>)</argument_list></macro> <block>{
+	<decl_stmt><decl><type><name>CgsCache</name> *</type><name>me</name></decl>;</decl_stmt>
+
+	<if>if <condition>(<expr>(<name>me</name> = <call><name>myCache</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>cgsWin</name></expr></argument>, <argument><expr>(<name>CgsEnum</name>) <name>n</name></expr></argument>)</argument_list></call>) != 0</expr>)</condition><then> <block>{
+	    <if>if <condition>(<expr><call><name>THIS</name><argument_list>(<argument><expr><name>gc</name></expr></argument>)</argument_list></call> == <name>gc</name></expr>)</condition><then> <block>{
+		<expr_stmt><expr><name>result</name> = (<name>CgsEnum</name>) <name>n</name></expr>;</expr_stmt>
+		<break>break;</break>
+	    }</block></then></if>
+	}</block></then></if>
+    }</block>
+    <return>return <expr><name>result</name></expr>;</return>
+}</block></function>
+
+<comment type="block">/*
+ * Return the font for the given GC.
+ */</comment>
+<function><type><name>XTermFonts</name> *</type>
+<name>getCgsFont</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>, <param><decl><type><name>VTwin</name> *</type> <name>cgsWin</name></decl></param>, <param><decl><type><name>GC</name></type> <name>gc</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>int</name></type> <name>n</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>XTermFonts</name> *</type><name>result</name> =<init> <expr>0</expr></init></decl>;</decl_stmt>
+
+    <macro><name>for_each_gc</name><argument_list>(<argument>n</argument>)</argument_list></macro> <block>{
+	<decl_stmt><decl><type><name>CgsCache</name> *</type><name>me</name></decl>;</decl_stmt>
+
+	<if>if <condition>(<expr>(<name>me</name> = <call><name>myCache</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>cgsWin</name></expr></argument>, <argument><expr>(<name>CgsEnum</name>) <name>n</name></expr></argument>)</argument_list></call>) != 0</expr>)</condition><then> <block>{
+	    <if>if <condition>(<expr><call><name>THIS</name><argument_list>(<argument><expr><name>gc</name></expr></argument>)</argument_list></call> == <name>gc</name></expr>)</condition><then> <block>{
+		<expr_stmt><expr><name>result</name> = <call><name>THIS</name><argument_list>(<argument><expr><name>font</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<break>break;</break>
+	    }</block></then></if>
+	}</block></then></if>
+    }</block>
+    <return>return <expr><name>result</name></expr>;</return>
+}</block></function>
+
+<comment type="block">/*
+ * Return the foreground color for the given GC.
+ */</comment>
+<function><type><name>Pixel</name></type>
+<name>getCgsFore</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>, <param><decl><type><name>VTwin</name> *</type> <name>cgsWin</name></decl></param>, <param><decl><type><name>GC</name></type> <name>gc</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>int</name></type> <name>n</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>Pixel</name></type> <name>result</name> =<init> <expr>0</expr></init></decl>;</decl_stmt>
+
+    <macro><name>for_each_gc</name><argument_list>(<argument>n</argument>)</argument_list></macro> <block>{
+	<decl_stmt><decl><type><name>CgsCache</name> *</type><name>me</name></decl>;</decl_stmt>
+
+	<if>if <condition>(<expr>(<name>me</name> = <call><name>myCache</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>cgsWin</name></expr></argument>, <argument><expr>(<name>CgsEnum</name>) <name>n</name></expr></argument>)</argument_list></call>) != 0</expr>)</condition><then> <block>{
+	    <if>if <condition>(<expr><call><name>THIS</name><argument_list>(<argument><expr><name>gc</name></expr></argument>)</argument_list></call> == <name>gc</name></expr>)</condition><then> <block>{
+		<expr_stmt><expr><name>result</name> = <call><name>THIS</name><argument_list>(<argument><expr><name>fg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<break>break;</break>
+	    }</block></then></if>
+	}</block></then></if>
+    }</block>
+    <return>return <expr><name>result</name></expr>;</return>
+}</block></function>
+
+<comment type="block">/*
+ * Return the background color for the given GC.
+ */</comment>
+<function><type><name>Pixel</name></type>
+<name>getCgsBack</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>, <param><decl><type><name>VTwin</name> *</type> <name>cgsWin</name></decl></param>, <param><decl><type><name>GC</name></type> <name>gc</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>int</name></type> <name>n</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>Pixel</name></type> <name>result</name> =<init> <expr>0</expr></init></decl>;</decl_stmt>
+
+    <macro><name>for_each_gc</name><argument_list>(<argument>n</argument>)</argument_list></macro> <block>{
+	<decl_stmt><decl><type><name>CgsCache</name> *</type><name>me</name></decl>;</decl_stmt>
+
+	<if>if <condition>(<expr>(<name>me</name> = <call><name>myCache</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>cgsWin</name></expr></argument>, <argument><expr>(<name>CgsEnum</name>) <name>n</name></expr></argument>)</argument_list></call>) != 0</expr>)</condition><then> <block>{
+	    <if>if <condition>(<expr><call><name>THIS</name><argument_list>(<argument><expr><name>gc</name></expr></argument>)</argument_list></call> == <name>gc</name></expr>)</condition><then> <block>{
+		<expr_stmt><expr><name>result</name> = <call><name>THIS</name><argument_list>(<argument><expr><name>bg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<break>break;</break>
+	    }</block></then></if>
+	}</block></then></if>
+    }</block>
+    <return>return <expr><name>result</name></expr>;</return>
+}</block></function>
+
+<comment type="block">/*
+ * Copy the parameters (except GC of course) from one cache record to another.
+ */</comment>
+<function><type><name>void</name></type>
+<name>copyCgs</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>, <param><decl><type><name>VTwin</name> *</type> <name>cgsWin</name></decl></param>, <param><decl><type><name>CgsEnum</name></type> <name>dstCgsId</name></decl></param>, <param><decl><type><name>CgsEnum</name></type> <name>srcCgsId</name></decl></param>)</parameter_list>
+<block>{
+    <if>if <condition>(<expr><name>dstCgsId</name> != <name>srcCgsId</name></expr>)</condition><then> <block>{
+	<decl_stmt><decl><type><name>CgsCache</name> *</type><name>me</name></decl>;</decl_stmt>
+
+	<if>if <condition>(<expr>(<name>me</name> = <call><name>myCache</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>cgsWin</name></expr></argument>, <argument><expr><name>srcCgsId</name></expr></argument>)</argument_list></call>) != 0</expr>)</condition><then> <block>{
+	    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("copyCgs from %s to %s\n",
+		   <call><name>traceCgsEnum</name><argument_list>(<argument><expr><name>srcCgsId</name></expr></argument>)</argument_list></call>,
+		   <call><name>traceCgsEnum</name><argument_list>(<argument><expr><name>dstCgsId</name></expr></argument>)</argument_list></call>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><call><name>TRACE2</name><argument_list>(<argument><expr>("copyCgs from %s (me %p, fg %s, bg %s, cset %s) to %s {{\n",
+		    <call><name>traceCgsEnum</name><argument_list>(<argument><expr><name>srcCgsId</name></expr></argument>)</argument_list></call>,
+		    <name>me</name>,
+		    <call><name>tracePixel</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><call><name>THIS</name><argument_list>(<argument><expr><name>fg</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call>,
+		    <call><name>tracePixel</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><call><name>THIS</name><argument_list>(<argument><expr><name>bg</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call>,
+		    <call><name>traceCSet</name><argument_list>(<argument><expr><call><name>THIS</name><argument_list>(<argument><expr><name>cset</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call>,
+		    <call><name>traceCgsEnum</name><argument_list>(<argument><expr><name>dstCgsId</name></expr></argument>)</argument_list></call>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><call><name>setCgsCSet</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>cgsWin</name></expr></argument>, <argument><expr><name>dstCgsId</name></expr></argument>, <argument><expr><call><name>THIS</name><argument_list>(<argument><expr><name>cset</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><call><name>setCgsFore</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>cgsWin</name></expr></argument>, <argument><expr><name>dstCgsId</name></expr></argument>, <argument><expr><call><name>THIS</name><argument_list>(<argument><expr><name>fg</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><call><name>setCgsBack</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>cgsWin</name></expr></argument>, <argument><expr><name>dstCgsId</name></expr></argument>, <argument><expr><call><name>THIS</name><argument_list>(<argument><expr><name>bg</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><call><name>setCgsFont</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>cgsWin</name></expr></argument>, <argument><expr><name>dstCgsId</name></expr></argument>, <argument><expr><call><name>THIS</name><argument_list>(<argument><expr><name>font</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><call><name>TRACE2</name><argument_list>(<argument><expr>("...copyCgs }}\n")</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	}</block></then></if>
+    }</block></then></if>
+}</block></function>
+
+<comment type="block">/*
+ * Interchange colors in the cache, e.g., for reverse-video.
+ */</comment>
+<function><type><name>void</name></type>
+<name>redoCgs</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>, <param><decl><type><name>Pixel</name></type> <name>fg</name></decl></param>, <param><decl><type><name>Pixel</name></type> <name>bg</name></decl></param>, <param><decl><type><name>CgsEnum</name></type> <name>cgsId</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>int</name></type> <name>n</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>VTwin</name> *</type><name>cgsWin</name> =<init> <expr><call><name>WhichVWin</name><argument_list>(<argument><expr><call><name>TScreenOf</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>CgsCache</name> *</type><name>me</name> =<init> <expr><call><name>myCache</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>cgsWin</name></expr></argument>, <argument><expr><name>cgsId</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr><name>me</name> != 0</expr>)</condition><then> <block>{
+	<decl_stmt><decl><type><name>CgsCacheData</name> *</type><name>save_data</name> =<init> <expr><name>me</name>-&gt;<name>data</name></expr></init></decl>;</decl_stmt>
+
+	<for>for (<init><expr><name>n</name> = 0</expr>;</init> <condition><expr><name>n</name> &lt; <name>DEPTH</name></expr>;</condition> <incr><expr>++<name>n</name></expr></incr>) <block>{
+	    <if>if <condition>(<expr><call><name>LIST</name><argument_list>(<argument><expr><name>n</name></expr></argument>)</argument_list></call>.<name>gc</name> != 0 &amp;&amp; <call><name>HaveFont</name><argument_list>(<argument><expr><call><name>LIST</name><argument_list>(<argument><expr><name>n</name></expr></argument>)</argument_list></call>.<name>font</name></expr></argument>)</argument_list></call></expr>)</condition><then> <block>{
+		<expr_stmt><expr><call><name>LINK</name><argument_list>(<argument><expr><name>n</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+		<if>if <condition>(<expr><call><name>LIST</name><argument_list>(<argument><expr><name>n</name></expr></argument>)</argument_list></call>.<name>fg</name> == <name>fg</name>
+		    &amp;&amp; <call><name>LIST</name><argument_list>(<argument><expr><name>n</name></expr></argument>)</argument_list></call>.<name>bg</name> == <name>bg</name></expr>)</condition><then> <block>{
+		    <expr_stmt><expr><call><name>setCgsFore</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>cgsWin</name></expr></argument>, <argument><expr><name>cgsId</name></expr></argument>, <argument><expr><name>bg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		    <expr_stmt><expr><call><name>setCgsBack</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>cgsWin</name></expr></argument>, <argument><expr><name>cgsId</name></expr></argument>, <argument><expr><name>fg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		}</block></then> <else>else <if>if <condition>(<expr><call><name>LIST</name><argument_list>(<argument><expr><name>n</name></expr></argument>)</argument_list></call>.<name>fg</name> == <name>bg</name>
+			   &amp;&amp; <call><name>LIST</name><argument_list>(<argument><expr><name>n</name></expr></argument>)</argument_list></call>.<name>bg</name> == <name>fg</name></expr>)</condition><then> <block>{
+		    <expr_stmt><expr><call><name>setCgsFore</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>cgsWin</name></expr></argument>, <argument><expr><name>cgsId</name></expr></argument>, <argument><expr><name>fg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		    <expr_stmt><expr><call><name>setCgsBack</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>cgsWin</name></expr></argument>, <argument><expr><name>cgsId</name></expr></argument>, <argument><expr><name>bg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		}</block></then> <else>else <block>{
+		    <continue>continue;</continue>
+		}</block></else></if></else></if>
+
+		<expr_stmt><expr>(<name>void</name>) <call><name>chgCache</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>cgsId</name></expr></argument>, <argument><expr><name>me</name></expr></argument>, <argument><expr><name>False</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    }</block></then></if>
+	}</block></for>
+	<expr_stmt><expr><name>me</name>-&gt;<name>data</name> = <name>save_data</name></expr>;</expr_stmt>
+    }</block></then></if>
+}</block></function>
+
+<comment type="block">/*
+ * Swap the cache records, e.g., when doing reverse-video.
+ */</comment>
+<function><type><name>void</name></type>
+<name>swapCgs</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>, <param><decl><type><name>VTwin</name> *</type> <name>cgsWin</name></decl></param>, <param><decl><type><name>CgsEnum</name></type> <name>dstCgsId</name></decl></param>, <param><decl><type><name>CgsEnum</name></type> <name>srcCgsId</name></decl></param>)</parameter_list>
+<block>{
+    <if>if <condition>(<expr><name>dstCgsId</name> != <name>srcCgsId</name></expr>)</condition><then> <block>{
+	<decl_stmt><decl><type><name>CgsCache</name> *</type><name>dst</name></decl>;</decl_stmt>
+	<decl_stmt><decl><type><name>CgsCache</name> *</type><name>src</name></decl>;</decl_stmt>
+	<decl_stmt><decl><type><name>CgsCache</name></type> <name>tmp</name></decl>;</decl_stmt>
+
+	<if>if <condition>(<expr>(<name>src</name> = <call><name>myCache</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>cgsWin</name></expr></argument>, <argument><expr><name>srcCgsId</name></expr></argument>)</argument_list></call>) != 0</expr>)</condition><then> <block>{
+	    <if>if <condition>(<expr>(<name>dst</name> = <call><name>myCache</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>cgsWin</name></expr></argument>, <argument><expr><name>dstCgsId</name></expr></argument>)</argument_list></call>) != 0</expr>)</condition><then> <block>{
+		<decl_stmt><decl><type><name>int</name></type> <name>srcIndex</name> =<init> <expr><call><name>dataIndex</name><argument_list>(<argument><expr><name>src</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+		<decl_stmt><decl><type><name>int</name></type> <name>dstIndex</name> =<init> <expr><call><name>dataIndex</name><argument_list>(<argument><expr><name>dst</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+		<expr_stmt><expr><call><name>EXCHANGE</name><argument_list>(<argument><expr>*<name>src</name></expr></argument>, <argument><expr>*<name>dst</name></expr></argument>, <argument><expr><name>tmp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+		<expr_stmt><expr><call><name>relinkData</name><argument_list>(<argument><expr><name>src</name></expr></argument>, <argument><expr><name>dstIndex</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>relinkData</name><argument_list>(<argument><expr><name>dst</name></expr></argument>, <argument><expr><name>srcIndex</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    }</block></then></if>
+	}</block></then></if>
+    }</block></then></if>
+}</block></function>
+
+<comment type="block">/*
+ * Free any GC associated with the given id.
+ */</comment>
+<function><type><name>GC</name></type>
+<name>freeCgs</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>, <param><decl><type><name>VTwin</name> *</type> <name>cgsWin</name></decl></param>, <param><decl><type><name>CgsEnum</name></type> <name>cgsId</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>CgsCache</name> *</type><name>me</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>int</name></type> <name>j</name></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr>(<name>me</name> = <call><name>myCache</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>cgsWin</name></expr></argument>, <argument><expr><name>cgsId</name></expr></argument>)</argument_list></call>) != 0</expr>)</condition><then> <block>{
+	<for>for (<init><expr><name>j</name> = 0</expr>;</init> <condition><expr><name>j</name> &lt; <name>DEPTH</name></expr>;</condition> <incr><expr>++<name>j</name></expr></incr>) <block>{
+	    <if>if <condition>(<expr><call><name>LIST</name><argument_list>(<argument><expr><name>j</name></expr></argument>)</argument_list></call>.<name>gc</name> != 0</expr>)</condition><then> <block>{
+		<expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("freeCgs(%s, %s) gc %p(%d)\n",
+		       <call><name>traceVTwin</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>cgsWin</name></expr></argument>)</argument_list></call>,
+		       <call><name>traceCgsEnum</name><argument_list>(<argument><expr><name>cgsId</name></expr></argument>)</argument_list></call>, (<name>void</name> *) <call><name>LIST</name><argument_list>(<argument><expr><name>j</name></expr></argument>)</argument_list></call>.<name>gc</name>, <name>j</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>clrCgsFonts</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>cgsWin</name></expr></argument>, <argument><expr><call><name>LIST</name><argument_list>(<argument><expr><name>j</name></expr></argument>)</argument_list></call>.<name>font</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_BOX_CHARS</name></expr></cpp:if>
+		<if>if <condition>(<expr><name>cgsId</name> == <name>gcDots</name></expr>)</condition><then> <block>{
+		    <expr_stmt><expr><call><name>XmuReleaseStippledPixmap</name><argument_list>(<argument><expr><call><name>XtScreen</name><argument_list>(<argument><expr>(<name>Widget</name>) <name>xw</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><call><name>LIST</name><argument_list>(<argument><expr><name>j</name></expr></argument>)</argument_list></call>.<name>tile</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		}</block></then></if>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+		<expr_stmt><expr><call><name>XFreeGC</name><argument_list>(<argument><expr><call><name>TScreenOf</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call>-&gt;<name>display</name></expr></argument>, <argument><expr><call><name>LIST</name><argument_list>(<argument><expr><name>j</name></expr></argument>)</argument_list></call>.<name>gc</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr>&amp;<call><name>LIST</name><argument_list>(<argument><expr><name>j</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr>0</expr></argument>, <argument><expr><call><name>sizeof</name><argument_list>(<argument><expr><call><name>LIST</name><argument_list>(<argument><expr><name>j</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    }</block></then></if>
+	    <expr_stmt><expr><call><name>LINK</name><argument_list>(<argument><expr>0</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	}</block></for>
+    }</block></then></if>
+    <return>return <expr>0</expr>;</return>
+}</block></function>
+
+<cpp:ifdef>#<cpp:directive>ifdef</cpp:directive> <name>NO_LEAKS</name></cpp:ifdef>
+<function><type><name>void</name></type>
+<name>noleaks_cachedCgs</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>)</parameter_list>
+<block>{
+<cpp:ifndef>#<cpp:directive>ifndef</cpp:directive> <name>NO_ACTIVE_ICON</name></cpp:ifndef>
+    <expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><call><name>TScreenOf</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call>-&gt;<name>icon_cgs_cache</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+    <expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><call><name>TScreenOf</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call>-&gt;<name>main_cgs_cache</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+}</block></function>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</unit>

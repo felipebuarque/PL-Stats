@@ -1,0 +1,127 @@
+<unit xmlns="http://www.sdml.info/srcML/src" xmlns:cpp="http://www.sdml.info/srcML/cpp" language="C" dir="" filename="scrollback.c"><comment type="block">/* $XTermId: scrollback.c,v 1.14 2010/04/28 21:47:09 tom Exp $ */</comment>
+
+<comment type="block">/************************************************************
+
+Copyright 2009,2010 by Thomas E. Dickey
+
+                        All Rights Reserved
+
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
+IN NO EVENT SHALL THE ABOVE LISTED COPYRIGHT HOLDER(S) BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+Except as contained in this notice, the name(s) of the above copyright
+holders shall not be used in advertising or otherwise to promote the
+sale, use or other dealings in this Software without prior written
+authorization.
+
+********************************************************/</comment>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;xterm.h&gt;</cpp:file></cpp:include>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>REAL_ROW</name>(screen, row) ((row) + 1 + (screen)-&gt;saved_fifo)</cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>ROW2FIFO</name>(screen, row) \
+	(unsigned) (REAL_ROW(screen, row) % (screen)-&gt;savelines)</cpp:define>
+
+<comment type="block">/*
+ * Given a row-number, find the corresponding data for the line in the VT100
+ * widget's saved-line FIFO.  The row-number (from getLineData) is negative.
+ * So we just count backwards from the last saved line.
+ */</comment>
+<function><type><name>LineData</name> *</type>
+<name>getScrollback</name><parameter_list>(<param><decl><type><name>TScreen</name> *</type> <name>screen</name></decl></param>, <param><decl><type><name>int</name></type> <name>row</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>LineData</name> *</type><name>result</name> =<init> <expr>0</expr></init></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr><name>screen</name>-&gt;<name>saved_fifo</name> &gt; 0 &amp;&amp; <call><name>REAL_ROW</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr><name>row</name></expr></argument>)</argument_list></call> &gt;= 0</expr>)</condition><then> <block>{
+	<decl_stmt><decl><type><name>unsigned</name></type> <name>which</name> =<init> <expr><call><name>ROW2FIFO</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr><name>row</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+	<decl_stmt><decl><type><name>ScrnBuf</name></type> <name>where</name> =<init> <expr><call><name>scrnHeadAddr</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr><name>screen</name>-&gt;<name>saveBuf_index</name></expr></argument>, <argument><expr><name>which</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+	<expr_stmt><expr><name>result</name> = (<name>LineData</name> *) <name>where</name></expr>;</expr_stmt>
+    }</block></then></if>
+
+    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("getScrollback %d -&gt; %d -&gt; %p\n",
+	   <name>row</name>, <call><name>ROW2FIFO</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr><name>row</name></expr></argument>)</argument_list></call>,
+	   (<name>void</name> *) <name>result</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <return>return <expr><name>result</name></expr>;</return>
+}</block></function>
+
+<comment type="block">/*
+ * Allocate a new row in the scrollback FIFO, returning a pointer to it.
+ */</comment>
+<function><type><name>LineData</name> *</type>
+<name>addScrollback</name><parameter_list>(<param><decl><type><name>TScreen</name> *</type> <name>screen</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>ScrnBuf</name></type> <name>where</name> =<init> <expr>0</expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>unsigned</name></type> <name>which</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>unsigned</name></type> <name>ncols</name> =<init> <expr>(<name>unsigned</name>) <call><name>MaxCols</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>Char</name> *</type><name>block</name></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr><name>screen</name>-&gt;<name>saveBuf_index</name> != 0</expr>)</condition><then> <block>{
+	<expr_stmt><expr><name>screen</name>-&gt;<name>saved_fifo</name>++</expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("addScrollback %lu\n", <name>screen</name>-&gt;<name>saved_fifo</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+	<comment type="block">/* first, see which index we'll use */</comment>
+	<expr_stmt><expr><name>which</name> = <call>(<name>unsigned</name>) <argument_list>(<argument><expr><name>screen</name>-&gt;<name>saved_fifo</name> % <name>screen</name>-&gt;<name>savelines</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><name>where</name> = <call><name>scrnHeadAddr</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr><name>screen</name>-&gt;<name>saveBuf_index</name></expr></argument>, <argument><expr><name>which</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+	<comment type="block">/* discard any obsolete index data */</comment>
+	<if>if <condition>(<expr><name>screen</name>-&gt;<name>saved_fifo</name> &gt; <name>screen</name>-&gt;<name>savelines</name></expr>)</condition><then> <block>{
+	    <decl_stmt><decl><type><name>LineData</name> *</type><name>prior</name> =<init> <expr>(<name>LineData</name> *) <name>where</name></expr></init></decl>;</decl_stmt>
+	    <comment type="block">/*
+	     * setupLineData uses the attribs as the first address used from the
+	     * data block.
+	     */</comment>
+	    <if>if <condition>(<expr><name>prior</name>-&gt;<name>attribs</name> != 0</expr>)</condition><then> <block>{
+		<expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("...freeing prior FIFO data in slot %d: %p-&gt;%p\n",
+		       <name>which</name>, (<name>void</name> *) <name>prior</name>, <name>prior</name>-&gt;<name>attribs</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>prior</name>-&gt;<name>attribs</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><name>prior</name>-&gt;<name>attribs</name> = 0</expr>;</expr_stmt>
+	    }</block></then></if>
+	}</block></then></if>
+
+	<comment type="block">/* allocate the new data */</comment>
+	<expr_stmt><expr><name>block</name> = <call><name>allocScrnData</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr>1</expr></argument>, <argument><expr><name>ncols</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+	<comment type="block">/* record the new data in the index */</comment>
+	<expr_stmt><expr><call><name>setupLineData</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr><name>where</name></expr></argument>, <argument><expr>(<name>Char</name> *) <name>block</name></expr></argument>, <argument><expr>1</expr></argument>, <argument><expr><name>ncols</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+	<expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("...storing new FIFO data in slot %d: %p-&gt;%p\n",
+	       <name>which</name>, (<name>void</name> *) <name>where</name>, <name>block</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+    }</block></then></if>
+    <return>return <expr>(<name>LineData</name> *) <name>where</name></expr>;</return>
+}</block></function>
+
+<function><type><name>void</name></type>
+<name>deleteScrollback</name><parameter_list>(<param><decl><type><name>TScreen</name> *</type> <name>screen</name></decl></param>, <param><decl><type><name>int</name></type> <name>row</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>unsigned</name></type> <name>which</name> =<init> <expr><call><name>ROW2FIFO</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr><name>row</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>ScrnBuf</name></type> <name>where</name> =<init> <expr><call><name>scrnHeadAddr</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr><name>screen</name>-&gt;<name>saveBuf_index</name></expr></argument>, <argument><expr><name>which</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>LineData</name> *</type><name>prior</name> =<init> <expr>(<name>LineData</name> *) <name>where</name></expr></init></decl>;</decl_stmt>
+    <comment type="block">/*
+     * setupLineData uses the attribs as the first address used from the
+     * data block.
+     */</comment>
+    <if>if <condition>(<expr><name>prior</name>-&gt;<name>attribs</name> != 0</expr>)</condition><then> <block>{
+	<expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("...freeing prior FIFO data in slot %d: %p-&gt;%p\n",
+	       <name>which</name>, (<name>void</name> *) <name>prior</name>, <name>prior</name>-&gt;<name>attribs</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>prior</name>-&gt;<name>attribs</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><name>prior</name>-&gt;<name>attribs</name> = 0</expr>;</expr_stmt>
+    }</block></then></if>
+}</block></function>
+</unit>

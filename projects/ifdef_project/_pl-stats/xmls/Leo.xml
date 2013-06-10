@@ -1,0 +1,91 @@
+<unit language="Java" dir="" filename="Leo.java"><class><specifier>public</specifier> class <name>Leo</name> <block>{
+
+	<constructor><specifier>public</specifier><name>Leo</name><parameter_list>()</parameter_list><block>{
+		
+	}</block></constructor>
+	
+	<function><type><specifier>public</specifier><name>void</name></type><name>leoEhFoda</name><parameter_list>(<param><decl><type><name>int</name></type><name>x</name></decl></param>, <param><decl><type><name>String</name></type><name><name>texto</name><index>[]</index></name></decl></param>)</parameter_list><block>{
+		
+		<directive>#<type>ifdef</type><decl>FeatureA</decl></directive>
+			
+		<directive>#<type>endif</type></directive>
+		
+		<directive>#<type>ifndef</type><decl>FeatureB</decl></directive>
+			<decl_stmt><decl><type><specifier>private</specifier><name>int</name></type><name>y</name></decl>;</decl_stmt>
+		<directive>#<type>endif</type></directive>
+		
+		<directive>#<type>ifdef</type><decl>FeatureC</decl></directive>
+			
+			<directive>#<type>ifdef</type><decl>FeatureD</decl></directive>
+				<expr_stmt><expr><name>y</name> = <name>x</name></expr>;</expr_stmt>
+			<directive>#<type>endif</type></directive>
+		
+		<directive>#<type>endif</type></directive>
+		
+		<directive>#<type>ifdef</type><decl>FeatureE</decl></directive>
+		<for>for(<init><decl><type><name>int</name></type><name>i</name> =<init><expr>0</expr></init></decl>;</init> <condition><expr><name>i</name> &lt; 10</expr>;</condition> <incr><expr><name>i</name>++</expr></incr>)<block>{
+			<if>if<condition>(<expr><name>i</name> == 4</expr>)</condition><then><block>{
+				<break>break;</break>
+			}</block></then> <else>else <block>{
+				<continue>continue;</continue>
+			}</block></else></if>
+		}</block></for>
+		<directive>#<type>endif</type></directive>
+		
+		<directive>#<type>ifdef</type><decl>FeatureF</decl></directive>
+		
+		<directive>#<type>elif</type><decl>FeatureG</decl></directive>
+		
+		<directive>#<type>else</type></directive>
+		
+		<directive>#<type>endif</type></directive>
+		
+		<directive>#<type>mdebug</type><decl>debug1</decl></directive>
+		
+		<directive>#<type>enddebug</type></directive>
+		
+		<directive>#<type>mdebug</type><decl>debug2</decl></directive>
+		
+		<directive>#<type>enddebug</type></directive>
+		<return>return <expr><name>x</name></expr>;</return>
+		
+	}</block></function>
+	
+	<function><type><specifier>public</specifier><name>void</name></type><name>leoEhFoda2</name><parameter_list>()</parameter_list><block>{
+		
+		<decl_stmt><decl><type><specifier>private</specifier><name>int</name></type><name>x</name>, <name>y</name>, <name>z</name></decl>;</decl_stmt>
+		<decl_stmt><decl><type><specifier>private</specifier><name>String</name></type><name>texto</name> =<init><expr>'opa'</expr></init></decl>;</decl_stmt>
+		
+		<expr_stmt><expr><name>X</name>.<name>z</name> = 'teste'</expr>;</expr_stmt>
+		
+		<if>if<condition>(<expr><name>z</name> == 'teste'</expr>)</condition><then><block>{
+<directive>#<type>ifdef</type><decl>FeatureSpecial</decl></directive>
+			<expr_stmt><expr><name>z</name> = 'outro teste'</expr></expr_stmt>
+<directive>#<type>endif</type></directive>
+		}</block></then></if>
+		
+		<directive>#<type>mdebug</type><decl>debug3</decl></directive>
+		<expr_stmt><expr><name>y</name> = 1</expr>;</expr_stmt>
+		<for>for(<init><decl><type><name>int</name></type><name>i</name> =<init><expr>0</expr></init></decl>;</init> <condition><expr><name>i</name> &lt; <call><name>sizeof</name><argument_list>(<argument><expr><name>x</name></expr></argument>)</argument_list></call></expr>;</condition> <incr><expr><name>i</name>++</expr></incr>)<block>{
+			<expr_stmt><expr><name>z</name> = "texto1"</expr>;</expr_stmt>
+		}</block></for>
+		<directive>#<type>enddebug</type></directive>
+		
+		<directive>#<type>mdebug</type><decl>debug4</decl></directive>
+		<while>while<condition>(<expr><name>x</name> = 1</expr>)</condition><block>{
+			<expr_stmt><expr><name>x</name>++</expr>;</expr_stmt>
+		}</block></while>
+		<directive>#<type>enddebug</type></directive>
+		
+		<directive>#<type>ifndef</type><decl>FeatureH||FeatureH2</decl></directive>
+		<expr_stmt><expr><name>x</name> = 2</expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>leoEhFoda</name><argument_list>(<argument><expr><name>x</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<directive>#<type>elifndef</type><decl>FeatureI</decl></directive>
+		<expr_stmt><expr><name>y</name> = <name>Y</name>.<name>x</name></expr>;</expr_stmt>
+		<expr_stmt><expr><name>y</name> = <call><name>leoEhFoda</name><argument_list>(<argument><expr><name>x</name></expr></argument>, <argument><expr><name>y</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<directive>#<type>else</type></directive>
+		<expr_stmt><expr><name>texto</name> = "texto aqui!"</expr>;</expr_stmt>
+		<directive>#<type>endif</type></directive>
+	}</block></function>
+	
+}</block></class></unit>

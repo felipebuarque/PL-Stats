@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit language="Java" dir="" filename="RelatorioMembroAction.java"><package>package <name>in980</name>.<name>rgms</name>.<name>presentation</name>.<name>actions</name>;</package>
+
+<import>import <name>java</name>.<name>util</name>.<name>List</name>;</import>
+
+<import>import <name>in980</name>.<name>rgms</name>.<name>domain</name>.<name>Membro</name>;</import>
+<import>import <name>in980</name>.<name>rgms</name>.<name>domain</name>.<name>TipoMembro</name>;</import>
+<import>import <name>in980</name>.<name>rgms</name>.<name>persistence</name>.<name>MembroDAO</name>;</import>
+
+<import>import <name>org</name>.<name>apache</name>.<name>struts2</name>.<name>convention</name>.<name>annotation</name>.<name>Action</name>;</import>
+<import>import <name>org</name>.<name>apache</name>.<name>struts2</name>.<name>convention</name>.<name>annotation</name>.<name>Result</name>;</import>
+
+<class><specifier>public</specifier> class <name>RelatorioMembroAction</name> <block>{
+	<decl_stmt><decl><type><specifier>private</specifier> <name>String</name></type> <name>msg</name></decl>;</decl_stmt>
+	private <expr_stmt><expr><name>List</name>&lt;<name>Membro</name>&gt; <name>membrosProfessor</name></expr>;</expr_stmt>
+	private <expr_stmt><expr><name>List</name>&lt;<name>Membro</name>&gt; <name>membrosEstudante</name></expr>;</expr_stmt>
+	private <expr_stmt><expr><name>List</name>&lt;<name>Membro</name>&gt; <name>membrosPesquisador</name></expr>;</expr_stmt>
+	
+	@<expr_stmt><expr><call><name>Action</name><argument_list>(<argument><expr><name>value</name> = "membrosPorGrupo"</expr></argument>, <argument><expr><name>results</name> = <block>{ 
+			@<expr><call><name>Result</name><argument_list>(<argument><expr><name>location</name> = "/lista_membro_grupo.jsp"</expr></argument>, <argument><expr><name>name</name> = "success"</expr></argument>)</argument_list></call></expr> 
+			}</block></expr></argument>
+	)</argument_list></call>
+	public <name>String</name> <call><name>membrosPorGrupo</name><argument_list>()</argument_list></call> <block>{
+		<try>try <block>{
+			<decl_stmt><decl><type><name>MembroDAO</name></type> <name>dao</name> =<init> <expr>new <call><name>MembroDAO</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+			<expr_stmt><expr><name>membrosProfessor</name> = <call><name><name>dao</name>.<name>buscaPorTipo</name></name><argument_list>(<argument><expr><name>TipoMembro</name>.<name>PROFESSOR</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+			<expr_stmt><expr><name>membrosEstudante</name> = <call><name><name>dao</name>.<name>buscaPorTipo</name></name><argument_list>(<argument><expr><name>TipoMembro</name>.<name>ESTUDANTE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+			<expr_stmt><expr><name>membrosPesquisador</name> = <call><name><name>dao</name>.<name>buscaPorTipo</name></name><argument_list>(<argument><expr><name>TipoMembro</name>.<name>PESQUISADOR</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt/></block></try>}</block></expr></expr_stmt> <catch>catch (<param><decl><type><name>Exception</name></type> <name>e</name></decl></param>) <block>{
+			<expr_stmt><expr><call><name><name>e</name>.<name>printStackTrace</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+			<expr_stmt><expr><call><name>setMsg</name><argument_list>(<argument><expr>"Erro ao Listar os Membros: " + <call><name><name>e</name>.<name>getMessage</name></name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		}</block></catch>
+				
+		<return>return <expr>"success"</expr>;</return>
+	}</block></class>
+	
+	@<expr_stmt><expr><call><name>Action</name><argument_list>(<argument><expr><name>value</name> = "paginaPessoal"</expr></argument>, <argument><expr><name>results</name> = <block>{ 
+			@<expr><call><name>Result</name><argument_list>(<argument><expr><name>location</name> = "/pagina_pessoal.jsp"</expr></argument>, <argument><expr><name>name</name> = "success"</expr></argument>)</argument_list></call></expr> 
+			}</block></expr></argument>
+	)</argument_list></call>
+	public <name>String</name> <call><name>paginaPessoal</name><argument_list>()</argument_list></call> <block>{
+		<try>try <block>{
+			<decl_stmt><decl><type><name>MembroDAO</name></type> <name>dao</name> =<init> <expr>new <call><name>MembroDAO</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+			<expr_stmt><expr><name>membrosProfessor</name> = <call><name><name>dao</name>.<name>buscaPorTipo</name></name><argument_list>(<argument><expr><name>TipoMembro</name>.<name>PROFESSOR</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt/></block></try>}</block></expr></expr_stmt> <catch>catch (<param><decl><type><name>Exception</name></type> <name>e</name></decl></param>) <block>{
+			<expr_stmt><expr><call><name><name>e</name>.<name>printStackTrace</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+			<expr_stmt><expr><call><name>setMsg</name><argument_list>(<argument><expr>"Erro ao Listar os Membros: " + <call><name><name>e</name>.<name>getMessage</name></name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		}</block></catch>
+				
+		<return>return <expr>"success"</expr>;</return>
+	}
+	
+	public <expr_stmt><expr><name>List</name>&lt;<name>Membro</name>&gt; <call><name>getMembrosProfessor</name><argument_list>()</argument_list></call> <block>{
+		<return>return <expr><name>membrosProfessor</name></expr>;</return></block></expr></expr_stmt>
+	}
+	
+	<decl_stmt><decl><type><specifier>public</specifier> <name>void</name></type> <name>setMembrosProfessor</name>(List<argument_list>&lt;<argument><name>Membro</name></argument>&gt;</argument_list> membrosProfessor) <block>{
+		<expr_stmt><expr><name>this</name>.<name>membrosProfessor</name> = <name>membrosProfessor</name></expr>;</expr_stmt>
+	}</block></decl></decl_stmt>
+
+	public <expr_stmt><expr><name>List</name>&lt;<name>Membro</name>&gt; <call><name>getMembrosEstudante</name><argument_list>()</argument_list></call> <block>{
+		<return>return <expr><name>membrosEstudante</name></expr>;</return></block></expr></expr_stmt>
+	}
+
+	<decl_stmt><decl><type><specifier>public</specifier> <name>void</name></type> <name>setMembrosEstudante</name>(List<argument_list>&lt;<argument><name>Membro</name></argument>&gt;</argument_list> membrosEstudante) <block>{
+		<expr_stmt><expr><name>this</name>.<name>membrosEstudante</name> = <name>membrosEstudante</name></expr>;</expr_stmt>
+	}</block></decl></decl_stmt>
+
+	public <expr_stmt><expr><name>List</name>&lt;<name>Membro</name>&gt; <call><name>getMembrosPesquisador</name><argument_list>()</argument_list></call> <block>{
+		<return>return <expr><name>membrosPesquisador</name></expr>;</return></block></expr></expr_stmt>
+	}
+
+	<decl_stmt><decl><type><specifier>public</specifier> <name>void</name></type> <name>setMembrosPesquisador</name>(List<argument_list>&lt;<argument><name>Membro</name></argument>&gt;</argument_list> membrosPesquisador) <block>{
+		<expr_stmt><expr><name>this</name>.<name>membrosPesquisador</name> = <name>membrosPesquisador</name></expr>;</expr_stmt>
+	}</block></decl></decl_stmt>
+
+	<function><type><specifier>public</specifier> <name>String</name></type> <name>getMsg</name><parameter_list>()</parameter_list> <block>{
+		<return>return <expr><name>msg</name></expr>;</return>
+	}</block></function>
+	
+	<function><type><specifier>public</specifier> <name>void</name></type> <name>setMsg</name><parameter_list>(<param><decl><type><name>String</name></type> <name>msg</name></decl></param>)</parameter_list> <block>{
+		<expr_stmt><expr><name>this</name>.<name>msg</name> = <name>msg</name></expr>;</expr_stmt>
+	}</block></function>
+}
+</unit>

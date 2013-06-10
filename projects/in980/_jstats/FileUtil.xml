@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit language="Java" dir="" filename="FileUtil.java"><package>package <name>in980</name>.<name>velogen</name>.<name>file</name>;</package>
+
+<import>import <name>in980</name>.<name>velogen</name>.<name>parser</name>.<name>VelocityParser</name>;</import>
+
+<import>import <name>java</name>.<name>io</name>.<name>File</name>;</import>
+<import>import <name>java</name>.<name>io</name>.<name>FileInputStream</name>;</import>
+<import>import <name>java</name>.<name>io</name>.<name>FileOutputStream</name>;</import>
+<import>import <name>java</name>.<name>io</name>.<name>IOException</name>;</import>
+<import>import <name>java</name>.<name>io</name>.<name>OutputStreamWriter</name>;</import>
+<import>import <name>java</name>.<name>nio</name>.<name>charset</name>.<name>Charset</name>;</import>
+<import>import <name>java</name>.<name>util</name>.<name>Enumeration</name>;</import>
+<import>import <name>java</name>.<name>util</name>.<name>Properties</name>;</import>
+
+<class><specifier>public</specifier> class <name>FileUtil</name> <block>{
+
+	<decl_stmt><decl><type><specifier>private</specifier> <name>static</name> <specifier>final</specifier> <name>String</name></type> <name>FILE_ENCODING</name> =<init> <expr>"ISO-8859-1"</expr></init></decl>;</decl_stmt> <comment type="line">// ISO-8859-1,</comment>
+	<comment type="line">// UTF-8</comment>
+<comment type="line">//	private static final String INPUT_DIR = "./input/";</comment>
+<comment type="line">//	private static final String OUTPUT_DIR = "./output/";</comment>
+	<decl_stmt><decl><type><specifier>private</specifier> <name>static</name> <specifier>final</specifier> <name>String</name></type> <name>APP_DIR</name> =<init> <expr>"./src/in980/velogen/app/"</expr></init></decl>;</decl_stmt>
+
+	<comment type="line">// private static final String DIR_IN =</comment>
+	<comment type="line">// "/home/salaniojr/workspace-eclipse-galileo/testeweb/WebContent/template/";</comment>
+	<comment type="line">// private static final String DIR_OUT =</comment>
+	<comment type="line">// "/home/salaniojr/workspace-eclipse-galileo/testeweb/WebContent/";</comment>
+
+	<function><type><specifier>public</specifier> <name>static</name> <name>Properties</name></type> <name>getPropertiesFile</name><parameter_list>(<param><decl><type><name>String</name></type> <name>filePath</name></decl></param>, <param><decl><type><name>String</name></type> <name>input</name></decl></param>)</parameter_list>
+			<throws>throws</throws> IOException <block>{
+		<return>return <expr><call><name>genericGetPropertiesFile</name><argument_list>(<argument><expr>new <call><name>File</name><argument_list>(<argument><expr><name>input</name> + <name>filePath</name>
+				+ ".properties"</expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</return>
+	}</block></function>
+
+	<function><type><specifier>public</specifier> <name>static</name> <name>Properties</name></type> <name>getMainPropertiesFile</name><parameter_list>()</parameter_list> <throws>throws</throws> IOException <block>{
+		<return>return <expr><call><name>genericGetPropertiesFile</name><argument_list>(<argument><expr>new <call><name>File</name><argument_list>(<argument><expr><name>APP_DIR</name> + "tpltsprops"
+				+ ".properties"</expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</return>
+	}</block></function>
+
+	<function><type><specifier>private</specifier> <name>static</name> <name>Properties</name></type> <name>genericGetPropertiesFile</name><parameter_list>(<param><decl><type><name>File</name></type> <name>file</name></decl></param>)</parameter_list>
+			<throws>throws</throws> IOException <block>{
+		<decl_stmt><decl><type><name>Properties</name></type> <name>properties</name> =<init> <expr>new <call><name>Properties</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+		<decl_stmt><decl><type><name>FileInputStream</name></type> <name>fis</name> =<init> <expr>new <call><name>FileInputStream</name><argument_list>(<argument><expr><name>file</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt> <comment type="line">// Ex.:</comment>
+															<comment type="line">// ./app/app.properties</comment>
+		<expr_stmt><expr><call><name><name>properties</name>.<name>load</name></name><argument_list>(<argument><expr><name>fis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name><name>fis</name>.<name>close</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+		<return>return <expr><name>properties</name></expr>;</return>
+	}</block></function>
+
+	<function><type><specifier>public</specifier> <name>static</name> <name>void</name></type> <name>prepareFile</name><parameter_list>(<param><decl><type><name>String</name></type> <name>templateFilePath</name></decl></param>, <param><decl><type><name>Properties</name></type> <name>propFile</name></decl></param>, 
+			<param><decl><type><name>String</name></type> <name>output</name></decl></param>, <param><decl><type><name>String</name></type> <name>input</name></decl></param>)</parameter_list>
+			<throws>throws</throws> IOException <block>{
+		<decl_stmt><decl><type><name>VelocityParser</name></type> <name>velInstance</name> =<init> <expr>new <call><name>VelocityParser</name><argument_list>(<argument><expr><name>input</name>
+				+ <name>templateFilePath</name> + ".vm"</expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+		<expr_stmt><expr><name>Enumeration</name>&lt;<name>Object</name>&gt; <name>keys</name> = <call><name><name>propFile</name>.<name>keys</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+		<while>while <condition>(<expr><call><name><name>keys</name>.<name>hasMoreElements</name></name><argument_list>()</argument_list></call></expr>)</condition> <block>{
+			<decl_stmt><decl><type><name>String</name></type> <name>key</name> =<init> <expr>(<name>String</name>) <call><name><name>keys</name>.<name>nextElement</name></name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+			<expr_stmt><expr><call><name><name>velInstance</name>.<name>addToContext</name></name><argument_list>(<argument><expr><name>key</name></expr></argument>, <argument><expr><call><name><name>propFile</name>.<name>get</name></name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		}</block></while>
+
+		<decl_stmt><decl><type><name>Charset</name></type> <name>cs</name> =<init> <expr><call><name><name>Charset</name>.<name>forName</name></name><argument_list>(<argument><expr><name>FILE_ENCODING</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+		<decl_stmt><decl><type><name>OutputStreamWriter</name></type> <name>osw</name> =<init> <expr>new <call><name>OutputStreamWriter</name><argument_list>(<argument><expr>new <call><name>FileOutputStream</name><argument_list>(
+				<argument><expr><name>output</name> + <name>templateFilePath</name> + ".jsp"</expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name>cs</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+		<expr_stmt><expr><call><name><name>System</name>.<name>out</name>.<name>println</name></name><argument_list>(<argument><expr><name>output</name> + <name>templateFilePath</name> + ".jsp"</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+		<expr_stmt><expr><call><name><name>velInstance</name>.<name>processTemplate</name></name><argument_list>(<argument><expr><name>osw</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	}</block></function>
+}</block></class>
+</unit>

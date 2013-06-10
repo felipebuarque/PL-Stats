@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit language="Java" dir="" filename="ActionPublicacaoBase.java"><package>package <name>in980</name>.<name>rgms</name>.<name>presentation</name>.<name>actions</name>;</package>
+
+<import>import <name>in980</name>.<name>rgms</name>.<name>domain</name>.<name>DissertacaoMestrado</name>;</import>
+<import>import <name>in980</name>.<name>rgms</name>.<name>domain</name>.<name>LinhaPesquisa</name>;</import>
+<import>import <name>in980</name>.<name>rgms</name>.<name>domain</name>.<name>Membro</name>;</import>
+<import>import <name>in980</name>.<name>rgms</name>.<name>domain</name>.<name>Publicacao</name>;</import>
+<import>import <name>in980</name>.<name>rgms</name>.<name>persistence</name>.<name>LinhaPesquisaDAO</name>;</import>
+<import>import <name>in980</name>.<name>rgms</name>.<name>persistence</name>.<name>MembroDAO</name>;</import>
+
+<import>import <name>java</name>.<name>util</name>.<name>ArrayList</name>;</import>
+<import>import <name>java</name>.<name>util</name>.<name>List</name>;</import>
+
+<import>import <name>com</name>.<name>opensymphony</name>.<name>xwork2</name>.<name>ActionContext</name>;</import>
+
+<class><specifier>public</specifier> <specifier>abstract</specifier> class <name>ActionPublicacaoBase</name> <super><implements>implements <name>ActionCRUDBase</name></implements></super><block>{
+	<decl_stmt><decl><type><specifier>private</specifier> <name>Publicacao</name></type> <name>publicacao</name></decl>;</decl_stmt>
+	
+	public <expr_stmt><expr><name>List</name>&lt;<name>Membro</name>&gt; <call><name>getMembros</name><argument_list>()</argument_list></call><block>{
+		<return>return <expr>new <call><name>MembroDAO</name><argument_list>()</argument_list></call>.<call><name>listaTodos</name><argument_list>()</argument_list></call></expr>;</return></block></expr></expr_stmt>
+	}</block></class>
+	public <expr_stmt><expr><name>List</name>&lt;<name>LinhaPesquisa</name>&gt; <call><name>getLinhasPesquisa</name><argument_list>()</argument_list></call><block>{
+		<return>return <expr>new <call><name>LinhaPesquisaDAO</name><argument_list>()</argument_list></call>.<call><name>listaTodos</name><argument_list>()</argument_list></call></expr>;</return></block></expr></expr_stmt>
+	}
+	
+	<comment type="line">//#ifdef informacoesContextuais</comment>
+	<function><type><specifier>protected</specifier> <name>void</name></type> <name>loadContextualInfo</name><parameter_list>(<param><decl><type><name>Publicacao</name></type> <name>dissertacaoMestrado</name></decl></param>)</parameter_list> <block>{
+		<decl_stmt><decl><type><name>Membro</name></type> <name>membroAutenticado</name> =<init> <expr><call><name>getMembroAutenticado</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+		<if>if<condition>(<expr><name>membroAutenticado</name> != <name>null</name></expr>)</condition><then><block>{
+			<expr_stmt><expr><name>List</name>&lt;<name>Membro</name>&gt; <name>autores</name> = new <name>ArrayList</name>&lt;<name>Membro</name>&gt;()</expr>;</expr_stmt>
+			<expr_stmt><expr><call><name><name>autores</name>.<name>add</name></name><argument_list>(<argument><expr><name>membroAutenticado</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+			<expr_stmt><expr><call><name><name>dissertacaoMestrado</name>.<name>setAutoresMembros</name></name><argument_list>(<argument><expr><name>autores</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+			
+			<expr_stmt><expr><name>List</name>&lt;<name>LinhaPesquisa</name>&gt; <name>linhaDePesquisa</name> = <call><name><name>membroAutenticado</name>.<name>getLinhasPesquisa</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+			<expr_stmt><expr><call><name><name>dissertacaoMestrado</name>.<name>setLinhasPesquisa</name></name><argument_list>(<argument><expr><name>linhaDePesquisa</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>			
+		}</block></then></if>
+	}</block></function>
+	<comment type="line">//#endif</comment>
+	
+	<comment type="line">//#ifdef autenticacao</comment>
+	<function><type><specifier>protected</specifier> <name>Membro</name></type> <name>getMembroAutenticado</name><parameter_list>()</parameter_list> <block>{
+		<return>return <expr>(<name>Membro</name>)<call><name><name>ActionContext</name>.<name>getContext</name></name><argument_list>()</argument_list></call>.<call><name>getSession</name><argument_list>()</argument_list></call>.<call><name>get</name><argument_list>(<argument><expr>"membroAutenticado"</expr></argument>)</argument_list></call></expr>;</return>		
+	}</block></function>
+	<comment type="line">//#endif</comment>
+	
+	<function><type><specifier>public</specifier> <name>Publicacao</name></type> <name>getPublicacao</name><parameter_list>()</parameter_list> <block>{
+		<return>return <expr><name>publicacao</name></expr>;</return>
+	}</block></function>
+
+	<function><type><specifier>public</specifier> <name>void</name></type> <name>setPublicacao</name><parameter_list>(<param><decl><type><name>Publicacao</name></type> <name>publicacao</name></decl></param>)</parameter_list> <block>{
+		<expr_stmt><expr><name>this</name>.<name>publicacao</name> = <name>publicacao</name></expr>;</expr_stmt>
+	}</block></function>
+}
+</unit>

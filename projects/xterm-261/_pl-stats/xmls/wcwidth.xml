@@ -1,0 +1,332 @@
+<unit xmlns="http://www.sdml.info/srcML/src" xmlns:cpp="http://www.sdml.info/srcML/cpp" language="C" dir="" filename="wcwidth.c"><comment type="block">/* $XTermId: wcwidth.c,v 1.22 2009/02/13 19:53:12 tom Exp $ */</comment>
+
+<comment type="block">/* $XFree86: xc/programs/xterm/wcwidth.c,v 1.9 2006/06/19 00:36:52 dickey Exp $ */</comment>
+
+<comment type="block">/*
+ * This is an implementation of wcwidth() and wcswidth() (defined in
+ * IEEE Std 1002.1-2001) for Unicode.
+ *
+ * http://www.opengroup.org/onlinepubs/007904975/functions/wcwidth.html
+ * http://www.opengroup.org/onlinepubs/007904975/functions/wcswidth.html
+ *
+ * In fixed-width output devices, Latin characters all occupy a single
+ * "cell" position of equal width, whereas ideographic CJK characters
+ * occupy two such cells. Interoperability between terminal-line
+ * applications and (teletype-style) character terminals using the
+ * UTF-8 encoding requires agreement on which character should advance
+ * the cursor by how many cell positions. No established formal
+ * standards exist at present on which Unicode character shall occupy
+ * how many cell positions on character terminals. These routines are
+ * a first attempt of defining such behavior based on simple rules
+ * applied to data provided by the Unicode Consortium.
+ *
+ * For some graphical characters, the Unicode standard explicitly
+ * defines a character-cell width via the definition of the East Asian
+ * FullWidth (F), Wide (W), Half-width (H), and Narrow (Na) classes.
+ * In all these cases, there is no ambiguity about which width a
+ * terminal shall use. For characters in the East Asian Ambiguous (A)
+ * class, the width choice depends purely on a preference of backward
+ * compatibility with either historic CJK or Western practice.
+ * Choosing single-width for these characters is easy to justify as
+ * the appropriate long-term solution, as the CJK practice of
+ * displaying these characters as double-width comes from historic
+ * implementation simplicity (8-bit encoded characters were displayed
+ * single-width and 16-bit ones double-width, even for Greek,
+ * Cyrillic, etc.) and not any typographic considerations.
+ *
+ * Much less clear is the choice of width for the Not East Asian
+ * (Neutral) class. Existing practice does not dictate a width for any
+ * of these characters. It would nevertheless make sense
+ * typographically to allocate two character cells to characters such
+ * as for instance EM SPACE or VOLUME INTEGRAL, which cannot be
+ * represented adequately with a single-width glyph. The following
+ * routines at present merely assign a single-cell width to all
+ * neutral characters, in the interest of simplicity. This is not
+ * entirely satisfactory and should be reconsidered before
+ * establishing a formal standard in this area. At the moment, the
+ * decision which Not East Asian (Neutral) characters should be
+ * represented by double-width glyphs cannot yet be answered by
+ * applying a simple rule from the Unicode database content. Setting
+ * up a proper standard for the behavior of UTF-8 character terminals
+ * will require a careful analysis not only of each Unicode character,
+ * but also of each presentation form, something the author of these
+ * routines has avoided to do so far.
+ *
+ * http://www.unicode.org/unicode/reports/tr11/
+ *
+ * Markus Kuhn -- 2007-05-25 (Unicode 5.0)
+ *
+ * Permission to use, copy, modify, and distribute this software
+ * for any purpose and without fee is hereby granted. The author
+ * disclaims all warranties with regard to this software.
+ *
+ * Latest version: http://www.cl.cam.ac.uk/~mgk25/ucs/wcwidth.c
+ */</comment>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;wcwidth.h&gt;</cpp:file></cpp:include>
+
+<struct>struct <name>interval</name> <block>{
+  <decl_stmt><decl><type><name>unsigned</name> <name>long</name></type> <name>first</name></decl>;</decl_stmt>
+  <decl_stmt><decl><type><name>unsigned</name> <name>long</name></type> <name>last</name></decl>;</decl_stmt>
+}</block>;</struct>
+
+<comment type="block">/* auxiliary function for binary search in interval table */</comment>
+<function><type><name>static</name> <name>int</name></type> <name>bisearch</name><parameter_list>(<param><decl><type><name>unsigned</name> <name>long</name></type> <name>ucs</name></decl></param>, <param><decl><type><name>const</name> struct <name>interval</name> *</type><name>table</name></decl></param>, <param><decl><type><name>int</name></type> <name>max</name></decl></param>)</parameter_list> <block>{
+  <decl_stmt><decl><type><name>int</name></type> <name>min</name> =<init> <expr>0</expr></init></decl>;</decl_stmt>
+  <decl_stmt><decl><type><name>int</name></type> <name>mid</name></decl>;</decl_stmt>
+
+  <if>if <condition>(<expr><name>ucs</name> &gt;= <name><name>table</name><index>[<expr>0</expr>]</index></name>.<name>first</name> &amp;&amp; <name>ucs</name> &lt;= <name><name>table</name><index>[<expr><name>max</name></expr>]</index></name>.<name>last</name></expr>)</condition><then> <block>{
+    <while>while <condition>(<expr><name>max</name> &gt;= <name>min</name></expr>)</condition> <block>{
+      <expr_stmt><expr><name>mid</name> = (<name>min</name> + <name>max</name>) / 2</expr>;</expr_stmt>
+      <if>if <condition>(<expr><name>ucs</name> &gt; <name><name>table</name><index>[<expr><name>mid</name></expr>]</index></name>.<name>last</name></expr>)</condition><then>
+        <expr_stmt><expr><name>min</name> = <name>mid</name> + 1</expr>;</expr_stmt></then>
+      <else>else <if>if <condition>(<expr><name>ucs</name> &lt; <name><name>table</name><index>[<expr><name>mid</name></expr>]</index></name>.<name>first</name></expr>)</condition><then>
+        <expr_stmt><expr><name>max</name> = <name>mid</name> - 1</expr>;</expr_stmt></then>
+      <else>else
+        <return>return <expr>1</expr>;</return></else></if></else></if>
+    }</block></while>
+  }</block></then></if>
+
+  <return>return <expr>0</expr>;</return>
+}</block></function>
+
+
+<comment type="block">/* The following two functions define the column width of an ISO 10646
+ * character as follows:
+ *
+ *    - The null character (U+0000) has a column width of 0.
+ *
+ *    - Other C0/C1 control characters and DEL will lead to a return
+ *      value of -1.
+ *
+ *    - Non-spacing and enclosing combining characters (general
+ *      category code Mn or Me in the Unicode database) have a
+ *      column width of 0.
+ *
+ *    - SOFT HYPHEN (U+00AD) has a column width of 1.
+ *
+ *    - Other format characters (general category code Cf in the Unicode
+ *      database) and ZERO WIDTH SPACE (U+200B) have a column width of 0.
+ *
+ *    - Hangul Jamo medial vowels and final consonants (U+1160-U+11FF)
+ *      have a column width of 0.
+ *
+ *    - Spacing characters in the East Asian Wide (W) or East Asian
+ *      Full-width (F) category as defined in Unicode Technical
+ *      Report #11 have a column width of 2.
+ *
+ *    - All remaining characters (including all printable
+ *      ISO 8859-1 and WGL4 characters, Unicode control characters,
+ *      etc.) have a column width of 1.
+ *
+ * This implementation assumes that wchar_t characters are encoded
+ * in ISO 10646.
+ */</comment>
+
+<function><type><name>int</name></type> <name>mk_wcwidth</name><parameter_list>(<param><decl><type><name>wchar_t</name></type> <name>ucs</name></decl></param>)</parameter_list>
+<block>{
+  <decl_stmt><decl><type><name>unsigned</name> <name>long</name></type> <name>cmp</name> =<init> <expr>(<name>unsigned</name> <name>long</name>) <name>ucs</name></expr></init></decl>;</decl_stmt>
+
+  <comment type="block">/* sorted list of non-overlapping intervals of non-spacing characters */</comment>
+  <comment type="block">/* generated by
+   *	uniset +cat=Me +cat=Mn +cat=Cf -00AD +1160-11FF +200B c
+   */</comment>
+  <decl_stmt><decl><type><name>static</name> <name>const</name> struct <name>interval</name></type> <name><name>combining</name><index>[]</index></name> =<init> <expr><block>{
+    <expr><block>{ <expr>0x0300</expr>, <expr>0x036F</expr> }</block></expr>, <expr><block>{ <expr>0x0483</expr>, <expr>0x0486</expr> }</block></expr>, <expr><block>{ <expr>0x0488</expr>, <expr>0x0489</expr> }</block></expr>,
+    <expr><block>{ <expr>0x0591</expr>, <expr>0x05BD</expr> }</block></expr>, <expr><block>{ <expr>0x05BF</expr>, <expr>0x05BF</expr> }</block></expr>, <expr><block>{ <expr>0x05C1</expr>, <expr>0x05C2</expr> }</block></expr>,
+    <expr><block>{ <expr>0x05C4</expr>, <expr>0x05C5</expr> }</block></expr>, <expr><block>{ <expr>0x05C7</expr>, <expr>0x05C7</expr> }</block></expr>, <expr><block>{ <expr>0x0600</expr>, <expr>0x0603</expr> }</block></expr>,
+    <expr><block>{ <expr>0x0610</expr>, <expr>0x0615</expr> }</block></expr>, <expr><block>{ <expr>0x064B</expr>, <expr>0x065E</expr> }</block></expr>, <expr><block>{ <expr>0x0670</expr>, <expr>0x0670</expr> }</block></expr>,
+    <expr><block>{ <expr>0x06D6</expr>, <expr>0x06E4</expr> }</block></expr>, <expr><block>{ <expr>0x06E7</expr>, <expr>0x06E8</expr> }</block></expr>, <expr><block>{ <expr>0x06EA</expr>, <expr>0x06ED</expr> }</block></expr>,
+    <expr><block>{ <expr>0x070F</expr>, <expr>0x070F</expr> }</block></expr>, <expr><block>{ <expr>0x0711</expr>, <expr>0x0711</expr> }</block></expr>, <expr><block>{ <expr>0x0730</expr>, <expr>0x074A</expr> }</block></expr>,
+    <expr><block>{ <expr>0x07A6</expr>, <expr>0x07B0</expr> }</block></expr>, <expr><block>{ <expr>0x07EB</expr>, <expr>0x07F3</expr> }</block></expr>, <expr><block>{ <expr>0x0901</expr>, <expr>0x0902</expr> }</block></expr>,
+    <expr><block>{ <expr>0x093C</expr>, <expr>0x093C</expr> }</block></expr>, <expr><block>{ <expr>0x0941</expr>, <expr>0x0948</expr> }</block></expr>, <expr><block>{ <expr>0x094D</expr>, <expr>0x094D</expr> }</block></expr>,
+    <expr><block>{ <expr>0x0951</expr>, <expr>0x0954</expr> }</block></expr>, <expr><block>{ <expr>0x0962</expr>, <expr>0x0963</expr> }</block></expr>, <expr><block>{ <expr>0x0981</expr>, <expr>0x0981</expr> }</block></expr>,
+    <expr><block>{ <expr>0x09BC</expr>, <expr>0x09BC</expr> }</block></expr>, <expr><block>{ <expr>0x09C1</expr>, <expr>0x09C4</expr> }</block></expr>, <expr><block>{ <expr>0x09CD</expr>, <expr>0x09CD</expr> }</block></expr>,
+    <expr><block>{ <expr>0x09E2</expr>, <expr>0x09E3</expr> }</block></expr>, <expr><block>{ <expr>0x0A01</expr>, <expr>0x0A02</expr> }</block></expr>, <expr><block>{ <expr>0x0A3C</expr>, <expr>0x0A3C</expr> }</block></expr>,
+    <expr><block>{ <expr>0x0A41</expr>, <expr>0x0A42</expr> }</block></expr>, <expr><block>{ <expr>0x0A47</expr>, <expr>0x0A48</expr> }</block></expr>, <expr><block>{ <expr>0x0A4B</expr>, <expr>0x0A4D</expr> }</block></expr>,
+    <expr><block>{ <expr>0x0A70</expr>, <expr>0x0A71</expr> }</block></expr>, <expr><block>{ <expr>0x0A81</expr>, <expr>0x0A82</expr> }</block></expr>, <expr><block>{ <expr>0x0ABC</expr>, <expr>0x0ABC</expr> }</block></expr>,
+    <expr><block>{ <expr>0x0AC1</expr>, <expr>0x0AC5</expr> }</block></expr>, <expr><block>{ <expr>0x0AC7</expr>, <expr>0x0AC8</expr> }</block></expr>, <expr><block>{ <expr>0x0ACD</expr>, <expr>0x0ACD</expr> }</block></expr>,
+    <expr><block>{ <expr>0x0AE2</expr>, <expr>0x0AE3</expr> }</block></expr>, <expr><block>{ <expr>0x0B01</expr>, <expr>0x0B01</expr> }</block></expr>, <expr><block>{ <expr>0x0B3C</expr>, <expr>0x0B3C</expr> }</block></expr>,
+    <expr><block>{ <expr>0x0B3F</expr>, <expr>0x0B3F</expr> }</block></expr>, <expr><block>{ <expr>0x0B41</expr>, <expr>0x0B43</expr> }</block></expr>, <expr><block>{ <expr>0x0B4D</expr>, <expr>0x0B4D</expr> }</block></expr>,
+    <expr><block>{ <expr>0x0B56</expr>, <expr>0x0B56</expr> }</block></expr>, <expr><block>{ <expr>0x0B82</expr>, <expr>0x0B82</expr> }</block></expr>, <expr><block>{ <expr>0x0BC0</expr>, <expr>0x0BC0</expr> }</block></expr>,
+    <expr><block>{ <expr>0x0BCD</expr>, <expr>0x0BCD</expr> }</block></expr>, <expr><block>{ <expr>0x0C3E</expr>, <expr>0x0C40</expr> }</block></expr>, <expr><block>{ <expr>0x0C46</expr>, <expr>0x0C48</expr> }</block></expr>,
+    <expr><block>{ <expr>0x0C4A</expr>, <expr>0x0C4D</expr> }</block></expr>, <expr><block>{ <expr>0x0C55</expr>, <expr>0x0C56</expr> }</block></expr>, <expr><block>{ <expr>0x0CBC</expr>, <expr>0x0CBC</expr> }</block></expr>,
+    <expr><block>{ <expr>0x0CBF</expr>, <expr>0x0CBF</expr> }</block></expr>, <expr><block>{ <expr>0x0CC6</expr>, <expr>0x0CC6</expr> }</block></expr>, <expr><block>{ <expr>0x0CCC</expr>, <expr>0x0CCD</expr> }</block></expr>,
+    <expr><block>{ <expr>0x0CE2</expr>, <expr>0x0CE3</expr> }</block></expr>, <expr><block>{ <expr>0x0D41</expr>, <expr>0x0D43</expr> }</block></expr>, <expr><block>{ <expr>0x0D4D</expr>, <expr>0x0D4D</expr> }</block></expr>,
+    <expr><block>{ <expr>0x0DCA</expr>, <expr>0x0DCA</expr> }</block></expr>, <expr><block>{ <expr>0x0DD2</expr>, <expr>0x0DD4</expr> }</block></expr>, <expr><block>{ <expr>0x0DD6</expr>, <expr>0x0DD6</expr> }</block></expr>,
+    <expr><block>{ <expr>0x0E31</expr>, <expr>0x0E31</expr> }</block></expr>, <expr><block>{ <expr>0x0E34</expr>, <expr>0x0E3A</expr> }</block></expr>, <expr><block>{ <expr>0x0E47</expr>, <expr>0x0E4E</expr> }</block></expr>,
+    <expr><block>{ <expr>0x0EB1</expr>, <expr>0x0EB1</expr> }</block></expr>, <expr><block>{ <expr>0x0EB4</expr>, <expr>0x0EB9</expr> }</block></expr>, <expr><block>{ <expr>0x0EBB</expr>, <expr>0x0EBC</expr> }</block></expr>,
+    <expr><block>{ <expr>0x0EC8</expr>, <expr>0x0ECD</expr> }</block></expr>, <expr><block>{ <expr>0x0F18</expr>, <expr>0x0F19</expr> }</block></expr>, <expr><block>{ <expr>0x0F35</expr>, <expr>0x0F35</expr> }</block></expr>,
+    <expr><block>{ <expr>0x0F37</expr>, <expr>0x0F37</expr> }</block></expr>, <expr><block>{ <expr>0x0F39</expr>, <expr>0x0F39</expr> }</block></expr>, <expr><block>{ <expr>0x0F71</expr>, <expr>0x0F7E</expr> }</block></expr>,
+    <expr><block>{ <expr>0x0F80</expr>, <expr>0x0F84</expr> }</block></expr>, <expr><block>{ <expr>0x0F86</expr>, <expr>0x0F87</expr> }</block></expr>, <expr><block>{ <expr>0x0F90</expr>, <expr>0x0F97</expr> }</block></expr>,
+    <expr><block>{ <expr>0x0F99</expr>, <expr>0x0FBC</expr> }</block></expr>, <expr><block>{ <expr>0x0FC6</expr>, <expr>0x0FC6</expr> }</block></expr>, <expr><block>{ <expr>0x102D</expr>, <expr>0x1030</expr> }</block></expr>,
+    <expr><block>{ <expr>0x1032</expr>, <expr>0x1032</expr> }</block></expr>, <expr><block>{ <expr>0x1036</expr>, <expr>0x1037</expr> }</block></expr>, <expr><block>{ <expr>0x1039</expr>, <expr>0x1039</expr> }</block></expr>,
+    <expr><block>{ <expr>0x1058</expr>, <expr>0x1059</expr> }</block></expr>, <expr><block>{ <expr>0x1160</expr>, <expr>0x11FF</expr> }</block></expr>, <expr><block>{ <expr>0x135F</expr>, <expr>0x135F</expr> }</block></expr>,
+    <expr><block>{ <expr>0x1712</expr>, <expr>0x1714</expr> }</block></expr>, <expr><block>{ <expr>0x1732</expr>, <expr>0x1734</expr> }</block></expr>, <expr><block>{ <expr>0x1752</expr>, <expr>0x1753</expr> }</block></expr>,
+    <expr><block>{ <expr>0x1772</expr>, <expr>0x1773</expr> }</block></expr>, <expr><block>{ <expr>0x17B4</expr>, <expr>0x17B5</expr> }</block></expr>, <expr><block>{ <expr>0x17B7</expr>, <expr>0x17BD</expr> }</block></expr>,
+    <expr><block>{ <expr>0x17C6</expr>, <expr>0x17C6</expr> }</block></expr>, <expr><block>{ <expr>0x17C9</expr>, <expr>0x17D3</expr> }</block></expr>, <expr><block>{ <expr>0x17DD</expr>, <expr>0x17DD</expr> }</block></expr>,
+    <expr><block>{ <expr>0x180B</expr>, <expr>0x180D</expr> }</block></expr>, <expr><block>{ <expr>0x18A9</expr>, <expr>0x18A9</expr> }</block></expr>, <expr><block>{ <expr>0x1920</expr>, <expr>0x1922</expr> }</block></expr>,
+    <expr><block>{ <expr>0x1927</expr>, <expr>0x1928</expr> }</block></expr>, <expr><block>{ <expr>0x1932</expr>, <expr>0x1932</expr> }</block></expr>, <expr><block>{ <expr>0x1939</expr>, <expr>0x193B</expr> }</block></expr>,
+    <expr><block>{ <expr>0x1A17</expr>, <expr>0x1A18</expr> }</block></expr>, <expr><block>{ <expr>0x1B00</expr>, <expr>0x1B03</expr> }</block></expr>, <expr><block>{ <expr>0x1B34</expr>, <expr>0x1B34</expr> }</block></expr>,
+    <expr><block>{ <expr>0x1B36</expr>, <expr>0x1B3A</expr> }</block></expr>, <expr><block>{ <expr>0x1B3C</expr>, <expr>0x1B3C</expr> }</block></expr>, <expr><block>{ <expr>0x1B42</expr>, <expr>0x1B42</expr> }</block></expr>,
+    <expr><block>{ <expr>0x1B6B</expr>, <expr>0x1B73</expr> }</block></expr>, <expr><block>{ <expr>0x1DC0</expr>, <expr>0x1DCA</expr> }</block></expr>, <expr><block>{ <expr>0x1DFE</expr>, <expr>0x1DFF</expr> }</block></expr>,
+    <expr><block>{ <expr>0x200B</expr>, <expr>0x200F</expr> }</block></expr>, <expr><block>{ <expr>0x202A</expr>, <expr>0x202E</expr> }</block></expr>, <expr><block>{ <expr>0x2060</expr>, <expr>0x2063</expr> }</block></expr>,
+    <expr><block>{ <expr>0x206A</expr>, <expr>0x206F</expr> }</block></expr>, <expr><block>{ <expr>0x20D0</expr>, <expr>0x20EF</expr> }</block></expr>, <expr><block>{ <expr>0x302A</expr>, <expr>0x302F</expr> }</block></expr>,
+    <expr><block>{ <expr>0x3099</expr>, <expr>0x309A</expr> }</block></expr>, <expr><block>{ <expr>0xA806</expr>, <expr>0xA806</expr> }</block></expr>, <expr><block>{ <expr>0xA80B</expr>, <expr>0xA80B</expr> }</block></expr>,
+    <expr><block>{ <expr>0xA825</expr>, <expr>0xA826</expr> }</block></expr>, <expr><block>{ <expr>0xFB1E</expr>, <expr>0xFB1E</expr> }</block></expr>, <expr><block>{ <expr>0xFE00</expr>, <expr>0xFE0F</expr> }</block></expr>,
+    <expr><block>{ <expr>0xFE20</expr>, <expr>0xFE23</expr> }</block></expr>, <expr><block>{ <expr>0xFEFF</expr>, <expr>0xFEFF</expr> }</block></expr>, <expr><block>{ <expr>0xFFF9</expr>, <expr>0xFFFB</expr> }</block></expr>,
+    <expr><block>{ <expr>0x10A01</expr>, <expr>0x10A03</expr> }</block></expr>, <expr><block>{ <expr>0x10A05</expr>, <expr>0x10A06</expr> }</block></expr>, <expr><block>{ <expr>0x10A0C</expr>, <expr>0x10A0F</expr> }</block></expr>,
+    <expr><block>{ <expr>0x10A38</expr>, <expr>0x10A3A</expr> }</block></expr>, <expr><block>{ <expr>0x10A3F</expr>, <expr>0x10A3F</expr> }</block></expr>, <expr><block>{ <expr>0x1D167</expr>, <expr>0x1D169</expr> }</block></expr>,
+    <expr><block>{ <expr>0x1D173</expr>, <expr>0x1D182</expr> }</block></expr>, <expr><block>{ <expr>0x1D185</expr>, <expr>0x1D18B</expr> }</block></expr>, <expr><block>{ <expr>0x1D1AA</expr>, <expr>0x1D1AD</expr> }</block></expr>,
+    <expr><block>{ <expr>0x1D242</expr>, <expr>0x1D244</expr> }</block></expr>, <expr><block>{ <expr>0xE0001</expr>, <expr>0xE0001</expr> }</block></expr>, <expr><block>{ <expr>0xE0020</expr>, <expr>0xE007F</expr> }</block></expr>,
+    <expr><block>{ <expr>0xE0100</expr>, <expr>0xE01EF</expr> }</block></expr>
+  }</block></expr></init></decl>;</decl_stmt>
+
+  <comment type="block">/* test for 8-bit control characters */</comment>
+  <if>if <condition>(<expr><name>cmp</name> == 0</expr>)</condition><then>
+    <return>return <expr>0</expr>;</return></then></if>
+  <if>if <condition>(<expr><name>cmp</name> &lt; 32 || (<name>cmp</name> &gt;= 0x7f &amp;&amp; <name>cmp</name> &lt; 0xa0)</expr>)</condition><then>
+    <return>return <expr>-1</expr>;</return></then></if>
+
+  <comment type="block">/* binary search in table of non-spacing characters */</comment>
+  <if>if <condition>(<expr><call><name>bisearch</name><argument_list>(<argument><expr><name>cmp</name></expr></argument>, <argument><expr><name>combining</name></expr></argument>,
+               <argument><expr><call>(<name>int</name>) <argument_list>(<argument><expr><call><name>sizeof</name><argument_list>(<argument><expr><name>combining</name></expr></argument>)</argument_list></call> / <call><name>sizeof</name><argument_list>(<argument>struct <expr><name>interval</name></expr></argument>)</argument_list></call> - 1</expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>)</condition><then>
+    <return>return <expr>0</expr>;</return></then></if>
+
+  <comment type="block">/* if we arrive here, cmp is not a combining or C0/C1 control character */</comment>
+
+  <return>return <expr>1 +
+    (<name>cmp</name> &gt;= 0x1100 &amp;&amp;
+     (<name>cmp</name> &lt;= 0x115f ||                    <comment type="block">/* Hangul Jamo init. consonants */</comment>
+      <name>cmp</name> == 0x2329 || <name>cmp</name> == 0x232a ||
+      (<name>cmp</name> &gt;= 0x2e80 &amp;&amp; <name>cmp</name> &lt;= 0xa4cf &amp;&amp;
+       <name>cmp</name> != 0x303f) ||                  <comment type="block">/* CJK ... Yi */</comment>
+      (<name>cmp</name> &gt;= 0xac00 &amp;&amp; <name>cmp</name> &lt;= 0xd7a3) || <comment type="block">/* Hangul Syllables */</comment>
+      (<name>cmp</name> &gt;= 0xf900 &amp;&amp; <name>cmp</name> &lt;= 0xfaff) || <comment type="block">/* CJK Compatibility Ideographs */</comment>
+      (<name>cmp</name> &gt;= 0xfe10 &amp;&amp; <name>cmp</name> &lt;= 0xfe19) || <comment type="block">/* Vertical forms */</comment>
+      (<name>cmp</name> &gt;= 0xfe30 &amp;&amp; <name>cmp</name> &lt;= 0xfe6f) || <comment type="block">/* CJK Compatibility Forms */</comment>
+      (<name>cmp</name> &gt;= 0xff00 &amp;&amp; <name>cmp</name> &lt;= 0xff60) || <comment type="block">/* Fullwidth Forms */</comment>
+      (<name>cmp</name> &gt;= 0xffe0 &amp;&amp; <name>cmp</name> &lt;= 0xffe6) ||
+      (<name>cmp</name> &gt;= 0x20000 &amp;&amp; <name>cmp</name> &lt;= 0x2fffd) ||
+      (<name>cmp</name> &gt;= 0x30000 &amp;&amp; <name>cmp</name> &lt;= 0x3fffd)))</expr>;</return>
+}</block></function>
+
+
+<function><type><name>int</name></type> <name>mk_wcswidth</name><parameter_list>(<param><decl><type><name>const</name> <name>wchar_t</name> *</type><name>pwcs</name></decl></param>, <param><decl><type><name>size_t</name></type> <name>n</name></decl></param>)</parameter_list>
+<block>{
+  <decl_stmt><decl><type><name>int</name></type> <name>w</name>, <name>width</name> =<init> <expr>0</expr></init></decl>;</decl_stmt>
+
+  <for>for (<init>;</init><condition><expr>*<name>pwcs</name> &amp;&amp; <name>n</name>-- &gt; 0</expr>;</condition> <incr><expr><name>pwcs</name>++</expr></incr>)
+    <if>if <condition>(<expr>(<name>w</name> = <call><name>mk_wcwidth</name><argument_list>(<argument><expr>*<name>pwcs</name></expr></argument>)</argument_list></call>) &lt; 0</expr>)</condition><then>
+      <return>return <expr>-1</expr>;</return></then>
+    <else>else
+      <expr_stmt><expr><name>width</name> += <name>w</name></expr>;</expr_stmt></else></if></for>
+
+  <return>return <expr><name>width</name></expr>;</return>
+}</block></function>
+
+
+<comment type="block">/*
+ * The following functions are the same as mk_wcwidth() and
+ * mk_wcwidth_cjk(), except that spacing characters in the East Asian
+ * Ambiguous (A) category as defined in Unicode Technical Report #11
+ * have a column width of 2. This variant might be useful for users of
+ * CJK legacy encodings who want to migrate to UCS without changing
+ * the traditional terminal character-width behaviour. It is not
+ * otherwise recommended for general use.
+ */</comment>
+<function><type><name>int</name></type> <name>mk_wcwidth_cjk</name><parameter_list>(<param><decl><type><name>wchar_t</name></type> <name>ucs</name></decl></param>)</parameter_list>
+<block>{
+  <comment type="block">/* sorted list of non-overlapping intervals of East Asian Ambiguous
+   * characters, generated by
+   *
+   * uniset +WIDTH-A -cat=Me -cat=Mn -cat=Cf \
+   *	+E000..F8FF \
+   *	+F0000..FFFFD \
+   *	+100000..10FFFD  c
+   *
+   * "WIDTH-A" is a file extracted from EastAsianWidth.txt by selecting
+   * only those with width "A", and omitting:
+   *
+   *	0xAD
+   *	all lines with "COMBINING"
+   *
+   * (uniset does not recognize the range expressions in WIDTH-A).
+   */</comment>
+  <decl_stmt><decl><type><name>static</name> <name>const</name> struct <name>interval</name></type> <name><name>ambiguous</name><index>[]</index></name> =<init> <expr><block>{
+    <expr><block>{ <expr>0x00A1</expr>, <expr>0x00A1</expr> }</block></expr>, <expr><block>{ <expr>0x00A4</expr>, <expr>0x00A4</expr> }</block></expr>, <expr><block>{ <expr>0x00A7</expr>, <expr>0x00A8</expr> }</block></expr>,
+    <expr><block>{ <expr>0x00AA</expr>, <expr>0x00AA</expr> }</block></expr>, <expr><block>{ <expr>0x00AE</expr>, <expr>0x00AE</expr> }</block></expr>, <expr><block>{ <expr>0x00B0</expr>, <expr>0x00B4</expr> }</block></expr>,
+    <expr><block>{ <expr>0x00B6</expr>, <expr>0x00BA</expr> }</block></expr>, <expr><block>{ <expr>0x00BC</expr>, <expr>0x00BF</expr> }</block></expr>, <expr><block>{ <expr>0x00C6</expr>, <expr>0x00C6</expr> }</block></expr>,
+    <expr><block>{ <expr>0x00D0</expr>, <expr>0x00D0</expr> }</block></expr>, <expr><block>{ <expr>0x00D7</expr>, <expr>0x00D8</expr> }</block></expr>, <expr><block>{ <expr>0x00DE</expr>, <expr>0x00E1</expr> }</block></expr>,
+    <expr><block>{ <expr>0x00E6</expr>, <expr>0x00E6</expr> }</block></expr>, <expr><block>{ <expr>0x00E8</expr>, <expr>0x00EA</expr> }</block></expr>, <expr><block>{ <expr>0x00EC</expr>, <expr>0x00ED</expr> }</block></expr>,
+    <expr><block>{ <expr>0x00F0</expr>, <expr>0x00F0</expr> }</block></expr>, <expr><block>{ <expr>0x00F2</expr>, <expr>0x00F3</expr> }</block></expr>, <expr><block>{ <expr>0x00F7</expr>, <expr>0x00FA</expr> }</block></expr>,
+    <expr><block>{ <expr>0x00FC</expr>, <expr>0x00FC</expr> }</block></expr>, <expr><block>{ <expr>0x00FE</expr>, <expr>0x00FE</expr> }</block></expr>, <expr><block>{ <expr>0x0101</expr>, <expr>0x0101</expr> }</block></expr>,
+    <expr><block>{ <expr>0x0111</expr>, <expr>0x0111</expr> }</block></expr>, <expr><block>{ <expr>0x0113</expr>, <expr>0x0113</expr> }</block></expr>, <expr><block>{ <expr>0x011B</expr>, <expr>0x011B</expr> }</block></expr>,
+    <expr><block>{ <expr>0x0126</expr>, <expr>0x0127</expr> }</block></expr>, <expr><block>{ <expr>0x012B</expr>, <expr>0x012B</expr> }</block></expr>, <expr><block>{ <expr>0x0131</expr>, <expr>0x0133</expr> }</block></expr>,
+    <expr><block>{ <expr>0x0138</expr>, <expr>0x0138</expr> }</block></expr>, <expr><block>{ <expr>0x013F</expr>, <expr>0x0142</expr> }</block></expr>, <expr><block>{ <expr>0x0144</expr>, <expr>0x0144</expr> }</block></expr>,
+    <expr><block>{ <expr>0x0148</expr>, <expr>0x014B</expr> }</block></expr>, <expr><block>{ <expr>0x014D</expr>, <expr>0x014D</expr> }</block></expr>, <expr><block>{ <expr>0x0152</expr>, <expr>0x0153</expr> }</block></expr>,
+    <expr><block>{ <expr>0x0166</expr>, <expr>0x0167</expr> }</block></expr>, <expr><block>{ <expr>0x016B</expr>, <expr>0x016B</expr> }</block></expr>, <expr><block>{ <expr>0x01CE</expr>, <expr>0x01CE</expr> }</block></expr>,
+    <expr><block>{ <expr>0x01D0</expr>, <expr>0x01D0</expr> }</block></expr>, <expr><block>{ <expr>0x01D2</expr>, <expr>0x01D2</expr> }</block></expr>, <expr><block>{ <expr>0x01D4</expr>, <expr>0x01D4</expr> }</block></expr>,
+    <expr><block>{ <expr>0x01D6</expr>, <expr>0x01D6</expr> }</block></expr>, <expr><block>{ <expr>0x01D8</expr>, <expr>0x01D8</expr> }</block></expr>, <expr><block>{ <expr>0x01DA</expr>, <expr>0x01DA</expr> }</block></expr>,
+    <expr><block>{ <expr>0x01DC</expr>, <expr>0x01DC</expr> }</block></expr>, <expr><block>{ <expr>0x0251</expr>, <expr>0x0251</expr> }</block></expr>, <expr><block>{ <expr>0x0261</expr>, <expr>0x0261</expr> }</block></expr>,
+    <expr><block>{ <expr>0x02C4</expr>, <expr>0x02C4</expr> }</block></expr>, <expr><block>{ <expr>0x02C7</expr>, <expr>0x02C7</expr> }</block></expr>, <expr><block>{ <expr>0x02C9</expr>, <expr>0x02CB</expr> }</block></expr>,
+    <expr><block>{ <expr>0x02CD</expr>, <expr>0x02CD</expr> }</block></expr>, <expr><block>{ <expr>0x02D0</expr>, <expr>0x02D0</expr> }</block></expr>, <expr><block>{ <expr>0x02D8</expr>, <expr>0x02DB</expr> }</block></expr>,
+    <expr><block>{ <expr>0x02DD</expr>, <expr>0x02DD</expr> }</block></expr>, <expr><block>{ <expr>0x02DF</expr>, <expr>0x02DF</expr> }</block></expr>, <expr><block>{ <expr>0x0391</expr>, <expr>0x03A1</expr> }</block></expr>,
+    <expr><block>{ <expr>0x03A3</expr>, <expr>0x03A9</expr> }</block></expr>, <expr><block>{ <expr>0x03B1</expr>, <expr>0x03C1</expr> }</block></expr>, <expr><block>{ <expr>0x03C3</expr>, <expr>0x03C9</expr> }</block></expr>,
+    <expr><block>{ <expr>0x0401</expr>, <expr>0x0401</expr> }</block></expr>, <expr><block>{ <expr>0x0410</expr>, <expr>0x044F</expr> }</block></expr>, <expr><block>{ <expr>0x0451</expr>, <expr>0x0451</expr> }</block></expr>,
+    <expr><block>{ <expr>0x2010</expr>, <expr>0x2010</expr> }</block></expr>, <expr><block>{ <expr>0x2013</expr>, <expr>0x2016</expr> }</block></expr>, <expr><block>{ <expr>0x2018</expr>, <expr>0x2019</expr> }</block></expr>,
+    <expr><block>{ <expr>0x201C</expr>, <expr>0x201D</expr> }</block></expr>, <expr><block>{ <expr>0x2020</expr>, <expr>0x2022</expr> }</block></expr>, <expr><block>{ <expr>0x2024</expr>, <expr>0x2027</expr> }</block></expr>,
+    <expr><block>{ <expr>0x2030</expr>, <expr>0x2030</expr> }</block></expr>, <expr><block>{ <expr>0x2032</expr>, <expr>0x2033</expr> }</block></expr>, <expr><block>{ <expr>0x2035</expr>, <expr>0x2035</expr> }</block></expr>,
+    <expr><block>{ <expr>0x203B</expr>, <expr>0x203B</expr> }</block></expr>, <expr><block>{ <expr>0x203E</expr>, <expr>0x203E</expr> }</block></expr>, <expr><block>{ <expr>0x2074</expr>, <expr>0x2074</expr> }</block></expr>,
+    <expr><block>{ <expr>0x207F</expr>, <expr>0x207F</expr> }</block></expr>, <expr><block>{ <expr>0x2081</expr>, <expr>0x2084</expr> }</block></expr>, <expr><block>{ <expr>0x20AC</expr>, <expr>0x20AC</expr> }</block></expr>,
+    <expr><block>{ <expr>0x2103</expr>, <expr>0x2103</expr> }</block></expr>, <expr><block>{ <expr>0x2105</expr>, <expr>0x2105</expr> }</block></expr>, <expr><block>{ <expr>0x2109</expr>, <expr>0x2109</expr> }</block></expr>,
+    <expr><block>{ <expr>0x2113</expr>, <expr>0x2113</expr> }</block></expr>, <expr><block>{ <expr>0x2116</expr>, <expr>0x2116</expr> }</block></expr>, <expr><block>{ <expr>0x2121</expr>, <expr>0x2122</expr> }</block></expr>,
+    <expr><block>{ <expr>0x2126</expr>, <expr>0x2126</expr> }</block></expr>, <expr><block>{ <expr>0x212B</expr>, <expr>0x212B</expr> }</block></expr>, <expr><block>{ <expr>0x2153</expr>, <expr>0x2154</expr> }</block></expr>,
+    <expr><block>{ <expr>0x215B</expr>, <expr>0x215E</expr> }</block></expr>, <expr><block>{ <expr>0x2160</expr>, <expr>0x216B</expr> }</block></expr>, <expr><block>{ <expr>0x2170</expr>, <expr>0x2179</expr> }</block></expr>,
+    <expr><block>{ <expr>0x2190</expr>, <expr>0x2199</expr> }</block></expr>, <expr><block>{ <expr>0x21B8</expr>, <expr>0x21B9</expr> }</block></expr>, <expr><block>{ <expr>0x21D2</expr>, <expr>0x21D2</expr> }</block></expr>,
+    <expr><block>{ <expr>0x21D4</expr>, <expr>0x21D4</expr> }</block></expr>, <expr><block>{ <expr>0x21E7</expr>, <expr>0x21E7</expr> }</block></expr>, <expr><block>{ <expr>0x2200</expr>, <expr>0x2200</expr> }</block></expr>,
+    <expr><block>{ <expr>0x2202</expr>, <expr>0x2203</expr> }</block></expr>, <expr><block>{ <expr>0x2207</expr>, <expr>0x2208</expr> }</block></expr>, <expr><block>{ <expr>0x220B</expr>, <expr>0x220B</expr> }</block></expr>,
+    <expr><block>{ <expr>0x220F</expr>, <expr>0x220F</expr> }</block></expr>, <expr><block>{ <expr>0x2211</expr>, <expr>0x2211</expr> }</block></expr>, <expr><block>{ <expr>0x2215</expr>, <expr>0x2215</expr> }</block></expr>,
+    <expr><block>{ <expr>0x221A</expr>, <expr>0x221A</expr> }</block></expr>, <expr><block>{ <expr>0x221D</expr>, <expr>0x2220</expr> }</block></expr>, <expr><block>{ <expr>0x2223</expr>, <expr>0x2223</expr> }</block></expr>,
+    <expr><block>{ <expr>0x2225</expr>, <expr>0x2225</expr> }</block></expr>, <expr><block>{ <expr>0x2227</expr>, <expr>0x222C</expr> }</block></expr>, <expr><block>{ <expr>0x222E</expr>, <expr>0x222E</expr> }</block></expr>,
+    <expr><block>{ <expr>0x2234</expr>, <expr>0x2237</expr> }</block></expr>, <expr><block>{ <expr>0x223C</expr>, <expr>0x223D</expr> }</block></expr>, <expr><block>{ <expr>0x2248</expr>, <expr>0x2248</expr> }</block></expr>,
+    <expr><block>{ <expr>0x224C</expr>, <expr>0x224C</expr> }</block></expr>, <expr><block>{ <expr>0x2252</expr>, <expr>0x2252</expr> }</block></expr>, <expr><block>{ <expr>0x2260</expr>, <expr>0x2261</expr> }</block></expr>,
+    <expr><block>{ <expr>0x2264</expr>, <expr>0x2267</expr> }</block></expr>, <expr><block>{ <expr>0x226A</expr>, <expr>0x226B</expr> }</block></expr>, <expr><block>{ <expr>0x226E</expr>, <expr>0x226F</expr> }</block></expr>,
+    <expr><block>{ <expr>0x2282</expr>, <expr>0x2283</expr> }</block></expr>, <expr><block>{ <expr>0x2286</expr>, <expr>0x2287</expr> }</block></expr>, <expr><block>{ <expr>0x2295</expr>, <expr>0x2295</expr> }</block></expr>,
+    <expr><block>{ <expr>0x2299</expr>, <expr>0x2299</expr> }</block></expr>, <expr><block>{ <expr>0x22A5</expr>, <expr>0x22A5</expr> }</block></expr>, <expr><block>{ <expr>0x22BF</expr>, <expr>0x22BF</expr> }</block></expr>,
+    <expr><block>{ <expr>0x2312</expr>, <expr>0x2312</expr> }</block></expr>, <expr><block>{ <expr>0x2460</expr>, <expr>0x24E9</expr> }</block></expr>, <expr><block>{ <expr>0x24EB</expr>, <expr>0x254B</expr> }</block></expr>,
+    <expr><block>{ <expr>0x2550</expr>, <expr>0x2573</expr> }</block></expr>, <expr><block>{ <expr>0x2580</expr>, <expr>0x258F</expr> }</block></expr>, <expr><block>{ <expr>0x2592</expr>, <expr>0x2595</expr> }</block></expr>,
+    <expr><block>{ <expr>0x25A0</expr>, <expr>0x25A1</expr> }</block></expr>, <expr><block>{ <expr>0x25A3</expr>, <expr>0x25A9</expr> }</block></expr>, <expr><block>{ <expr>0x25B2</expr>, <expr>0x25B3</expr> }</block></expr>,
+    <expr><block>{ <expr>0x25B6</expr>, <expr>0x25B7</expr> }</block></expr>, <expr><block>{ <expr>0x25BC</expr>, <expr>0x25BD</expr> }</block></expr>, <expr><block>{ <expr>0x25C0</expr>, <expr>0x25C1</expr> }</block></expr>,
+    <expr><block>{ <expr>0x25C6</expr>, <expr>0x25C8</expr> }</block></expr>, <expr><block>{ <expr>0x25CB</expr>, <expr>0x25CB</expr> }</block></expr>, <expr><block>{ <expr>0x25CE</expr>, <expr>0x25D1</expr> }</block></expr>,
+    <expr><block>{ <expr>0x25E2</expr>, <expr>0x25E5</expr> }</block></expr>, <expr><block>{ <expr>0x25EF</expr>, <expr>0x25EF</expr> }</block></expr>, <expr><block>{ <expr>0x2605</expr>, <expr>0x2606</expr> }</block></expr>,
+    <expr><block>{ <expr>0x2609</expr>, <expr>0x2609</expr> }</block></expr>, <expr><block>{ <expr>0x260E</expr>, <expr>0x260F</expr> }</block></expr>, <expr><block>{ <expr>0x2614</expr>, <expr>0x2615</expr> }</block></expr>,
+    <expr><block>{ <expr>0x261C</expr>, <expr>0x261C</expr> }</block></expr>, <expr><block>{ <expr>0x261E</expr>, <expr>0x261E</expr> }</block></expr>, <expr><block>{ <expr>0x2640</expr>, <expr>0x2640</expr> }</block></expr>,
+    <expr><block>{ <expr>0x2642</expr>, <expr>0x2642</expr> }</block></expr>, <expr><block>{ <expr>0x2660</expr>, <expr>0x2661</expr> }</block></expr>, <expr><block>{ <expr>0x2663</expr>, <expr>0x2665</expr> }</block></expr>,
+    <expr><block>{ <expr>0x2667</expr>, <expr>0x266A</expr> }</block></expr>, <expr><block>{ <expr>0x266C</expr>, <expr>0x266D</expr> }</block></expr>, <expr><block>{ <expr>0x266F</expr>, <expr>0x266F</expr> }</block></expr>,
+    <expr><block>{ <expr>0x273D</expr>, <expr>0x273D</expr> }</block></expr>, <expr><block>{ <expr>0x2776</expr>, <expr>0x277F</expr> }</block></expr>, <expr><block>{ <expr>0xE000</expr>, <expr>0xF8FF</expr> }</block></expr>,
+    <expr><block>{ <expr>0xFFFD</expr>, <expr>0xFFFD</expr> }</block></expr>, <expr><block>{ <expr>0xF0000</expr>, <expr>0xFFFFD</expr> }</block></expr>, <expr><block>{ <expr>0x100000</expr>, <expr>0x10FFFD</expr> }</block></expr>
+  }</block></expr></init></decl>;</decl_stmt>
+
+  <comment type="block">/* binary search in table of non-spacing characters */</comment>
+  <if>if <condition>(<macro><name>bisearch</name><argument_list>(<argument>(unsigned long) ucs</argument>, <argument>ambiguous</argument>,
+               <argument>(int) (sizeof(ambiguous) / sizeof(struct interval) - 1)</argument>)</argument_list></macro>)</condition><then>
+    <return>return <expr>2</expr>;</return></then></if>
+
+  <return>return <expr><call><name>mk_wcwidth</name><argument_list>(<argument><expr><name>ucs</name></expr></argument>)</argument_list></call></expr>;</return>
+}</block></function>
+
+
+<function><type><name>int</name></type> <name>mk_wcswidth_cjk</name><parameter_list>(<param><decl><type><name>const</name> <name>wchar_t</name> *</type><name>pwcs</name></decl></param>, <param><decl><type><name>size_t</name></type> <name>n</name></decl></param>)</parameter_list>
+<block>{
+  <decl_stmt><decl><type><name>int</name></type> <name>w</name>, <name>width</name> =<init> <expr>0</expr></init></decl>;</decl_stmt>
+
+  <for>for (<init>;</init><condition><expr>*<name>pwcs</name> &amp;&amp; <name>n</name>-- &gt; 0</expr>;</condition> <incr><expr><name>pwcs</name>++</expr></incr>)
+    <if>if <condition>(<expr>(<name>w</name> = <call><name>mk_wcwidth_cjk</name><argument_list>(<argument><expr>*<name>pwcs</name></expr></argument>)</argument_list></call>) &lt; 0</expr>)</condition><then>
+      <return>return <expr>-1</expr>;</return></then>
+    <else>else
+      <expr_stmt><expr><name>width</name> += <name>w</name></expr>;</expr_stmt></else></if></for>
+
+  <return>return <expr><name>width</name></expr>;</return>
+}</block></function>
+</unit>

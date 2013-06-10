@@ -1,0 +1,76 @@
+<unit language="Java" dir="" filename="Dao.java"><package>package <name>in980</name>.<name>rgms</name>.<name>persistence</name>;</package><import>import <name>in980</name>.<name>rgms</name>.<name>utils</name>.<name>HibernateUtils</name>;</import><import>import <name>java</name>.<name>util</name>.<name>List</name>;</import><import>import <name>org</name>.<name>hibernate</name>.<name>Session</name>;</import><decl_stmt><decl><type><specifier>public</specifier><specifier>abstract</specifier> class</type><name>Dao</name>&lt;<name>T</name>&gt;<block>{
+	
+	<comment type="line">//Session currentSession;</comment>
+
+	<function><type><specifier>public</specifier><name>void</name></type><name>inserir</name><parameter_list>(<param><decl><type><name>T</name></type><name>object</name></decl></param>)</parameter_list><throws>throws</throws> Exception<block>{
+		<decl_stmt><decl><type><name>Session</name></type><name>s</name>  =<init><expr><call><name><name>HibernateUtils</name>.<name>getSessionFactory</name></name><argument_list>()</argument_list></call>.<call><name>getCurrentSession</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+		<try>try <block>{
+<comment type="line">//			s.beginTransaction();</comment>
+			<expr_stmt><expr><call><name><name>s</name>.<name>save</name></name><argument_list>(<argument><expr><name>object</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<comment type="line">//			s.getTransaction().commit();</comment>
+		}</block></try> <catch>catch (<param><decl><type><name>Exception</name></type><name>e</name></decl></param>) <block>{
+<comment type="line">//			s.getTransaction().rollback();</comment>
+			<expr_stmt><expr><call><name><name>e</name>.<name>printStackTrace</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+			<throw>throw <expr>new <call><name>Exception</name><argument_list>(<argument><expr><name>e</name></expr></argument>)</argument_list></call></expr>;</throw>
+		}</block></catch>	
+	}</block></function>
+	<function><type><specifier>public</specifier><name>void</name></type><name>atualizar</name><parameter_list>(<param><decl><type><name>T</name></type><name>object</name></decl></param>)</parameter_list><throws>throws</throws> Exception<block>{
+		<decl_stmt><decl><type><name>Session</name></type><name>s</name> =<init><expr><call><name><name>HibernateUtils</name>.<name>getSessionFactory</name></name><argument_list>()</argument_list></call>.<call><name>getCurrentSession</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+		<try>try <block>{			
+<comment type="line">//			s.beginTransaction();</comment>
+			<expr_stmt><expr><call><name><name>s</name>.<name>update</name></name><argument_list>(<argument><expr><name>object</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<comment type="line">//			s.getTransaction().commit();</comment>
+		}</block></try> <catch>catch (<param><decl><type><name>Exception</name></type><name>e</name></decl></param>) <block>{
+<comment type="line">//			s.getTransaction().rollback();</comment>
+			<expr_stmt><expr><call><name><name>e</name>.<name>printStackTrace</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+			<throw>throw <expr>new <call><name>Exception</name><argument_list>(<argument><expr><name>e</name></expr></argument>)</argument_list></call></expr>;</throw>
+		}</block></catch>
+	}</block></function>
+	
+	<function><type><specifier>public</specifier><name>void</name></type><name>excluir</name><parameter_list>(<param><decl><type><name>T</name></type><name>object</name></decl></param>)</parameter_list><throws>throws</throws> Exception<block>{
+		<decl_stmt><decl><type><name>Session</name></type><name>s</name>  =<init><expr><call><name><name>HibernateUtils</name>.<name>getSessionFactory</name></name><argument_list>()</argument_list></call>.<call><name>getCurrentSession</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+		<try>try <block>{
+<comment type="line">//			s.beginTransaction();		</comment>
+			<expr_stmt><expr><call><name><name>s</name>.<name>delete</name></name><argument_list>(<argument><expr><name>object</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>		
+<comment type="line">//			s.getTransaction().commit();</comment>
+		}</block></try> <catch>catch (<param><decl><type><name>Exception</name></type><name>e</name></decl></param>) <block>{
+<comment type="line">//			s.getTransaction().rollback();</comment>
+			<expr_stmt><expr><call><name><name>e</name>.<name>printStackTrace</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+			<throw>throw <expr>new <call><name>Exception</name><argument_list>(<argument><expr><name>e</name></expr></argument>)</argument_list></call></expr>;</throw>
+		}</block></catch>
+	}</block></function>
+	
+	@<expr_stmt><expr><call><name>SuppressWarnings</name><argument_list>(<argument><expr>"unchecked"</expr></argument>)</argument_list></call>
+	public <name>List</name>&lt;<name>T</name>&gt; <call><name>listaTodos</name><argument_list>()</argument_list></call><block>{
+		<expr><name>Session</name><name>s</name>  = <call><name><name>HibernateUtils</name>.<name>getSessionFactory</name></name><argument_list>()</argument_list></call>.<call><name>getCurrentSession</name><argument_list>()</argument_list></call></expr>;
+<comment type="line">//		s.beginTransaction();</comment>
+		<expr><name>List</name>&lt;<name>T</name>&gt; <name>membros</name> = <call><name><name>s</name>.<name>createQuery</name></name><argument_list>(<argument><expr>"from " + <call><name>getTabela</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call>.<call><name>list</name><argument_list>()</argument_list></call></expr>;
+<comment type="line">//		s.getTransaction().commit();</comment>
+		<return>return <expr><name>membros</name></expr>;</return></block></expr></expr_stmt>		
+	}</block></decl></decl_stmt>
+	
+	@<expr_stmt><expr><call><name>SuppressWarnings</name><argument_list>(<argument><expr>"unchecked"</expr></argument>)</argument_list></call>
+	public <name>T</name> <call><name>buscaPeloId</name><argument_list>(<argument><expr><name>Integer</name><name>id</name></expr></argument>)</argument_list></call> throws <name>Exception</name> <block>{		
+		<expr><name>Session</name><name>s</name>  = <call><name><name>HibernateUtils</name>.<name>getSessionFactory</name></name><argument_list>()</argument_list></call>.<call><name>getCurrentSession</name><argument_list>()</argument_list></call></expr>;
+<comment type="line">//		s.beginTransaction();</comment>
+		<expr><name>T</name><name>object</name> = (<name>T</name>) <call><name><name>s</name>.<name>get</name></name><argument_list>(<argument><expr><call><name>getTipoClasse</name><argument_list>()</argument_list></call></expr></argument>, <argument><expr><name>id</name></expr></argument>)</argument_list></call></expr>;
+<comment type="line">//		s.getTransaction().commit();</comment>
+		<return>return <expr><name>object</name></expr>;</return></block></expr></expr_stmt>		
+	}
+	
+	public <expr_stmt><expr><name>List</name>&lt;<name>T</name>&gt; <call><name>buscar</name><argument_list>(<argument><expr><name>T</name><name>object</name></expr></argument>)</argument_list></call> throws <name>Exception</name> <block>{
+		<expr><name>Session</name><name>s</name>  = <call><name><name>HibernateUtils</name>.<name>getSessionFactory</name></name><argument_list>()</argument_list></call>.<call><name>getCurrentSession</name><argument_list>()</argument_list></call></expr>;
+<comment type="line">//		s.beginTransaction();</comment>
+		<expr><name>List</name>&lt;<name>T</name>&gt; <name>listaRetorno</name> = <call><name>montaLista</name><argument_list>(<argument><expr><name>object</name></expr></argument>, <argument><expr><name>s</name></expr></argument>)</argument_list></call></expr>;	
+<comment type="line">//		s.getTransaction().commit();</comment>
+		<return>return <expr><name>listaRetorno</name></expr>;</return></block></expr></expr_stmt>
+	}
+	
+	
+	@<expr_stmt><expr><call><name>SuppressWarnings</name><argument_list>(<argument><expr>"unchecked"</expr></argument>)</argument_list></call>
+	protected abstract <name>Class</name> <call><name>getTipoClasse</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+	<function_decl><type><specifier>protected</specifier><specifier>abstract</specifier><name>String</name></type><name>getTabela</name><parameter_list>()</parameter_list>;</function_decl>
+	protected abstract <expr_stmt><expr><name>List</name>&lt;<name>T</name>&gt; <call><name>montaLista</name><argument_list>(<argument><expr><name>T</name><name>object</name></expr></argument>, <argument><expr><name>Session</name><name>s</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	
+}
+</unit>

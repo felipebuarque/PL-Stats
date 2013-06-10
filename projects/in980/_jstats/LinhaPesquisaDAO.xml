@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit language="Java" dir="" filename="LinhaPesquisaDAO.java"><package>package <name>in980</name>.<name>rgms</name>.<name>persistence</name>;</package>
+
+<import>import <name>in980</name>.<name>rgms</name>.<name>domain</name>.<name>LinhaPesquisa</name>;</import>
+<import>import <name>in980</name>.<name>rgms</name>.<name>domain</name>.<name>Membro</name>;</import>
+<import>import <name>in980</name>.<name>rgms</name>.<name>domain</name>.<name>TipoMembro</name>;</import>
+<import>import <name>in980</name>.<name>rgms</name>.<name>utils</name>.<name>HibernateUtils</name>;</import>
+
+<import>import <name>java</name>.<name>util</name>.<name>List</name>;</import>
+
+<import>import <name>org</name>.<name>hibernate</name>.<name>Query</name>;</import>
+<import>import <name>org</name>.<name>hibernate</name>.<name>Session</name>;</import>
+
+<decl_stmt><decl><type><specifier>public</specifier> class</type> <name>LinhaPesquisaDAO</name> extends <name>Dao</name>&lt;<name>LinhaPesquisa</name>&gt;<block>{
+	
+	
+	@<expr_stmt><expr><call><name>SuppressWarnings</name><argument_list>(<argument><expr>"unchecked"</expr></argument>)</argument_list></call>
+	protected <name>List</name>&lt;<name>LinhaPesquisa</name>&gt; <call><name>montaLista</name><argument_list>(<argument><expr><name>LinhaPesquisa</name> <name>object</name></expr></argument>, <argument><expr><name>Session</name> <name>s</name></expr></argument>)</argument_list></call> <block>{
+		<expr><name>List</name>&lt;<name>LinhaPesquisa</name>&gt; <name>listaRetorno</name> = <call><name><name>s</name>.<name>createQuery</name></name><argument_list>(<argument><expr>"from " + <call><name>getTabela</name><argument_list>()</argument_list></call>+ 
+				" t where upper(t.descricao) like :descricao "</expr></argument> )</argument_list></call>
+			.<call><name>setString</name><argument_list>(<argument><expr>"descricao"</expr></argument>, <argument><expr>"%" + <call><name><name>object</name>.<name>getDescricao</name></name><argument_list>()</argument_list></call>.<call><name>toUpperCase</name><argument_list>()</argument_list></call> + "%"</expr></argument>)</argument_list></call>
+			.<call><name>list</name><argument_list>()</argument_list></call></expr>;
+		<return>return <expr><name>listaRetorno</name></expr>;</return></block></expr></expr_stmt>
+	}</block></decl></decl_stmt>
+
+	@<function><type><name>Override</name>
+	<specifier>protected</specifier> <name>String</name></type> <name>getTabela</name><parameter_list>()</parameter_list> <block>{
+		<return>return <expr>"LinhaPesquisa"</expr>;</return>
+	}</block></function>
+
+	@<expr_stmt><expr><call><name>SuppressWarnings</name><argument_list>(<argument><expr>"unchecked"</expr></argument>)</argument_list></call>
+	@<name>Override</name>
+	protected <name>Class</name> <call><name>getTipoClasse</name><argument_list>()</argument_list></call> <block>{
+		<return>return <expr><name>LinhaPesquisa</name>.class</expr>;</return></block></expr></expr_stmt>
+	}
+	
+	@<expr_stmt><expr><call><name>SuppressWarnings</name><argument_list>(<argument><expr>"unchecked"</expr></argument>)</argument_list></call>
+	public <name>List</name>&lt;<name>LinhaPesquisa</name>&gt; <call><name>getByMembro</name><argument_list>(<argument><expr><name>Membro</name> <name>membro</name></expr></argument>)</argument_list></call> <block>{
+		<expr><name>Session</name> <name>s</name>  = <call><name><name>HibernateUtils</name>.<name>getSessionFactory</name></name><argument_list>()</argument_list></call>.<call><name>getCurrentSession</name><argument_list>()</argument_list></call></expr>;		
+		<expr><name>List</name>&lt;<name>LinhaPesquisa</name>&gt; <name>linhasPesquisa</name> = <call><name><name>s</name>.<name>createQuery</name></name><argument_list>(<argument><expr>" from " + <call><name>getTabela</name><argument_list>()</argument_list></call> + 
+				" t where t.membros.id = :id_membro "</expr></argument>)</argument_list></call>.<call><name>setInteger</name><argument_list>(<argument><expr>"id_membro"</expr></argument>, <argument><expr><call><name><name>membro</name>.<name>getID</name></name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call>.<call><name>list</name><argument_list>()</argument_list></call></expr>;		
+		
+		<return>return <expr><name>linhasPesquisa</name></expr>;</return></block></expr></expr_stmt> 
+	}
+
+}
+</unit>

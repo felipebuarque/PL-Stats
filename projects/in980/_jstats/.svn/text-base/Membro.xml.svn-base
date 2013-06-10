@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit language="Java" dir="" filename="Membro.java"><package>package <name>in980</name>.<name>rgms</name>.<name>domain</name>;</package>
+
+<import>import <name>java</name>.<name>io</name>.<name>File</name>;</import>
+<import>import <name>java</name>.<name>io</name>.<name>FileInputStream</name>;</import>
+<import>import <name>java</name>.<name>io</name>.<name>FileOutputStream</name>;</import>
+<import>import <name>java</name>.<name>io</name>.<name>IOException</name>;</import>
+<import>import <name>java</name>.<name>io</name>.<name>Serializable</name>;</import>
+<import>import <name>java</name>.<name>nio</name>.<name>channels</name>.<name>FileChannel</name>;</import>
+<import>import <name>java</name>.<name>util</name>.<name>List</name>;</import>
+
+<import>import <name>javax</name>.<name>persistence</name>.<name>CascadeType</name>;</import>
+<import>import <name>javax</name>.<name>persistence</name>.<name>Entity</name>;</import>
+<import>import <name>javax</name>.<name>persistence</name>.<name>Enumerated</name>;</import>
+<import>import <name>javax</name>.<name>persistence</name>.<name>FetchType</name>;</import>
+<import>import <name>javax</name>.<name>persistence</name>.<name>GeneratedValue</name>;</import>
+<import>import <name>javax</name>.<name>persistence</name>.<name>GenerationType</name>;</import>
+<import>import <name>javax</name>.<name>persistence</name>.<name>Id</name>;</import>
+<import>import <name>javax</name>.<name>persistence</name>.<name>JoinColumn</name>;</import>
+<import>import <name>javax</name>.<name>persistence</name>.<name>JoinTable</name>;</import>
+<import>import <name>javax</name>.<name>persistence</name>.<name>ManyToMany</name>;</import>
+<import>import <name>javax</name>.<name>persistence</name>.<name>OneToOne</name>;</import>
+<import>import <name>javax</name>.<name>persistence</name>.<name>SequenceGenerator</name>;</import>
+<import>import <name>javax</name>.<name>persistence</name>.<name>Transient</name>;</import>
+
+@<expr_stmt><expr><name><name><name>Entity</name></name></name>
+@<call><name>SequenceGenerator</name><argument_list>(<argument><expr><name>name</name> = "membro_seq"</expr></argument>, <argument><expr><name>sequenceName</name> = "membro_seq"</expr></argument>)</argument_list></call>
+public class <name>Membro</name> implements <name>Serializable</name><block>{
+
+	private <expr><name>static</name> final <name>long</name> <name>serialVersionUID</name> = 1L</expr>;
+	
+	@<expr><name><name><name>Id</name></name></name>
+	@<call><name>GeneratedValue</name><argument_list>(<argument><expr><name>strategy</name> = <name>GenerationType</name>.<name>SEQUENCE</name></expr></argument>, <argument><expr><name>generator</name> = "membro_seq"</expr></argument>)</argument_list></call>
+	private <name>Integer</name> <name>ID</name></expr>;
+	private <expr><name>String</name> <name>nome</name></expr>;
+	private <expr><name>String</name> <name>email</name></expr>;
+	private <expr><name>String</name> <name>fone</name></expr>;
+	private <expr><name>String</name> <name>universidade</name></expr>;
+	private <expr><name>String</name> <name>website</name></expr>;
+	private <expr><name>Integer</name> <name>ativo</name></expr>;	
+	private <expr><name>String</name> <name>foto</name></expr>;
+	@<expr><name>Enumerated</name>
+	private <name>Integer</name> <name>tipo</name></expr>;
+	@<expr><call><name>ManyToMany</name><argument_list>(
+			<argument><expr><name>targetEntity</name>=<name>Publicacao</name>.class</expr></argument>,
+			<argument><expr><name>cascade</name>=<block>{<expr><name>CascadeType</name>.<name>PERSIST</name></expr>, <expr><name>CascadeType</name>.<name>MERGE</name></expr>}</block></expr></argument>,
+			<argument><expr><name>mappedBy</name>="autoresMembros"</expr></argument>, 
+			<argument><expr><name>fetch</name>=<name>FetchType</name>.<name>LAZY</name></expr></argument>
+	)</argument_list></call>
+	private <name>List</name>&lt;<name>Publicacao</name>&gt; <name>publicacoes</name></expr>;
+	
+	@<expr><call><name>ManyToMany</name><argument_list>(<argument><expr><name>targetEntity</name> = <name>LinhaPesquisa</name>.class</expr></argument>, <argument><expr><name>cascade</name> = <block>{ <expr><name>CascadeType</name>.<name>PERSIST</name></expr>,
+		<expr><name>CascadeType</name>.<name>MERGE</name></expr> }</block></expr></argument>, <argument><expr><name>fetch</name> = <name>FetchType</name>.<name>LAZY</name></expr></argument>)</argument_list></call>
+	@<call><name>JoinTable</name><argument_list>(<argument><expr><name>name</name> = "membro_linhaPesquisa"</expr></argument>, <argument><expr><name>joinColumns</name> = @<call><name>JoinColumn</name><argument_list>(<argument><expr><name>name</name> = "id_membro"</expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name>inverseJoinColumns</name> = @<call><name>JoinColumn</name><argument_list>(<argument><expr><name>name</name> = "id_linha_pesquisa"</expr></argument>)</argument_list></call></expr></argument>)</argument_list></call>
+	private <name>List</name>&lt;<name>LinhaPesquisa</name>&gt; <name>linhasPesquisa</name></expr>;
+
+	@<expr><name>Transient</name>
+	private <name>File</name> <name>upload</name></expr>;
+	@<expr><name>Transient</name>
+	private <name>String</name> <name>uploadFileName</name></expr>; <comment type="line">// nome do arquivo enviado</comment>
+	@<expr><name>Transient</name>
+	private <name>String</name> <name>uploadContentType</name></expr>; <comment type="line">// contexto do arquivo, imagem, txt etc...</comment>
+	@<expr><name>Transient</name>
+	private <name>String</name> <name>selected</name></expr>;
+
+	public <expr><call><name>Membro</name><argument_list>()</argument_list></call> <block>{
+		<expr><call><name>super</name><argument_list>()</argument_list></call></expr>;
+	}</block>
+
+	public <call><name>Membro</name><argument_list>(<argument><expr><name>Integer</name> <name>iD</name></expr></argument>)</argument_list></call> <block>{
+		<expr><call><name>super</name><argument_list>()</argument_list></call></expr>;
+		<expr><name>ID</name> = <name>iD</name></expr>;
+	}</block>
+	
+	<comment type="line">// Metodo que move o arquivo para o diretorio desejado</comment>
+    private <name>void</name> <call><name>copyFile</name><argument_list>(<argument><expr><name>File</name> <name>in</name></expr></argument>, <argument><expr><name>File</name> <name>out</name></expr></argument>)</argument_list></call> <block>{  	           
+        <try>try <block>{  
+            <decl_stmt><decl><type><name>FileChannel</name></type> <name>sourceChannel</name> =<init> <expr>new <call><name>FileInputStream</name><argument_list>(<argument><expr><name>in</name></expr></argument>)</argument_list></call>.<call><name>getChannel</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>  
+            <decl_stmt><decl><type><name>FileChannel</name></type> <name>destinationChannel</name> =<init> <expr>new <call><name>FileOutputStream</name><argument_list>(<argument><expr><name>out</name></expr></argument>)</argument_list></call>.<call><name>getChannel</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>  
+            <expr_stmt><expr><call><name><name>sourceChannel</name>.<name>transferTo</name></name><argument_list>(<argument><expr>0</expr></argument>, <argument><expr><call><name><name>sourceChannel</name>.<name>size</name></name><argument_list>()</argument_list></call></expr></argument>, <argument><expr><name>destinationChannel</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>  
+            <expr_stmt><expr><call><name><name>sourceChannel</name>.<name>close</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>  
+            <expr_stmt><expr><call><name><name>destinationChannel</name>.<name>close</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>  
+        <expr_stmt/></block></try>}</block></expr> <catch>catch (<param><decl><type><name>IOException</name></type> <name>ex</name></decl></param>) <block>{  
+            <expr_stmt><expr><call><name><name>ex</name>.<name>printStackTrace</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>   
+        <expr_stmt/></block></catch>}</block></expr></expr_stmt>  
+    }  
+    
+    <function><type><specifier>public</specifier> <name>void</name></type> <name>validateToPersist</name><parameter_list>()</parameter_list> <throws>throws</throws> Exception<block>{
+    	<if>if<condition>(<expr>!<call><name>getEmail</name><argument_list>()</argument_list></call>.<call><name>contains</name><argument_list>(<argument><expr>"@"</expr></argument>)</argument_list></call></expr>)</condition><then>
+    		<throw>throw <expr>new <call><name>Exception</name><argument_list>(<argument><expr>"E-mail invalido"</expr></argument>)</argument_list></call></expr>;</throw></then></if>
+    	<if>if<condition>(<expr><call><name>getNome</name><argument_list>()</argument_list></call> == <name>null</name></expr>)</condition><then>
+    		<throw>throw <expr>new <call><name>Exception</name><argument_list>(<argument><expr>"Nome invalido"</expr></argument>)</argument_list></call></expr>;</throw></then></if>
+    	
+    	<expr_stmt><expr><name>foto</name> = "/home/leofernandesmo/workspace/IN980-ResearchGroupManagementSystem/WebContent/fotosRGMS/"+ <name>this</name>.<name>uploadFileName</name></expr>;</expr_stmt>
+    		    	
+<comment type="line">//    	foto = "/home/salaniojr/workspace-eclipse-galileo/in980-rgms/in980-rgms/IN980-ResearchGroupManagementSystem/WebContent/fotosRGMS/"+ this.uploadFileName;</comment>
+    	<expr_stmt><expr><call><name>copyFile</name><argument_list>(<argument><expr><name>upload</name></expr></argument>, <argument><expr>new <call><name>File</name><argument_list>(<argument><expr><name>foto</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></function>
+
+	@<function><type><name>Override</name>
+	<specifier>public</specifier> <name>String</name></type> <name>toString</name><parameter_list>()</parameter_list> <block>{
+		<return>return <expr><name>nome</name></expr>;</return>
+	}</block></function>
+
+	<function><type><specifier>public</specifier> <name>String</name></type> <name>getNome</name><parameter_list>()</parameter_list> <block>{
+		<return>return <expr><name>nome</name></expr>;</return>
+	}</block></function>
+
+	<function><type><specifier>public</specifier> <name>void</name></type> <name>setNome</name><parameter_list>(<param><decl><type><name>String</name></type> <name>nome</name></decl></param>)</parameter_list> <block>{
+		<expr_stmt><expr><name>this</name>.<name>nome</name> = <name>nome</name></expr>;</expr_stmt>
+	}</block></function>
+
+	<function><type><specifier>public</specifier> <name>String</name></type> <name>getEmail</name><parameter_list>()</parameter_list> <block>{
+		<return>return <expr><name>email</name></expr>;</return>
+	}</block></function>
+
+	<function><type><specifier>public</specifier> <name>void</name></type> <name>setEmail</name><parameter_list>(<param><decl><type><name>String</name></type> <name>email</name></decl></param>)</parameter_list> <block>{
+		<expr_stmt><expr><name>this</name>.<name>email</name> = <name>email</name></expr>;</expr_stmt>
+	}</block></function>
+
+	<function><type><specifier>public</specifier> <name>String</name></type> <name>getFone</name><parameter_list>()</parameter_list> <block>{
+		<return>return <expr><name>fone</name></expr>;</return>
+	}</block></function>
+
+	<function><type><specifier>public</specifier> <name>void</name></type> <name>setFone</name><parameter_list>(<param><decl><type><name>String</name></type> <name>fone</name></decl></param>)</parameter_list> <block>{
+		<expr_stmt><expr><name>this</name>.<name>fone</name> = <name>fone</name></expr>;</expr_stmt>
+	}</block></function>
+
+	<function><type><specifier>public</specifier> <name>Integer</name></type> <name>getID</name><parameter_list>()</parameter_list> <block>{
+		<return>return <expr><name>ID</name></expr>;</return>
+	}</block></function>
+
+	<function><type><specifier>public</specifier> <name>void</name></type> <name>setID</name><parameter_list>(<param><decl><type><name>Integer</name></type> <name>iD</name></decl></param>)</parameter_list> <block>{
+		<expr_stmt><expr><name>ID</name> = <name>iD</name></expr>;</expr_stmt>
+	}</block></function>
+
+	<function><type><specifier>public</specifier> <name>File</name></type> <name>getUpload</name><parameter_list>()</parameter_list> <block>{
+		<return>return <expr><name>upload</name></expr>;</return>
+	}</block></function>
+
+	<function><type><specifier>public</specifier> <name>void</name></type> <name>setUpload</name><parameter_list>(<param><decl><type><name>File</name></type> <name>upload</name></decl></param>)</parameter_list> <block>{
+		<expr_stmt><expr><name>this</name>.<name>upload</name> = <name>upload</name></expr>;</expr_stmt>
+	}</block></function>
+
+	<function><type><specifier>public</specifier> <name>String</name></type> <name>getUploadFileName</name><parameter_list>()</parameter_list> <block>{
+		<return>return <expr><name>uploadFileName</name></expr>;</return>
+	}</block></function>
+
+	<function><type><specifier>public</specifier> <name>void</name></type> <name>setUploadFileName</name><parameter_list>(<param><decl><type><name>String</name></type> <name>uploadFileName</name></decl></param>)</parameter_list> <block>{
+		<decl_stmt><decl><type><name>String</name></type> <name>extensao</name> =<init> <expr><call><name><name>uploadFileName</name>.<name>substring</name></name><argument_list>(<argument><expr><call><name><name>uploadFileName</name>.<name>lastIndexOf</name></name><argument_list>(<argument><expr>"."</expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+		<expr_stmt><expr><name>this</name>.<name>uploadFileName</name> = <call><name>getFone</name><argument_list>()</argument_list></call> +  "_" + <name>extensao</name></expr> ;</expr_stmt>			
+	}</block></function>
+
+	<function><type><specifier>public</specifier> <name>String</name></type> <name>getUploadContentType</name><parameter_list>()</parameter_list> <block>{
+		<return>return <expr><name>uploadContentType</name></expr>;</return>
+	}</block></function>
+
+	<function><type><specifier>public</specifier> <name>void</name></type> <name>setUploadContentType</name><parameter_list>(<param><decl><type><name>String</name></type> <name>uploadContentType</name></decl></param>)</parameter_list> <block>{
+		<expr_stmt><expr><name>this</name>.<name>uploadContentType</name> = <name>uploadContentType</name></expr>;</expr_stmt>
+	}</block></function>
+
+	
+
+	<function><type><specifier>public</specifier> <name>String</name></type> <name>getUniversidade</name><parameter_list>()</parameter_list> <block>{
+		<return>return <expr><name>universidade</name></expr>;</return>
+	}</block></function>
+
+	<function><type><specifier>public</specifier> <name>void</name></type> <name>setUniversidade</name><parameter_list>(<param><decl><type><name>String</name></type> <name>universidade</name></decl></param>)</parameter_list> <block>{
+		<expr_stmt><expr><name>this</name>.<name>universidade</name> = <name>universidade</name></expr>;</expr_stmt>
+	}</block></function>
+
+	<function><type><specifier>public</specifier> <name>String</name></type> <name>getWebsite</name><parameter_list>()</parameter_list> <block>{
+		<return>return <expr><name>website</name></expr>;</return>
+	}</block></function>
+
+	<function><type><specifier>public</specifier> <name>void</name></type> <name>setWebsite</name><parameter_list>(<param><decl><type><name>String</name></type> <name>website</name></decl></param>)</parameter_list> <block>{
+		<expr_stmt><expr><name>this</name>.<name>website</name> = <name>website</name></expr>;</expr_stmt>
+	}</block></function>
+
+	<function><type><specifier>public</specifier> <name>Integer</name></type> <name>getAtivo</name><parameter_list>()</parameter_list> <block>{
+		<return>return <expr><name>ativo</name></expr>;</return>
+	}</block></function>
+
+	<function><type><specifier>public</specifier> <name>void</name></type> <name>setAtivo</name><parameter_list>(<param><decl><type><name>Integer</name></type> <name>ativo</name></decl></param>)</parameter_list> <block>{
+		<expr_stmt><expr><name>this</name>.<name>ativo</name> = <name>ativo</name></expr>;</expr_stmt>
+	}</block></function>
+
+	<function><type><specifier>public</specifier> <name>String</name></type> <name>getFoto</name><parameter_list>()</parameter_list> <block>{
+		<return>return <expr><name>foto</name></expr>;</return>
+	}</block></function>
+
+	<function><type><specifier>public</specifier> <name>void</name></type> <name>setFoto</name><parameter_list>(<param><decl><type><name>String</name></type> <name>foto</name></decl></param>)</parameter_list> <block>{
+		<expr_stmt><expr><name>this</name>.<name>foto</name> = <name>foto</name></expr>;</expr_stmt>
+	}</block></function>
+	
+	<function><type><specifier>public</specifier> <name>String</name></type> <name>getCaminhoRelativoImagem</name><parameter_list>()</parameter_list> <block>{
+		<if>if<condition>(<expr><call><name>getFoto</name><argument_list>()</argument_list></call> != <name>null</name></expr>)</condition><then>
+			<return>return <expr>"fotosRGMS" + <call><name>getFoto</name><argument_list>()</argument_list></call>.<call><name>substring</name><argument_list>(<argument><expr><call><name>getFoto</name><argument_list>()</argument_list></call>.<call><name>lastIndexOf</name><argument_list>(<argument><expr>"/"</expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</return></then></if>
+		<return>return <expr><name>null</name></expr>;</return> 
+	}</block></function>
+
+	public <expr_stmt><expr><name>List</name>&lt;<name>Publicacao</name>&gt; <call><name>getPublicacoes</name><argument_list>()</argument_list></call> <block>{
+		<return>return <expr><name>publicacoes</name></expr>;</return></block></expr></expr_stmt>
+	}
+
+	<decl_stmt><decl><type><specifier>public</specifier> <name>void</name></type> <name>setPublicacoes</name>(List<argument_list>&lt;<argument><name>Publicacao</name></argument>&gt;</argument_list> publicacoes) <block>{
+		<expr_stmt><expr><name>this</name>.<name>publicacoes</name> = <name>publicacoes</name></expr>;</expr_stmt>
+	}</block></decl></decl_stmt>
+
+	<function><type><specifier>public</specifier> <name>Integer</name></type> <name>getTipo</name><parameter_list>()</parameter_list> <block>{
+		<return>return <expr><name>tipo</name></expr>;</return>
+	}</block></function>
+
+	<function><type><specifier>public</specifier> <name>void</name></type> <name>setTipo</name><parameter_list>(<param><decl><type><name>Integer</name></type> <name>tipo</name></decl></param>)</parameter_list> <block>{
+		<expr_stmt><expr><name>this</name>.<name>tipo</name> = <name>tipo</name></expr>;</expr_stmt>
+	}</block></function>
+
+
+
+	<function><type><specifier>public</specifier> <name>String</name></type> <name>getSelected</name><parameter_list>()</parameter_list> <block>{
+		<return>return <expr><name>selected</name></expr>;</return>
+	}</block></function>
+
+	<function><type><specifier>public</specifier> <name>void</name></type> <name>setSelected</name><parameter_list>(<param><decl><type><name>String</name></type> <name>selected</name></decl></param>)</parameter_list> <block>{
+		<expr_stmt><expr><name>this</name>.<name>selected</name> = <name>selected</name></expr>;</expr_stmt>
+	}</block></function>
+
+	@<function><type><name>Override</name>
+	<specifier>public</specifier> <name>int</name></type> <name>hashCode</name><parameter_list>()</parameter_list> <block>{
+		<decl_stmt><decl><type><specifier>final</specifier> <name>int</name></type> <name>prime</name> =<init> <expr>31</expr></init></decl>;</decl_stmt>
+		<decl_stmt><decl><type><name>int</name></type> <name>result</name> =<init> <expr>1</expr></init></decl>;</decl_stmt>
+		<expr_stmt><expr><name>result</name> = <name>prime</name> * <name>result</name> + ((<name>ID</name> == <name>null</name>) ? 0 : <call><name><name>ID</name>.<name>hashCode</name></name><argument_list>()</argument_list></call>)</expr>;</expr_stmt>
+		<return>return <expr><name>result</name></expr>;</return>
+	}</block></function>
+
+	@<function><type><name>Override</name>
+	<specifier>public</specifier> <name>boolean</name></type> <name>equals</name><parameter_list>(<param><decl><type><name>Object</name></type> <name>obj</name></decl></param>)</parameter_list> <block>{
+		<if>if <condition>(<expr><name>this</name> == <name>obj</name></expr>)</condition><then>
+			<return>return <expr><name>true</name></expr>;</return></then></if>
+		<if>if <condition>(<expr><name>obj</name> == <name>null</name></expr>)</condition><then>
+			<return>return <expr><name>false</name></expr>;</return></then></if>
+		<if>if <condition>(<expr><call><name>getClass</name><argument_list>()</argument_list></call> != <call><name><name>obj</name>.<name>getClass</name></name><argument_list>()</argument_list></call></expr>)</condition><then>
+			<return>return <expr><name>false</name></expr>;</return></then></if>
+		<decl_stmt><decl><type><name>Membro</name></type> <name>other</name> =<init> <expr>(<name>Membro</name>) <name>obj</name></expr></init></decl>;</decl_stmt>
+		<if>if <condition>(<expr><name>ID</name> == <name>null</name></expr>)</condition><then> <block>{
+			<if>if <condition>(<expr><name>other</name>.<name>ID</name> != <name>null</name></expr>)</condition><then>
+				<return>return <expr><name>false</name></expr>;</return></then></if>
+		}</block></then> <else>else <if>if <condition>(<expr>!<call><name><name>ID</name>.<name>equals</name></name><argument_list>(<argument><expr><name>other</name>.<name>ID</name></expr></argument>)</argument_list></call></expr>)</condition><then>
+			<return>return <expr><name>false</name></expr>;</return></then></if></else></if>
+		<return>return <expr><name>true</name></expr>;</return>
+	}</block></function>
+
+	public <expr_stmt><expr><name>List</name>&lt;<name>LinhaPesquisa</name>&gt; <call><name>getLinhasPesquisa</name><argument_list>()</argument_list></call> <block>{
+		<return>return <expr><name>linhasPesquisa</name></expr>;</return></block></expr></expr_stmt>
+	}
+
+	<decl_stmt><decl><type><specifier>public</specifier> <name>void</name></type> <name>setLinhasPesquisa</name>(List<argument_list>&lt;<argument><name>LinhaPesquisa</name></argument>&gt;</argument_list> linhasPesquisa) <block>{
+		<expr_stmt><expr><name>this</name>.<name>linhasPesquisa</name> = <name>linhasPesquisa</name></expr>;</expr_stmt>
+	}</block></decl></decl_stmt>
+	
+	<comment type="line">//#ifdef autenticacao</comment>
+<comment type="line">//OneToOne(cascade={CascadeType.ALL}, fetch = FetchType.LAZY)</comment>
+<comment type="line">//	private Usuario usuario;</comment>
+<comment type="line">//</comment>	
+<comment type="line">//	public Usuario getUsuario() {</comment>
+<comment type="line">//		return usuario;</comment>
+<comment type="line">//	}</comment>
+<comment type="line">//	public void setUsuario(Usuario usuario) {</comment>
+<comment type="line">//		this.usuario = usuario;</comment>
+<comment type="line">//	}</comment>
+	<comment type="line">//#endif</comment>
+	
+}
+</unit>

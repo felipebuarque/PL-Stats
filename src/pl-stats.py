@@ -14,76 +14,20 @@ def usage():
     Help!
     '''
     print ''
-    print 'Usage: python pl-stats.py [OPTIONS] [PROJECT|WORKSPACE]'
+    print 'Usage: python pl-stats.py [OPTIONS] [PROJECT]'
     print 'Generates Antenna directives statistics about the PROJECT.'
     print ''
     print 'Options:'
-    print '    -h, --help                 print this help'
-    print '    -l, --language=LANG        set the project language as LANG. Actually supports C and Java languages.'
-    print '    -p, --project=PROJECT      set a project to be analyzed as PROJECT.'
-    print '    -w, --workspace=WORKSPACE  set a workspace to be analyzed as WORKSPACE. All projects within WORKSPACE will be analyzed.'
+    print '    -h, --help             print this help'
+    print '    -g, --generate         generate statistics. Whithout this flag, is there statistics data in project directory, they will be kept.'
+    print '    -l, --language=LANG    set the project language as LANG. Actually supports C and Java languages.'
+    print '    -e, --export           export statistics to different formats. Actually supports CSV and XML formats.'
     print ''
-
-
-
-def generate_statistical_data(language, dir):
-    '''
-    '''
-    print ''
-    print dir
-    print ''
-    print 'Setting up...'
-    setup = Setup(language, dir)
-    project = setup.getProject()
-    print 'Done.'
-    print ''
-    print '==================================='
-    print ''
-    print 'Creating directories...'
-    project.createDirectories()
-    print 'Done.'
-    print ''
-    print '==================================='
-    print ''
-    print 'Copying source files to work directory...'
-    project.copyFiles()
-    print 'Done.'
-    print ''
-    print '==================================='
-    print ''
-    print 'Converting source files...'
-    project.createXMLFiles()
-    project.moveXMLFiles()
-    print 'Done.'
-    print ''
-    print '==================================='
-    print ''
-    print 'Generating statistics...'
-    stats = project.getStats()
-    dict_file = stats.getStatistics()
-    print 'Done.'
-    print ''
-    print '==================================='
-    print ''
-    print 'Exporting data to csv file...'
-    stats.exportDataToCSV(dict_file)
-    print 'Done.'
-    print ''
-    print '==================================='
-
-#    print ''
-#    print 'Creating results csv file...'
-#    stats.exportResultsToCSV()
-#    print 'Done.'
-#    print ''
-#    print '==================================='
-
-    
 
 def main():
     
     try:
-        opts, extra_params = getopt.getopt(sys.argv[1:], "hgl:w:p:", ["help", "generate", "language=", "workspace=", "project="])
+        opts, extra_params = getopt.getopt(sys.argv[1:], "hgl:e:w:p:", ["help", "generate", "language=", "export=", "workspace=", "project="])
     except getopt.GetoptError:          
         usage()
         sys.exit(2)
@@ -101,25 +45,216 @@ def main():
                 generate = True
             if opt in ['-l', '--language']:
                 language = arg
+            if opt in ['-e', '--export']:
+                export = arg
             if opt in ['-w', '--workspace', '-p', '--project']:
                 dir = arg
             
-    if language is None or dir is None:
+    if language is None:
         usage()
         sys.exit()
-    else:
-        print dir
-        abs_dir = os.path.abspath(dir)
-        if not os.path.isdir(abs_dir):
-            print '%s is not a directory.' % (abs_dir)
-            sys.exit()
+
+#    if len(extra_params) > 1:
+#        usage()
+#        sys.exit()
+#    else:
+#        project_name = extra_params[0]
+    
+    if dir != None:
+        if opt == '-p':
+            project_name = os.path.abspath(dir)
+            print ''
+            print project_name
+    
+            # Set the variables
+            print ''
+            print 'Setting up...'
+            setup = Setup(language, project_name)
+        
+            # Set the project type (C or Java)
+            project = setup.getProject()
+            print 'Done.'
+            print ''
+            print '==================================='
+        
+            # Create the work directory (pl_stats directory)
+            print ''
+            print 'Creating directories...'
+            project.createDirectories()
+            print 'Done.'
+            print ''
+            print '==================================='
+            
+            # Copy files from project to work directory
+            print ''
+            print 'Copying source files to work directory...'
+            project.copyFiles()
+            print 'Done.'
+            print ''
+            print '==================================='
+            
+            # Create XML files from project source code
+            print ''
+            print 'Converting source files...'
+            project.createXMLFiles()
+            
+            # Remove source files from work directory
+            project.moveXMLFiles()
+            print 'Done.'
+            print ''
+            print '==================================='
+            
+            # Create the object to manipulate project statistics
+            print ''
+            print 'Generating statistics...'
+            stats = project.getStats()
+            
+            # Get project statistics
+            dict_methods, dict_features, dict_cbr, dict_vsoc, dict_decl_coupling, dict_assign_coupling = stats.getStatistics()
+            print 'Done.'
+            print ''
+            print '==================================='
+            
+            # Export directives results do XLS file
+        #    print ''
+        #    print 'Creating directives sheet...'
+        #    stats.exportDirectivesToXLS(dict_methods, dict_features)
+        #    print 'Done.'
+        #    print ''
+        #    print '==================================='
+        #
+        #    # Export dependencies results do XLS file
+        #    print ''
+        #    print 'Creating dependencies sheet...'
+        #    stats.exportDependenciesToXLS(dict_decl_coupling, dict_assign_coupling)
+        #    print 'Done.'
+        #    print ''
+        #    print '==================================='
+        
+            # Export directives data to CSV file
+            print ''
+            print 'Creating directives_data csv file...'
+            stats.exportDirectivesDataToCSV(dict_methods, dict_features)
+            print 'Done.'
+            print ''
+            print '==================================='
+            
+            # Export directives results do CSV file
+            print ''
+            print 'Creating directives_results csv file...'
+            stats.exportDirectivesResultsToCSV(dict_methods, dict_features)
+            print 'Done.'
+            print ''
+            print '==================================='
+            
+            # Export dependencies results do CSV file
+            print ''
+            print 'Creating dependencies csv file...'
+            stats.exportDependenciesToCSV(dict_decl_coupling, dict_assign_coupling)
+            print 'Done.'
+            print ''
+            print '==================================='
         else:
-            if opt in ['-p', '--project']:
-                generate_statistical_data(language, abs_dir)
-            elif opt in ['-w', '--workspace']:
-                for project in os.listdir(abs_dir):
-                    project_dir = os.path.join(abs_dir, project)
-                    if os.path.isdir(project_dir):
-                        generate_statistical_data(language, project_dir)
+            for project_dir in os.listdir(os.path.abspath(dir)):
+                project_name = os.path.abspath(dir+project_dir)
+                print ''
+                print project_name
+        
+                # Set the variables
+                print ''
+                print 'Setting up...'
+                setup = Setup(language, project_name)
+            
+                # Set the project type (C or Java)
+                project = setup.getProject()
+                print 'Done.'
+                print ''
+                print '==================================='
+            
+                # Create the work directory (pl_stats directory)
+                print ''
+                print 'Creating directories...'
+                project.createDirectories()
+                print 'Done.'
+                print ''
+                print '==================================='
+                
+                # Copy files from project to work directory
+                print ''
+                print 'Copying source files to work directory...'
+                project.copyFiles()
+                print 'Done.'
+                print ''
+                print '==================================='
+                
+                # Create XML files from project source code
+                print ''
+                print 'Converting source files...'
+                project.createXMLFiles()
+                
+                # Remove source files from work directory
+                project.moveXMLFiles()
+                print 'Done.'
+                print ''
+                print '==================================='
+                
+                # Create the object to manipulate project statistics
+                print ''
+                print 'Generating statistics...'
+                stats = project.getStats()
+                
+                # Get project statistics
+                dict_methods, dict_features, dict_cbr, dict_vsoc, dict_decl_coupling, dict_assign_coupling = stats.getStatistics()
+                print 'Done.'
+                print ''
+                print '==================================='
+                
+                # Export directives results do XLS file
+            #    print ''
+            #    print 'Creating directives sheet...'
+            #    stats.exportDirectivesToXLS(dict_methods, dict_features)
+            #    print 'Done.'
+            #    print ''
+            #    print '==================================='
+            #
+            #    # Export dependencies results do XLS file
+            #    print ''
+            #    print 'Creating dependencies sheet...'
+            #    stats.exportDependenciesToXLS(dict_decl_coupling, dict_assign_coupling)
+            #    print 'Done.'
+            #    print ''
+            #    print '==================================='
+            
+                # Export directives data to CSV file
+                print ''
+                print 'Creating directives_data csv file...'
+                stats.exportDirectivesDataToCSV(dict_methods, dict_features)
+                print 'Done.'
+                print ''
+                print '==================================='
+                
+                # Export directives results do CSV file
+                print ''
+                print 'Creating directives_results csv file...'
+                stats.exportDirectivesResultsToCSV(dict_methods, dict_features)
+                print 'Done.'
+                print ''
+                print '==================================='
+                
+                # Export dependencies results do CSV file
+                print ''
+                print 'Creating dependencies csv file...'
+                stats.exportDependenciesToCSV(dict_decl_coupling, dict_assign_coupling)
+                print 'Done.'
+                print ''
+                print '==================================='
+
+    print '==================================='
+    print '######### PL-Stats - v. 0.5 #########'
+    print '-----------------------------------'
+    print '# Project: ' + project_name.__str__()
+    print '-----------------------------------'
+    print '# Total of project methods: ' + len(dict_methods).__str__()
+    print '==================================='
 
 if __name__ == '__main__': main()

@@ -1,0 +1,219 @@
+<unit language="Java" dir="" filename="Publicacao.java"><package>package <name>in980</name>.<name>rgms</name>.<name>domain</name>;</package><import>import <name>java</name>.<name>io</name>.<name>File</name>;</import><import>import <name>java</name>.<name>io</name>.<name>FileInputStream</name>;</import><import>import <name>java</name>.<name>io</name>.<name>FileOutputStream</name>;</import><import>import <name>java</name>.<name>io</name>.<name>FileWriter</name>;</import><import>import <name>java</name>.<name>io</name>.<name>IOException</name>;</import><import>import <name>java</name>.<name>io</name>.<name>PrintWriter</name>;</import><import>import <name>java</name>.<name>io</name>.<name>Serializable</name>;</import><import>import <name>java</name>.<name>nio</name>.<name>channels</name>.<name>FileChannel</name>;</import><import>import <name>java</name>.<name>util</name>.<name>ArrayList</name>;</import><import>import <name>java</name>.<name>util</name>.<name>List</name>;</import><import>import <name>javax</name>.<name>persistence</name>.<name>CascadeType</name>;</import><import>import <name>javax</name>.<name>persistence</name>.<name>Entity</name>;</import><import>import <name>javax</name>.<name>persistence</name>.<name>FetchType</name>;</import><import>import <name>javax</name>.<name>persistence</name>.<name>GeneratedValue</name>;</import><import>import <name>javax</name>.<name>persistence</name>.<name>GenerationType</name>;</import><import>import <name>javax</name>.<name>persistence</name>.<name>Id</name>;</import><import>import <name>javax</name>.<name>persistence</name>.<name>Inheritance</name>;</import><import>import <name>javax</name>.<name>persistence</name>.<name>InheritanceType</name>;</import><import>import <name>javax</name>.<name>persistence</name>.<name>JoinColumn</name>;</import><import>import <name>javax</name>.<name>persistence</name>.<name>JoinTable</name>;</import><import>import <name>javax</name>.<name>persistence</name>.<name>ManyToMany</name>;</import><import>import <name>javax</name>.<name>persistence</name>.<name>SequenceGenerator</name>;</import><import>import <name>javax</name>.<name>persistence</name>.<name>Transient</name>;</import>
+
+@<expr_stmt><expr><name><name><name>Entity</name></name></name>
+@<call><name>SequenceGenerator</name><argument_list>(<argument><expr><name>name</name> = "publicacao_seq"</expr></argument>, <argument><expr><name>sequenceName</name> = "publicacao_seq"</expr></argument>)</argument_list></call>
+@<call><name>Inheritance</name><argument_list>(<argument><expr><name>strategy</name> = <name>InheritanceType</name>.<name>JOINED</name></expr></argument>)</argument_list></call>
+public abstract class <name>Publicacao</name> implements <name>Serializable</name> <block>{
+	private <expr><name>static</name> final <name>long</name> <name>serialVersionUID</name> = 1L</expr>;
+
+	@<expr><name><name><name>Id</name></name></name>
+	@<call><name>GeneratedValue</name><argument_list>(<argument><expr><name>strategy</name> = <name>GenerationType</name>.<name>SEQUENCE</name></expr></argument>, <argument><expr><name>generator</name> = "publicacao_seq"</expr></argument>)</argument_list></call>
+	private <name>Integer</name> <name>ID</name></expr>;
+	private <expr><name>Integer</name><name>ano</name></expr>;
+	private <expr><name>String</name><name>titulo</name></expr>;
+	@<expr><call><name>ManyToMany</name><argument_list>(<argument><expr><name>targetEntity</name> = <name>Membro</name>.class</expr></argument>, <argument><expr><name>cascade</name> = <block>{ <expr><name>CascadeType</name>.<name>PERSIST</name></expr>,
+			<expr><name>CascadeType</name>.<name>MERGE</name></expr> }</block></expr></argument>, <argument><expr><name>fetch</name> = <name>FetchType</name>.<name>EAGER</name></expr></argument>)</argument_list></call>
+	@<call><name>JoinTable</name><argument_list>(<argument><expr><name>name</name> = "publicacao_membro"</expr></argument>, <argument><expr><name>joinColumns</name> = @<call><name>JoinColumn</name><argument_list>(<argument><expr><name>name</name> = "id_publicacao"</expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name>inverseJoinColumns</name> = @<call><name>JoinColumn</name><argument_list>(<argument><expr><name>name</name> = "id_membro"</expr></argument>)</argument_list></call></expr></argument>)</argument_list></call>
+	private <name>List</name>&lt;<name>Membro</name>&gt; <name>autoresMembros</name></expr>;
+	
+	@<expr><call><name>ManyToMany</name><argument_list>(<argument><expr><name>targetEntity</name> = <name>LinhaPesquisa</name>.class</expr></argument>, <argument><expr><name>cascade</name> = <block>{ <expr><name>CascadeType</name>.<name>PERSIST</name></expr>,
+		<expr><name>CascadeType</name>.<name>MERGE</name></expr> }</block></expr></argument>, <argument><expr><name>fetch</name> = <name>FetchType</name>.<name>LAZY</name></expr></argument>)</argument_list></call>
+	@<call><name>JoinTable</name><argument_list>(<argument><expr><name>name</name> = "publicacao_linhaPesquisa"</expr></argument>, <argument><expr><name>joinColumns</name> = @<call><name>JoinColumn</name><argument_list>(<argument><expr><name>name</name> = "id_publicacao"</expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name>inverseJoinColumns</name> = @<call><name>JoinColumn</name><argument_list>(<argument><expr><name>name</name> = "id_linha_pesquisa"</expr></argument>)</argument_list></call></expr></argument>)</argument_list></call>
+	private <name>List</name>&lt;<name>LinhaPesquisa</name>&gt; <name>linhasPesquisa</name></expr>;
+	
+	private <expr><name>String</name><name>autoresNaoMembros</name></expr>;
+	private <expr><name>String</name><name>filePath</name></expr>;
+
+	@<expr><name>Transient</name>
+	private <name>File</name> <name>upload</name></expr>;
+	@<expr><name>Transient</name>
+	private <name>String</name> <name>uploadFileName</name></expr>; <comment type="line">// nome do arquivo enviado</comment>
+	@<expr><name>Transient</name>
+	private <name>String</name> <name>uploadContentType</name></expr>; <comment type="line">// contexto do arquivo, imagem, txt etc...</comment>
+
+	public abstract <expr><name>String</name><call><name>getDescTipo</name><argument_list>()</argument_list></call></expr>;
+
+	public abstract <expr><name>String</name><call><name>getNomeDescritivo</name><argument_list>()</argument_list></call></expr>;
+
+	protected abstract <expr><name>void</name><call><name>validateSubToPersist</name><argument_list>()</argument_list></call> throws <name>Exception</name></expr>;
+
+	public <expr><name>void</name><call><name>validateToPersist</name><argument_list>()</argument_list></call> throws <name>Exception</name> <block>{
+		<if>if <condition>(<expr><call><name>getTitulo</name><argument_list>()</argument_list></call> == <name>null</name> || <call><name>getTitulo</name><argument_list>()</argument_list></call>.<call><name>isEmpty</name><argument_list>()</argument_list></call></expr>)</condition><then><throw>throw <expr>new <call><name>Exception</name><argument_list>(<argument><expr>"Titulo Invalido"</expr></argument>)</argument_list></call></expr>;</throw></then></if></block></expr></block></expr></expr_stmt>
+		<if>if <condition>(<expr><call><name>getAno</name><argument_list>()</argument_list></call> == <name>null</name></expr>)</condition><then><throw>throw <expr>new <call><name>Exception</name><argument_list>(<argument><expr>"Ano invalido"</expr></argument>)</argument_list></call></expr>;</throw></then></if>
+		<if>if <condition>(<expr><call><name>getUploadFileName</name><argument_list>()</argument_list></call> == <name>null</name>
+				|| !<call><name>getUploadFileName</name><argument_list>()</argument_list></call>.<call><name>contains</name><argument_list>(<argument><expr>".pdf"</expr></argument>)</argument_list></call></expr>)</condition><then><throw>throw <expr>new <call><name>Exception</name><argument_list>(<argument><expr>"Arquivo Invalido (Obrigatorio formato PDF)"</expr></argument>)</argument_list></call></expr>;</throw></then></if>
+
+		<expr_stmt><expr><call><name>validateSubToPersist</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+		
+    	<expr_stmt><expr><name>filePath</name> = "/home/leofernandesmo/workspace/IN980-ResearchGroupManagementSystem/WebContent/artigosRGMS/"+ <name>this</name>.<name>uploadFileName</name></expr>;</expr_stmt>
+
+<comment type="line">//		filePath = "/home/salaniojr/workspace-eclipse-galileo/in980-rgms/in980-rgms/IN980-ResearchGroupManagementSystem/WebContent/artigosRGMS/"</comment>
+<comment type="line">//				+ this.uploadFileName;</comment>
+		
+		<expr_stmt><expr><call><name>copyFile</name><argument_list>(<argument><expr><name>upload</name></expr></argument>, <argument><expr>new <call><name>File</name><argument_list>(<argument><expr><name>filePath</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>geraBibtexFile</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+	}
+
+	<comment type="line">// Metodo que move o arquivo para o diretorio desejado</comment>
+	<function><type><specifier>private</specifier><name>void</name></type><name>copyFile</name><parameter_list>(<param><decl><type><name>File</name></type><name>in</name></decl></param>, <param><decl><type><name>File</name></type><name>out</name></decl></param>)</parameter_list><block>{
+		<try>try <block>{
+			<decl_stmt><decl><type><name>FileChannel</name></type><name>sourceChannel</name> =<init><expr>new <call><name>FileInputStream</name><argument_list>(<argument><expr><name>in</name></expr></argument>)</argument_list></call>.<call><name>getChannel</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+			<decl_stmt><decl><type><name>FileChannel</name></type><name>destinationChannel</name> =<init><expr>new <call><name>FileOutputStream</name><argument_list>(<argument><expr><name>out</name></expr></argument>)</argument_list></call>
+					.<call><name>getChannel</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+			<expr_stmt><expr><call><name><name>sourceChannel</name>.<name>transferTo</name></name><argument_list>(<argument><expr>0</expr></argument>, <argument><expr><call><name><name>sourceChannel</name>.<name>size</name></name><argument_list>()</argument_list></call></expr></argument>,
+					<argument><expr><name>destinationChannel</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+			<expr_stmt><expr><call><name><name>sourceChannel</name>.<name>close</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+			<expr_stmt><expr><call><name><name>destinationChannel</name>.<name>close</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+		}</block></try> <catch>catch (<param><decl><type><name>IOException</name></type><name>ex</name></decl></param>) <block>{
+			<expr_stmt><expr><call><name><name>ex</name>.<name>printStackTrace</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+		}</block></catch>
+	}</block></function>
+	
+	<function><type><specifier>public</specifier><name>void</name></type><name>geraBibtexFile</name><parameter_list>()</parameter_list><block>{
+		<decl_stmt><decl><type><name>String</name></type><name>arquivo</name> =<init><expr>"/home/leofernandesmo/workspace/IN980-ResearchGroupManagementSystem/WebContent/artigosRGMS/"
+			+ <name>this</name>.<name>uploadFileName</name></expr></init></decl>;</decl_stmt>
+		<expr_stmt><expr><name>arquivo</name> = <call><name><name>arquivo</name>.<name>substring</name></name><argument_list>(<argument><expr>0</expr></argument>, <argument><expr><call><name><name>arquivo</name>.<name>lastIndexOf</name></name><argument_list>(<argument><expr>"."</expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+				
+		<try>try <block>{
+			<decl_stmt><decl><type><name>FileWriter</name></type><name>writer</name> =<init><expr>new <call><name>FileWriter</name><argument_list>(<argument><expr><name>arquivo</name> + ".bib"</expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+			<decl_stmt><decl><type><name>PrintWriter</name></type><name>saida</name> =<init><expr>new <call><name>PrintWriter</name><argument_list>(<argument><expr><name>writer</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+			<expr_stmt><expr><call><name>adicionaInfoBibtex</name><argument_list>(<argument><expr><name>saida</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+			<expr_stmt><expr><call><name><name>saida</name>.<name>close</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+			<expr_stmt><expr><call><name><name>writer</name>.<name>close</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>			
+		}</block></try> <catch>catch (<param><decl><type><name>IOException</name></type><name>e</name></decl></param>) <block>{
+			<expr_stmt><expr><call><name><name>e</name>.<name>printStackTrace</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+		}</block></catch>
+	}</block></function>
+
+	<function_decl><type><specifier>protected</specifier><specifier>abstract</specifier><name>void</name></type><name>adicionaInfoBibtex</name><parameter_list>(<param><decl><type><name>PrintWriter</name></type><name>saida</name></decl></param>)</parameter_list> ;</function_decl>
+
+	<function><type><specifier>public</specifier><name>Integer</name></type><name>getAno</name><parameter_list>()</parameter_list><block>{
+		<return>return <expr><name>ano</name></expr>;</return>
+	}</block></function>
+
+	<function><type><specifier>public</specifier><name>void</name></type><name>setAno</name><parameter_list>(<param><decl><type><name>Integer</name></type><name>ano</name></decl></param>)</parameter_list><block>{
+		<expr_stmt><expr><name>this</name>.<name>ano</name> = <name>ano</name></expr>;</expr_stmt>
+	}</block></function>
+
+	<function><type><specifier>public</specifier><name>String</name></type><name>getTitulo</name><parameter_list>()</parameter_list><block>{
+		<return>return <expr><name>titulo</name></expr>;</return>
+	}</block></function>
+
+	<function><type><specifier>public</specifier><name>void</name></type><name>setTitulo</name><parameter_list>(<param><decl><type><name>String</name></type><name>titulo</name></decl></param>)</parameter_list><block>{
+		<expr_stmt><expr><name>this</name>.<name>titulo</name> = <name>titulo</name></expr>;</expr_stmt>
+	}</block></function>
+
+	<function><type><specifier>public</specifier><name>Integer</name></type><name>getID</name><parameter_list>()</parameter_list><block>{
+		<return>return <expr><name>ID</name></expr>;</return>
+	}</block></function>
+
+	<function><type><specifier>public</specifier><name>void</name></type><name>setID</name><parameter_list>(<param><decl><type><name>Integer</name></type><name>iD</name></decl></param>)</parameter_list><block>{
+		<expr_stmt><expr><name>ID</name> = <name>iD</name></expr>;</expr_stmt>
+	}</block></function>
+
+	<function><type><specifier>public</specifier><name>File</name></type><name>getUpload</name><parameter_list>()</parameter_list><block>{
+		<return>return <expr><name>upload</name></expr>;</return>
+	}</block></function>
+
+	<function><type><specifier>public</specifier><name>void</name></type><name>setUpload</name><parameter_list>(<param><decl><type><name>File</name></type><name>upload</name></decl></param>)</parameter_list><block>{
+		<expr_stmt><expr><name>this</name>.<name>upload</name> = <name>upload</name></expr>;</expr_stmt>
+	}</block></function>
+
+	<function><type><specifier>public</specifier><name>String</name></type><name>getUploadFileName</name><parameter_list>()</parameter_list><block>{
+		<return>return <expr><name>uploadFileName</name></expr>;</return>
+	}</block></function>
+
+	<function><type><specifier>public</specifier><name>void</name></type><name>setUploadFileName</name><parameter_list>(<param><decl><type><name>String</name></type><name>uploadFileName</name></decl></param>)</parameter_list><block>{
+		<expr_stmt><expr><name>this</name>.<name>uploadFileName</name> = <name>uploadFileName</name></expr>;</expr_stmt>
+	}</block></function>
+
+	<function><type><specifier>public</specifier><name>String</name></type><name>getUploadContentType</name><parameter_list>()</parameter_list><block>{
+		<return>return <expr><name>uploadContentType</name></expr>;</return>
+	}</block></function>
+
+	<function><type><specifier>public</specifier><name>void</name></type><name>setUploadContentType</name><parameter_list>(<param><decl><type><name>String</name></type><name>uploadContentType</name></decl></param>)</parameter_list><block>{
+		<expr_stmt><expr><name>this</name>.<name>uploadContentType</name> = <name>uploadContentType</name></expr>;</expr_stmt>
+	}</block></function>
+
+	<function><type><specifier>public</specifier><name>String</name></type><name>getFilePath</name><parameter_list>()</parameter_list><block>{
+		<return>return <expr><name>filePath</name></expr>;</return>
+	}</block></function>
+
+	<function><type><specifier>public</specifier><name>void</name></type><name>setFilePath</name><parameter_list>(<param><decl><type><name>String</name></type><name>filePath</name></decl></param>)</parameter_list><block>{
+		<expr_stmt><expr><name>this</name>.<name>filePath</name> = <name>filePath</name></expr>;</expr_stmt>
+		<decl_stmt><decl><type><name>String</name></type><name>nomeArquivo</name> =<init><expr><call><name><name>filePath</name>.<name>substring</name></name><argument_list>(<argument><expr><call><name><name>filePath</name>.<name>lastIndexOf</name></name><argument_list>(<argument><expr>"/"</expr></argument>)</argument_list></call> + 1</expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+		<expr_stmt><expr><call><name>setUploadFileName</name><argument_list>(<argument><expr><name>nomeArquivo</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	}</block></function>
+
+	public <expr_stmt><expr><name>List</name>&lt;<name>Membro</name>&gt; <call><name>getAutoresMembros</name><argument_list>()</argument_list></call> <block>{
+		<return>return <expr><name>autoresMembros</name></expr>;</return></block></expr></expr_stmt>
+	}
+
+	<decl_stmt><decl><type><specifier>public</specifier><name>void</name></type><name>setAutoresMembros</name>(List<argument_list>&lt;<argument><name>Membro</name></argument>&gt;</argument_list> autoresMembros) <block>{
+		<expr_stmt><expr><name>this</name>.<name>autoresMembros</name> = <name>autoresMembros</name></expr>;</expr_stmt>
+	}</block></decl></decl_stmt>
+
+	<function><type><specifier>public</specifier><name>void</name></type><name>addAutorMembro</name><parameter_list>(<param><decl><type><name>Membro</name></type><name>m</name></decl></param>)</parameter_list><block>{
+		<expr_stmt><expr><call><name><name>this</name>.<name>autoresMembros</name>.<name>add</name></name><argument_list>(<argument><expr><name>m</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	}</block></function>
+
+	<function><type><specifier>public</specifier><name>String</name></type><name>getAutoresNaoMembros</name><parameter_list>()</parameter_list><block>{
+		<return>return <expr><name>autoresNaoMembros</name></expr>;</return>
+	}</block></function>
+
+	<function><type><specifier>public</specifier><name>void</name></type><name>setAutoresNaoMembros</name><parameter_list>(<param><decl><type><name>String</name></type><name>autoresNaoMembros</name></decl></param>)</parameter_list><block>{
+		<expr_stmt><expr><name>this</name>.<name>autoresNaoMembros</name> = <name>autoresNaoMembros</name></expr>;</expr_stmt>
+	}</block></function>
+
+	<function><type><specifier>public</specifier><name>String</name></type><name>getCaminhoRelativoArquivo</name><parameter_list>()</parameter_list><block>{
+		<if>if <condition>(<expr><call><name>getFilePath</name><argument_list>()</argument_list></call> != <name>null</name></expr>)</condition><then><return>return <expr>"artigosRGMS"
+					+ <call><name>getFilePath</name><argument_list>()</argument_list></call>.<call><name>substring</name><argument_list>(<argument><expr><call><name>getFilePath</name><argument_list>()</argument_list></call>.<call><name>lastIndexOf</name><argument_list>(<argument><expr>"/"</expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</return></then></if>
+
+		<return>return <expr><name>null</name></expr>;</return>
+	}</block></function>
+	
+	<function><type><specifier>public</specifier><name>String</name></type><name>getCaminhoRelativoBibtex</name><parameter_list>()</parameter_list><block>{
+		<if>if <condition>(<expr><call><name>getFilePath</name><argument_list>()</argument_list></call> != <name>null</name></expr>)</condition><then><block>{
+			<decl_stmt><decl><type><name>String</name></type><name>arquivoBib</name> =<init><expr>"artigosRGMS"
+				+ <call><name>getFilePath</name><argument_list>()</argument_list></call>.<call><name>substring</name><argument_list>(<argument><expr><call><name>getFilePath</name><argument_list>()</argument_list></call>.<call><name>lastIndexOf</name><argument_list>(<argument><expr>"/"</expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+			<expr_stmt><expr><name>arquivoBib</name> = <call><name><name>arquivoBib</name>.<name>replaceAll</name></name><argument_list>(<argument><expr>".pdf"</expr></argument>, <argument><expr>".bib"</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+			<return>return <expr><name>arquivoBib</name></expr>;</return>
+		}</block></then></if>
+
+		<return>return <expr><name>null</name></expr>;</return>
+	}</block></function>
+
+	public <expr_stmt><expr><name>List</name>&lt;<name>String</name>&gt; <call><name>getListAutoresNaoMembros</name><argument_list>()</argument_list></call> <block>{
+		<if>if <condition>(<expr><call><name>getAutoresNaoMembros</name><argument_list>()</argument_list></call> != <name>null</name></expr>)</condition><then><block>{
+			<expr_stmt><expr><name>List</name>&lt;<name>String</name>&gt; <name>lista</name> = new <name>ArrayList</name>&lt;<name>String</name>&gt;()</expr>;</expr_stmt>
+			<decl_stmt><decl><type><name>String</name><index>[]</index></type><name>autores</name> =<init><expr><call><name>getAutoresNaoMembros</name><argument_list>()</argument_list></call>.<call><name>split</name><argument_list>(<argument><expr>","</expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+			<for>for (<init><decl><type><name>String</name></type><name>autor</name> : <name>autores</name>) <block>{
+				<expr_stmt><expr><call><name><name>lista</name>.<name>add</name></name><argument_list>(<argument><expr><name>autor</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+			<expr_stmt/></block></decl></init></for></block></then></if>}</block></expr></expr_stmt>
+			<return>return <expr><name>lista</name></expr>;</return>
+		}
+		<return>return <expr><name>null</name></expr>;</return>
+	}
+	
+	<function><type><specifier>protected</specifier><name>String</name></type><name>getStringAutoresMembros</name><parameter_list>()</parameter_list><block>{
+<comment type="line">//		StringBuilder strAutores = new StringBuilder();</comment>
+<comment type="line">//		for (Membro m : getAutoresMembros()) {</comment>
+<comment type="line">//			strAutores.append(m.getNome());</comment>
+<comment type="line">//			strAutores.append(", ");</comment>
+<comment type="line">//		}</comment>
+<comment type="line">//		return strAutores.toString();</comment>
+		<return>return <expr>""</expr>;</return>
+	}</block></function>
+
+	public <expr_stmt><expr><name>List</name>&lt;<name>LinhaPesquisa</name>&gt; <call><name>getLinhasPesquisa</name><argument_list>()</argument_list></call> <block>{
+		<return>return <expr><name>linhasPesquisa</name></expr>;</return></block></expr></expr_stmt>
+	}
+
+	<decl_stmt><decl><type><specifier>public</specifier><name>void</name></type><name>setLinhasPesquisa</name>(List<argument_list>&lt;<argument><name>LinhaPesquisa</name></argument>&gt;</argument_list> linhasPesquisa) <block>{
+		<expr_stmt><expr><name>this</name>.<name>linhasPesquisa</name> = <name>linhasPesquisa</name></expr>;</expr_stmt>
+	}</block></decl></decl_stmt>
+
+	
+
+}
+</unit>

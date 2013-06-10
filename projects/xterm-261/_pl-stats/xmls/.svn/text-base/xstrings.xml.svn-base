@@ -1,0 +1,287 @@
+<unit xmlns="http://www.sdml.info/srcML/src" xmlns:cpp="http://www.sdml.info/srcML/cpp" language="C" dir="" filename="xstrings.c"><comment type="block">/* $XTermId: xstrings.c,v 1.37 2010/04/04 22:34:17 tom Exp $ */</comment>
+
+<comment type="block">/************************************************************
+
+Copyright 2000-2009,2010 by Thomas E. Dickey
+
+                        All Rights Reserved
+
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE ABOVE LISTED COPYRIGHT HOLDER(S) BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+Except as contained in this notice, the name(s) of the above copyright
+holders shall not be used in advertising or otherwise to promote the
+sale, use or other dealings in this Software without prior written
+authorization.
+
+********************************************************/</comment>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;xterm.h&gt;</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;sys/types.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdio.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;string.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;ctype.h&gt;</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;xstrings.h&gt;</cpp:file></cpp:include>
+
+<function><type><name>char</name> *</type>
+<name>x_basename</name><parameter_list>(<param><decl><type><name>char</name> *</type><name>name</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>char</name> *</type><name>cp</name></decl>;</decl_stmt>
+
+    <expr_stmt><expr><name>cp</name> = <call><name>strrchr</name><argument_list>(<argument><expr><name>name</name></expr></argument>, <argument><expr>'/'</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:ifdef>#<cpp:directive>ifdef</cpp:directive> <name>__UNIXOS2__</name></cpp:ifdef>
+    <if>if <condition>(<expr><name>cp</name> == 0</expr>)</condition><then>
+	<expr_stmt><expr><name>cp</name> = <call><name>strrchr</name><argument_list>(<argument><expr><name>name</name></expr></argument>, <argument><expr>'\\'</expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+    <return>return <expr>(<name>cp</name> ? <name>cp</name> + 1 : <name>name</name>)</expr>;</return>
+}</block></function>
+
+<comment type="block">/*
+ * Decode a hexadecimal string, returning the decoded string.
+ * On return, 'next' points to the first character not part of the input.
+ * The caller must free the result.
+ */</comment>
+<function><type><name>char</name> *</type>
+<name>x_decode_hex</name><parameter_list>(<param><decl><type><name>const</name> <name>char</name> *</type><name>source</name></decl></param>, <param><decl><type><name>const</name> <name>char</name> **</type><name>next</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>char</name> *</type><name>result</name> =<init> <expr>0</expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>int</name></type> <name>pass</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>size_t</name></type> <name>j</name>, <name>k</name></decl>;</decl_stmt>
+
+    <for>for (<init><expr><name>pass</name> = 0</expr>;</init> <condition><expr><name>pass</name> &lt; 2</expr>;</condition> <incr><expr>++<name>pass</name></expr></incr>) <block>{
+	<for>for (<init><expr><name>j</name> = <name>k</name> = 0</expr>;</init> <condition><expr><call><name>isxdigit</name><argument_list>(<argument><expr><call><name>CharOf</name><argument_list>(<argument><expr><name><name>source</name><index>[<expr><name>j</name></expr>]</index></name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</condition> <incr><expr>++<name>j</name></expr></incr>) <block>{
+	    <if>if <condition>(<expr>(<name>pass</name> != 0) &amp;&amp; (<name>j</name> &amp; 1) != 0</expr>)</condition><then> <block>{
+		<expr_stmt><expr><name><name>result</name><index>[<expr><name>k</name>++</expr>]</index></name> = <call>(<name>char</name>) <argument_list>(<argument><expr>(<call><name>x_hex2int</name><argument_list>(<argument><expr><name><name>source</name><index>[<expr><name>j</name> - 1</expr>]</index></name></expr></argument>)</argument_list></call> &lt;&lt; 4)
+				      | <call><name>x_hex2int</name><argument_list>(<argument><expr><name><name>source</name><index>[<expr><name>j</name></expr>]</index></name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    }</block></then></if>
+	}</block></for>
+	<expr_stmt><expr>*<name>next</name> = (<name>source</name> + <name>j</name>)</expr>;</expr_stmt>
+	<if>if <condition>(<expr>(<name>j</name> &amp; 1) == 0</expr>)</condition><then> <block>{
+	    <if>if <condition>(<expr><name>pass</name></expr>)</condition><then> <block>{
+		<expr_stmt><expr><name><name>result</name><index>[<expr><name>k</name></expr>]</index></name> = '\0'</expr>;</expr_stmt>
+	    }</block></then> <else>else <block>{
+		<expr_stmt><expr><name>result</name> = <call><name>malloc</name><argument_list>(<argument><expr>++<name>j</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<if>if <condition>(<expr><name>result</name> == 0</expr>)</condition><then>
+		    <break>break;</break></then></if>	<comment type="block">/* not enough memory */</comment>
+	    }</block></else></if>
+	}</block></then> <else>else <block>{
+	    <break>break;</break>		<comment type="block">/* must have an even number of digits */</comment>
+	}</block></else></if>
+    }</block></for>
+    <return>return <expr><name>result</name></expr>;</return>
+}</block></function>
+
+<comment type="block">/*
+ * Encode a string into hexadecimal, returning the encoded string.
+ * The caller must free the result.
+ */</comment>
+<function><type><name>char</name> *</type>
+<name>x_encode_hex</name><parameter_list>(<param><decl><type><name>const</name> <name>char</name> *</type><name>source</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>size_t</name></type> <name>need</name> =<init> <expr>(<call><name>strlen</name><argument_list>(<argument><expr><name>source</name></expr></argument>)</argument_list></call> * 2) + 1</expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>char</name> *</type><name>result</name> =<init> <expr><call><name>malloc</name><argument_list>(<argument><expr><name>need</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr><name>result</name> != 0</expr>)</condition><then> <block>{
+	<decl_stmt><decl><type><name>unsigned</name></type> <name>j</name>, <name>k</name></decl>;</decl_stmt>
+	<for>for (<init><expr><name>j</name> = <name>k</name> = 0</expr>;</init> <condition><expr><name><name>source</name><index>[<expr><name>j</name></expr>]</index></name> != '\0'</expr>;</condition> <incr><expr>++<name>j</name></expr></incr>) <block>{
+	    <expr_stmt><expr><call><name>sprintf</name><argument_list>(<argument><expr><name>result</name> + <name>k</name></expr></argument>, <argument><expr>"%02X"</expr></argument>, <argument><expr><call><name>CharOf</name><argument_list>(<argument><expr><name><name>source</name><index>[<expr><name>j</name></expr>]</index></name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><name>k</name> += 2</expr>;</expr_stmt>
+	}</block></for>
+    }</block></then></if>
+    <return>return <expr><name>result</name></expr>;</return>
+}</block></function>
+
+<function><type><name>char</name> *</type>
+<name>x_getenv</name><parameter_list>(<param><decl><type><name>const</name> <name>char</name> *</type><name>name</name></decl></param>)</parameter_list>
+<block>{
+    <return>return <expr><call><name>x_strdup</name><argument_list>(<argument><expr><call><name>x_nonempty</name><argument_list>(<argument><expr><call><name>getenv</name><argument_list>(<argument><expr><name>name</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</return>
+}</block></function>
+
+<comment type="block">/*
+ * Decode a single hex "nibble", returning the nibble as 0-15, or -1 on error.
+ */</comment> <function><type><name>int</name></type>
+<name>x_hex2int</name><parameter_list>(<param><decl><type><name>int</name></type> <name>c</name></decl></param>)</parameter_list>
+<block>{
+    <if>if <condition>(<expr><name>c</name> &gt;= '0' &amp;&amp; <name>c</name> &lt;= '9'</expr>)</condition><then>
+	<return>return <expr><name>c</name> - '0'</expr>;</return></then></if>
+    <if>if <condition>(<expr><name>c</name> &gt;= 'a' &amp;&amp; <name>c</name> &lt;= 'f'</expr>)</condition><then>
+	<return>return <expr><name>c</name> - 'a' + 10</expr>;</return></then></if>
+    <if>if <condition>(<expr><name>c</name> &gt;= 'A' &amp;&amp; <name>c</name> &lt;= 'F'</expr>)</condition><then>
+	<return>return <expr><name>c</name> - 'A' + 10</expr>;</return></then></if>
+    <return>return <expr>-1</expr>;</return>
+}</block></function>
+
+<comment type="block">/*
+ * Check if the given string is nonnull/nonempty.  If so, return a pointer
+ * to the beginning of its content, otherwise return null.
+ */</comment>
+<function><type><name>String</name></type>
+<name>x_nonempty</name><parameter_list>(<param><decl><type><name>String</name></type> <name>s</name></decl></param>)</parameter_list>
+<block>{
+    <if>if <condition>(<expr><name>s</name> != 0</expr>)</condition><then> <block>{
+	<if>if <condition>(<expr>*<name>s</name> == '\0'</expr>)</condition><then> <block>{
+	    <expr_stmt><expr><name>s</name> = 0</expr>;</expr_stmt>
+	}</block></then> <else>else <block>{
+	    <expr_stmt><expr><name>s</name> = <call><name>x_skip_blanks</name><argument_list>(<argument><expr><name>s</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <if>if <condition>(<expr>*<name>s</name> == '\0'</expr>)</condition><then>
+		<expr_stmt><expr><name>s</name> = 0</expr>;</expr_stmt></then></if>
+	}</block></else></if>
+    }</block></then></if>
+    <return>return <expr><name>s</name></expr>;</return>
+}</block></function>
+
+<function><type><name>String</name></type>
+<name>x_skip_blanks</name><parameter_list>(<param><decl><type><name>String</name></type> <name>s</name></decl></param>)</parameter_list>
+<block>{
+    <while>while <condition>(<expr><call><name>isspace</name><argument_list>(<argument><expr><call><name>CharOf</name><argument_list>(<argument><expr>*<name>s</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>)</condition>
+	<expr_stmt><expr>++<name>s</name></expr>;</expr_stmt></while>
+    <return>return <expr><name>s</name></expr>;</return>
+}</block></function>
+
+<function><type><name>String</name></type>
+<name>x_skip_nonblanks</name><parameter_list>(<param><decl><type><name>String</name></type> <name>s</name></decl></param>)</parameter_list>
+<block>{
+    <while>while <condition>(<expr>*<name>s</name> != '\0' &amp;&amp; !<call><name>isspace</name><argument_list>(<argument><expr><call><name>CharOf</name><argument_list>(<argument><expr>*<name>s</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>)</condition>
+	<expr_stmt><expr>++<name>s</name></expr>;</expr_stmt></while>
+    <return>return <expr><name>s</name></expr>;</return>
+}</block></function>
+
+<function><type><name>int</name></type>
+<name>x_strcasecmp</name><parameter_list>(<param><decl><type><name>const</name> <name>char</name> *</type><name>s1</name></decl></param>, <param><decl><type><name>const</name> <name>char</name> *</type><name>s2</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>size_t</name></type> <name>len</name> =<init> <expr><call><name>strlen</name><argument_list>(<argument><expr><name>s1</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr><name>len</name> != <call><name>strlen</name><argument_list>(<argument><expr><name>s2</name></expr></argument>)</argument_list></call></expr>)</condition><then>
+	<return>return <expr>1</expr>;</return></then></if>
+
+    <return>return <expr><call><name>x_strncasecmp</name><argument_list>(<argument><expr><name>s1</name></expr></argument>, <argument><expr><name>s2</name></expr></argument>, <argument><expr>(<name>unsigned</name>) <name>len</name></expr></argument>)</argument_list></call></expr>;</return>
+}</block></function>
+
+<function><type><name>int</name></type>
+<name>x_strncasecmp</name><parameter_list>(<param><decl><type><name>const</name> <name>char</name> *</type><name>s1</name></decl></param>, <param><decl><type><name>const</name> <name>char</name> *</type><name>s2</name></decl></param>, <param><decl><type><name>unsigned</name></type> <name>n</name></decl></param>)</parameter_list>
+<block>{
+    <while>while <condition>(<expr><name>n</name>-- != 0</expr>)</condition> <block>{
+	<decl_stmt><decl><type><name>char</name></type> <name>c1</name> =<init> <expr><call><name>x_toupper</name><argument_list>(<argument><expr>*<name>s1</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+	<decl_stmt><decl><type><name>char</name></type> <name>c2</name> =<init> <expr><call><name>x_toupper</name><argument_list>(<argument><expr>*<name>s2</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+	<if>if <condition>(<expr><name>c1</name> != <name>c2</name></expr>)</condition><then>
+	    <return>return <expr>1</expr>;</return></then></if>
+	<if>if <condition>(<expr><name>c1</name> == 0</expr>)</condition><then>
+	    <break>break;</break></then></if>
+	<expr_stmt><expr><name>s1</name>++</expr>, <expr><name>s2</name>++</expr>;</expr_stmt>
+    }</block></while>
+
+    <return>return <expr>0</expr>;</return>
+}</block></function>
+
+<comment type="block">/*
+ * Allocates a copy of a string
+ */</comment>
+<function><type><name>char</name> *</type>
+<name>x_strdup</name><parameter_list>(<param><decl><type><name>const</name> <name>char</name> *</type><name>s</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>char</name> *</type><name>result</name> =<init> <expr>0</expr></init></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr><name>s</name> != 0</expr>)</condition><then> <block>{
+	<decl_stmt><decl><type><name>char</name> *</type><name>t</name> =<init> <expr><call><name>CastMallocN</name><argument_list>(<argument><expr><name>char</name></expr></argument>, <argument><expr><call><name>strlen</name><argument_list>(<argument><expr><name>s</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+	<if>if <condition>(<expr><name>t</name> != 0</expr>)</condition><then> <block>{
+	    <expr_stmt><expr><call><name>strcpy</name><argument_list>(<argument><expr><name>t</name></expr></argument>, <argument><expr><name>s</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	}</block></then></if>
+	<expr_stmt><expr><name>result</name> = <name>t</name></expr>;</expr_stmt>
+    }</block></then></if>
+    <return>return <expr><name>result</name></expr>;</return>
+}</block></function>
+
+<comment type="block">/*
+ * Returns a pointer to the first occurrence of s2 in s1,
+ * or NULL if there are none.
+ */</comment>
+<function><type><name>char</name> *</type>
+<name>x_strindex</name><parameter_list>(<param><decl><type><name>char</name> *</type><name>s1</name></decl></param>, <param><decl><type><name>const</name> <name>char</name> *</type><name>s2</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>char</name> *</type><name>s3</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>size_t</name></type> <name>s2len</name> =<init> <expr><call><name>strlen</name><argument_list>(<argument><expr><name>s2</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+    <while>while <condition>(<expr>(<name>s3</name> = <call><name>strchr</name><argument_list>(<argument><expr><name>s1</name></expr></argument>, <argument><expr>*<name>s2</name></expr></argument>)</argument_list></call>) != <name>NULL</name></expr>)</condition> <block>{
+	<if>if <condition>(<expr><call><name>strncmp</name><argument_list>(<argument><expr><name>s3</name></expr></argument>, <argument><expr><name>s2</name></expr></argument>, <argument><expr><name>s2len</name></expr></argument>)</argument_list></call> == 0</expr>)</condition><then>
+	    <return>return <expr>(<name>s3</name>)</expr>;</return></then></if>
+	<expr_stmt><expr><name>s1</name> = ++<name>s3</name></expr>;</expr_stmt>
+    }</block></while>
+    <return>return <expr>(<name>NULL</name>)</expr>;</return>
+}</block></function>
+
+<comment type="block">/*
+ * Trims leading/trailing spaces from a copy of the string.
+ */</comment>
+<function><type><name>char</name> *</type>
+<name>x_strtrim</name><parameter_list>(<param><decl><type><name>const</name> <name>char</name> *</type><name>source</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>char</name> *</type><name>result</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>char</name> *</type><name>s</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>char</name> *</type><name>d</name></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr><name>source</name> != 0 &amp;&amp; *<name>source</name> != '\0'</expr>)</condition><then> <block>{
+	<decl_stmt><decl><type><name>char</name> *</type><name>t</name> =<init> <expr><call><name>x_strdup</name><argument_list>(<argument><expr><name>source</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+	<expr_stmt><expr><name>s</name> = <name>t</name></expr>;</expr_stmt>
+	<expr_stmt><expr><name>d</name> = <name>s</name></expr>;</expr_stmt>
+	<while>while <condition>(<expr><call><name>isspace</name><argument_list>(<argument><expr><call><name>CharOf</name><argument_list>(<argument><expr>*<name>s</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>)</condition>
+	    <expr_stmt><expr>++<name>s</name></expr>;</expr_stmt></while>
+	<while>while <condition>(<expr>(*<name>d</name>++ = *<name>s</name>++) != '\0'</expr>)</condition> <block>{
+	    <empty_stmt>;</empty_stmt>
+	}</block></while>
+	<if>if <condition>(<expr>*<name>t</name> != '\0'</expr>)</condition><then> <block>{
+	    <expr_stmt><expr><name>s</name> = <name>t</name> + <call><name>strlen</name><argument_list>(<argument><expr><name>t</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <while>while <condition>(<expr><name>s</name> != <name>t</name> &amp;&amp; <call><name>isspace</name><argument_list>(<argument><expr><call><name>CharOf</name><argument_list>(<argument><expr><name><name>s</name><index>[<expr>-1</expr>]</index></name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>)</condition> <block>{
+		<expr_stmt><expr>*--<name>s</name> = '\0'</expr>;</expr_stmt>
+	    }</block></while>
+	}</block></then></if>
+	<expr_stmt><expr><name>result</name> = <name>t</name></expr>;</expr_stmt>
+    }</block></then> <else>else <block>{
+	<expr_stmt><expr><name>result</name> = <call><name>x_strdup</name><argument_list>(<argument><expr>""</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></else></if>
+    <return>return <expr><name>result</name></expr>;</return>
+}</block></function>
+
+<comment type="block">/*
+ * Avoid using system locale for upper/lowercase conversion, since there are
+ * a few locales where toupper(tolower(c)) != c.
+ */</comment>
+<function><type><name>char</name></type>
+<name>x_toupper</name><parameter_list>(<param><decl><type><name>int</name></type> <name>ch</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>static</name> <name>char</name></type> <name><name>table</name><index>[<expr>256</expr>]</index></name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>char</name></type> <name>result</name> =<init> <expr><name><name>table</name><index>[<expr><call><name>CharOf</name><argument_list>(<argument><expr><name>ch</name></expr></argument>)</argument_list></call></expr>]</index></name></expr></init></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr><name>result</name> == '\0'</expr>)</condition><then> <block>{
+	<decl_stmt><decl><type><name>unsigned</name></type> <name>n</name></decl>;</decl_stmt>
+	<decl_stmt><decl><type><name>const</name> <name>char</name> *</type><name>s</name> =<init> <expr>"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"</expr></init></decl>;</decl_stmt>
+
+	<for>for (<init><expr><name>n</name> = 0</expr>;</init> <condition><expr><name>n</name> &lt; <call><name>sizeof</name><argument_list>(<argument><expr><name>table</name></expr></argument>)</argument_list></call></expr>;</condition> <incr><expr>++<name>n</name></expr></incr>) <block>{
+	    <expr_stmt><expr><name><name>table</name><index>[<expr><name>n</name></expr>]</index></name> = (<name>char</name>) <name>n</name></expr>;</expr_stmt>
+	}</block></for>
+	<for>for (<init><expr><name>n</name> = 0</expr>;</init> <condition><expr><name><name>s</name><index>[<expr><name>n</name></expr>]</index></name> != '\0'</expr>;</condition> <incr><expr>++<name>n</name></expr></incr>) <block>{
+	    <expr_stmt><expr><name><name>table</name><index>[<expr><call><name>CharOf</name><argument_list>(<argument><expr><name><name>s</name><index>[<expr><name>n</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>]</index></name> = <name><name>s</name><index>[<expr><name>n</name> % 26</expr>]</index></name></expr>;</expr_stmt>
+	}</block></for>
+	<expr_stmt><expr><name>result</name> = <name><name>table</name><index>[<expr><call><name>CharOf</name><argument_list>(<argument><expr><name>ch</name></expr></argument>)</argument_list></call></expr>]</index></name></expr>;</expr_stmt>
+    }</block></then></if>
+
+    <return>return <expr><name>result</name></expr>;</return>
+}</block></function>
+</unit>

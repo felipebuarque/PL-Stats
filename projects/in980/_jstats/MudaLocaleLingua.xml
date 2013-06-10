@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit language="Java" dir="" filename="MudaLocaleLingua.java"><package>package <name>in980</name>.<name>rgms</name>.<name>presentation</name>.<name>actions</name>;</package>
+
+<import>import <name>org</name>.<name>apache</name>.<name>struts2</name>.<name>convention</name>.<name>annotation</name>.<name>Action</name>;</import>
+<import>import <name>org</name>.<name>apache</name>.<name>struts2</name>.<name>convention</name>.<name>annotation</name>.<name>Result</name>;</import>
+
+<class><specifier>public</specifier> class <name>MudaLocaleLingua</name> <block>{
+	
+	
+
+}</block></class>
+</unit>

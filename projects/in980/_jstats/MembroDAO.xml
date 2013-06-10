@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit language="Java" dir="" filename="MembroDAO.java"><package>package <name>in980</name>.<name>rgms</name>.<name>persistence</name>;</package>
+
+<import>import <name>in980</name>.<name>rgms</name>.<name>domain</name>.<name>Membro</name>;</import>
+<import>import <name>in980</name>.<name>rgms</name>.<name>domain</name>.<name>TipoMembro</name>;</import>
+<import>import <name>in980</name>.<name>rgms</name>.<name>domain</name>.<name>Usuario</name>;</import>
+<import>import <name>in980</name>.<name>rgms</name>.<name>utils</name>.<name>HibernateUtils</name>;</import>
+
+<import>import <name>java</name>.<name>util</name>.<name>List</name>;</import>
+
+<import>import <name>org</name>.<name>hibernate</name>.<name>Query</name>;</import>
+<import>import <name>org</name>.<name>hibernate</name>.<name>Session</name>;</import>
+
+<decl_stmt><decl><type><specifier>public</specifier> class</type> <name>MembroDAO</name> extends <name>Dao</name>&lt;<name>Membro</name>&gt;<block>{
+	
+	
+	@<expr_stmt><expr><call><name>SuppressWarnings</name><argument_list>(<argument><expr>"unchecked"</expr></argument>)</argument_list></call>
+	protected <name>List</name>&lt;<name>Membro</name>&gt; <call><name>montaLista</name><argument_list>(<argument><expr><name>Membro</name> <name>object</name></expr></argument>, <argument><expr><name>Session</name> <name>s</name></expr></argument>)</argument_list></call> <block>{
+		<expr><name>List</name>&lt;<name>Membro</name>&gt; <name>listaRetorno</name> = <call><name><name>s</name>.<name>createQuery</name></name><argument_list>(<argument><expr>"from " + <call><name>getTabela</name><argument_list>()</argument_list></call>+ 
+				" t where upper(t.nome) like :nome "</expr></argument> )</argument_list></call>
+			.<call><name>setString</name><argument_list>(<argument><expr>"nome"</expr></argument>, <argument><expr>"%" + <call><name><name>object</name>.<name>getNome</name></name><argument_list>()</argument_list></call>.<call><name>toUpperCase</name><argument_list>()</argument_list></call> + "%"</expr></argument>)</argument_list></call>
+			.<call><name>list</name><argument_list>()</argument_list></call></expr>;
+		<return>return <expr><name>listaRetorno</name></expr>;</return></block></expr></expr_stmt>
+	}</block></decl></decl_stmt>
+
+	@<function><type><name>Override</name>
+	<specifier>protected</specifier> <name>String</name></type> <name>getTabela</name><parameter_list>()</parameter_list> <block>{
+		<return>return <expr>"Membro"</expr>;</return>
+	}</block></function>
+
+	@<expr_stmt><expr><call><name>SuppressWarnings</name><argument_list>(<argument><expr>"unchecked"</expr></argument>)</argument_list></call>
+	@<name>Override</name>
+	protected <name>Class</name> <call><name>getTipoClasse</name><argument_list>()</argument_list></call> <block>{
+		<return>return <expr><name>Membro</name>.class</expr>;</return></block></expr></expr_stmt>
+	}
+	
+	@<expr_stmt><expr><call><name>SuppressWarnings</name><argument_list>(<argument><expr>"unchecked"</expr></argument>)</argument_list></call>
+	public <name>List</name>&lt;<name>Membro</name>&gt; <call><name>buscaPorTipo</name><argument_list>(<argument><expr><name>TipoMembro</name> <name>tipo</name></expr></argument>)</argument_list></call> throws <name>Exception</name> <block>{
+		<expr><name>Session</name> <name>s</name>  = <call><name><name>HibernateUtils</name>.<name>getSessionFactory</name></name><argument_list>()</argument_list></call>.<call><name>getCurrentSession</name><argument_list>()</argument_list></call></expr>;
+<comment type="line">//		s.beginTransaction();</comment>
+		<expr><name>Query</name> <name>q</name> = <call><name><name>s</name>.<name>createQuery</name></name><argument_list>(<argument><expr>"from " + <call><name>getTabela</name><argument_list>()</argument_list></call>+ 
+			" t where t.tipo = :tipo "</expr></argument> )</argument_list></call></expr>;		
+		<expr><call><name><name>q</name>.<name>setInteger</name></name><argument_list>(<argument><expr>"tipo"</expr></argument>, <argument><expr><call><name><name>tipo</name>.<name>getId</name></name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;		
+		<expr><name>List</name>&lt;<name>Membro</name>&gt; <name>listaRetorno</name> = <call><name><name>q</name>.<name>list</name></name><argument_list>()</argument_list></call></expr>;
+<comment type="line">//		s.getTransaction().commit();</comment>
+		<return>return <expr><name>listaRetorno</name></expr>;</return></block></expr></expr_stmt>
+	}	
+	
+	@<expr_stmt><expr><call><name>SuppressWarnings</name><argument_list>(<argument><expr>"unchecked"</expr></argument>)</argument_list></call>
+	public <name>List</name>&lt;<name>Membro</name>&gt; <call><name>buscaPorIDTurnAround</name><argument_list>(<argument><expr><name>TipoMembro</name> <name>tipo</name></expr></argument>)</argument_list></call> throws <name>Exception</name> <block>{
+		<expr><name>Session</name> <name>s</name>  = <call><name><name>HibernateUtils</name>.<name>getSessionFactory</name></name><argument_list>()</argument_list></call>.<call><name>getCurrentSession</name><argument_list>()</argument_list></call></expr>;
+<comment type="line">//		s.beginTransaction();</comment>
+		<expr><name>Query</name> <name>q</name> = <call><name><name>s</name>.<name>createQuery</name></name><argument_list>(<argument><expr>"from " + <call><name>getTabela</name><argument_list>()</argument_list></call>+ 
+			" t where t.ID = :ID "</expr></argument> )</argument_list></call></expr>;		
+		<expr><call><name><name>q</name>.<name>setInteger</name></name><argument_list>(<argument><expr>"tipo"</expr></argument>, <argument><expr><call><name><name>tipo</name>.<name>getId</name></name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;		
+		<expr><name>List</name>&lt;<name>Membro</name>&gt; <name>listaRetorno</name> = <call><name><name>q</name>.<name>list</name></name><argument_list>()</argument_list></call></expr>;
+<comment type="line">//		s.getTransaction().commit();</comment>
+		<return>return <expr><name>listaRetorno</name></expr>;</return></block></expr></expr_stmt>
+	}
+	
+	
+	<function><type><specifier>public</specifier> <name>Membro</name></type> <name>buscaPeloUsuario</name><parameter_list>(<param><decl><type><name>Usuario</name></type> <name>usuario</name></decl></param>)</parameter_list> <throws>throws</throws> Exception <block>{		
+		<decl_stmt><decl><type><name>Session</name></type> <name>s</name>  =<init> <expr><call><name><name>HibernateUtils</name>.<name>getSessionFactory</name></name><argument_list>()</argument_list></call>.<call><name>getCurrentSession</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<comment type="line">//		s.beginTransaction();</comment>
+		
+		<decl_stmt><decl><type><name>Query</name></type> <name>q</name> =<init> <expr><call><name><name>s</name>.<name>createQuery</name></name><argument_list>(<argument><expr>"from " + <call><name>getTabela</name><argument_list>()</argument_list></call>+ 
+			" t where t.ajc$interField$in980_rgms_domain_aspect_Autenticacao$usuario.ID = :usuario "</expr></argument> )</argument_list></call></expr></init></decl>;</decl_stmt>
+			
+
+		<expr_stmt><expr><call><name><name>q</name>.<name>setInteger</name></name><argument_list>(<argument><expr>"usuario"</expr></argument>, <argument><expr><call><name><name>usuario</name>.<name>getID</name></name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>		
+		<expr_stmt><expr><name>List</name>&lt;<name>Membro</name>&gt; <name>lista</name> = <call><name><name>q</name>.<name>list</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+		<if>if<condition>(<expr><call><name><name>lista</name>.<name>isEmpty</name></name><argument_list>()</argument_list></call></expr>)</condition><then>
+			<return>return <expr><name>null</name></expr>;</return></then></if>
+<comment type="line">//		s.getTransaction().commit();</comment>
+		<return>return <expr><call><name><name>lista</name>.<name>get</name></name><argument_list>(<argument><expr>0</expr></argument>)</argument_list></call></expr>;</return>		
+	}</block></function>
+
+}
+</unit>

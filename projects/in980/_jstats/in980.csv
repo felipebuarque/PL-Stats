@@ -1,0 +1,19 @@
+FQDN of method,#debug ,#elif ,#elifdef ,#elifndef ,#else,#if ,#ifdef ,#ifndef ,#mdebug 
+in980.velogen.file.FileUtil.prepareFile,0,0,0,0,0,0,0,0,0
+in980.rgms.presentation.OpenSessionFilter.init,0,0,0,0,0,0,0,0,0
+in980.velogen.file.FileUtil.getPropertiesFile,0,0,0,0,0,0,0,0,0
+in980.velogen.parser.VelocityParser.addToContext1,0,0,0,0,0,0,0,0,0
+in980.velogen.file.FileUtil.getMainPropertiesFile,0,0,0,0,0,0,0,0,0
+in980.velogen.file.FileUtil.genericGetPropertiesFile,0,0,0,0,0,0,0,0,0
+Main.testandoVelocity,0,0,0,0,0,0,0,0,0
+Main.teste,0,0,0,0,0,0,0,0,0
+in980.velogen.parser.VelocityParser.processTemplate,0,0,0,0,0,0,0,0,0
+in980.rgms.presentation.AutenticacaoInterceptor.intercept,0,0,0,0,0,0,0,0,0
+in980.velogen.parser.VelocityParser.getCurrentContext,0,0,0,0,0,0,0,0,0
+in980.rgms.presentation.AutenticacaoInterceptor.destroy,0,0,0,0,0,0,0,0,0
+in980.velogen.parser.VelocityParser.main,0,0,0,0,0,0,0,0,0
+in980.rgms.presentation.OpenSessionFilter.destroy,0,0,0,0,0,0,0,0,0
+in980.rgms.presentation.OpenSessionFilter.doFilter,0,0,0,0,0,0,0,0,0
+in980.rgms.presentation.AutenticacaoInterceptor.init,0,0,0,0,0,0,0,0,0
+Main.main,0,0,0,0,0,0,0,0,0
+in980.velogen.parser.VelocityParser.addToContext,0,0,0,0,0,0,0,0,0

@@ -1,0 +1,182 @@
+<configurationModel xmlns="ck.v20090401">
+	<configuration xmlns="">
+		<expression>member</expression>		
+		<transformation>
+			<name>selectScenarios</name>
+			<args>FL01,FL02,FL03,FL04,FL05,FL06,FL07,FL08,FL09,FL10</args>
+		</transformation>
+		<transformation>
+			<name>selectAndMoveComponent</name>
+			<args>Membro.java, /rgms/spl/src</args>
+		</transformation>
+		<transformation>
+			<name>selectAndMoveComponent</name>
+			<args>MembroAction.java, /rgms/spl/src</args>
+		</transformation>
+		<transformation>
+			<name>selectAndMoveComponent</name>
+			<args>MembroDAO.java, /rgms/spl/src</args>
+		</transformation>
+		<transformation>
+			<name>selectAndMoveComponent</name>
+			<args>cadastraMembro.jsp, /rgms/spl/WebContent</args>
+		</transformation>
+		<transformation>
+			<name>selectAndMoveComponent</name>
+			<args>listaMembro.jsp, /rgms/spl/WebContent</args>
+		</transformation>
+		<transformation>
+			<name>selectAndMoveComponent</name>
+			<args>listaMembroGrupo.jsp, /rgms/spl/WebContent</args>
+		</transformation>
+		<transformation>
+			<name>selectAndMoveComponent</name>
+			<args>relPessoalMembro.jsp, /rgms/spl/WebContent</args>
+		</transformation>
+	</configuration>	
+	<configuration xmlns="">
+		<expression>inJournal</expression>
+		<transformation>
+			<name>selectScenarios</name>
+			<args>FL11</args>
+		</transformation>		
+		<transformation>
+			<name>selectAndMoveComponent</name>
+			<args>Publicacao.java, /rgms/spl/src</args>
+		</transformation>
+		<transformation>
+			<name>selectAndMoveComponent</name>
+			<args>ArtigoRevista.java, /rgms/spl/src</args>
+		</transformation>
+		<transformation>
+			<name>selectAndMoveComponent</name>
+			<args>ArtigoRevistaAction.java, /rgms/spl/src</args>
+		</transformation>		
+		<transformation>
+			<name>selectAndMoveComponent</name>
+			<args>ArtigoRevistaDAO.java, /rgms/spl/src</args>
+		</transformation>		
+		<transformation>
+			<name>selectAndMoveComponent</name>
+			<args>cadastra_artigo_revista.jsp, /rgms/spl/WebContent</args>
+		</transformation>		
+		<transformation>
+			<name>selectAndMoveComponent</name>
+			<args>lista_publicacao.jsp, /rgms/spl/WebContent</args>
+		</transformation>				
+	</configuration>	
+	<configuration xmlns="">
+		<expression>inConference</expression>
+		<transformation>
+			<name>selectScenarios</name>
+			<args>FL12,FL17,FL18,FL19,FL20,FL21,FL22</args>
+		</transformation>			
+		<transformation>
+			<name>selectAndMoveComponent</name>
+			<args>Publicacao.java, /rgms/spl/src</args>
+		</transformation>
+		<transformation>
+			<name>selectAndMoveComponent</name>
+			<args>ArtigoConferencia.java, /rgms/spl/src</args>
+		</transformation>
+		<transformation>
+			<name>selectAndMoveComponent</name>
+			<args>ArtigoConferenciaAction.java, /rgms/spl/src</args>
+		</transformation>
+		<transformation>
+			<name>selectAndMoveComponent</name>
+			<args>ArtigoConferenciaDAO.java, /rgms/spl/src</args>
+		</transformation>
+		<transformation>
+			<name>selectAndMoveComponent</name>
+			<args>cadastra_artigo_conferencia.jsp, /rgms/spl/WebContent</args>
+		</transformation>
+		<transformation>
+			<name>selectAndMoveComponent</name>
+			<args>lista_publicacao.jsp, /rgms/spl/WebContent</args>
+		</transformation>		
+	</configuration>	
+	<configuration xmlns="">
+		<expression>masterThesis</expression>
+		<transformation>
+			<name>selectScenarios</name>
+			<args>FL13</args>
+		</transformation>		
+		<transformation>
+			<name>selectAndMoveComponent</name>
+			<args>Publicacao.java, /rgms/spl/src</args>
+		</transformation>
+		<transformation>
+			<name>selectAndMoveComponent</name>
+			<args>DissertacaoMestrado.java, /rgms/spl/src</args>
+		</transformation>
+		<transformation>
+			<name>selectAndMoveComponent</name>
+			<args>DissertacaoMestradoAction.java, /rgms/spl/src</args>
+		</transformation>
+		<transformation>
+			<name>selectAndMoveComponent</name>
+			<args>DissertacaoMestradoDAO.java, /rgms/spl/src</args>
+		</transformation>
+		<transformation>
+			<name>selectAndMoveComponent</name>
+			<args>cadastra_dissertacao_mestrado.jsp, /rgms/spl/WebContent</args>
+		</transformation>
+		<transformation>
+			<name>selectAndMoveComponent</name>
+			<args>lista_publicacao.jsp, /rgms/spl/WebContent</args>
+		</transformation>		
+	</configuration>	
+	<configuration xmlns="">
+		<expression>phDThesis</expression>
+		<transformation>
+			<name>selectScenarios</name>
+			<args>FL14</args>
+		</transformation>		
+		<transformation>
+			<name>selectAndMoveComponent</name>
+			<args>Publicacao.java, /rgms/spl/src</args>
+		</transformation>
+		<transformation>
+			<name>selectAndMoveComponent</name>
+			<args>TeseDoutorado.java, /rgms/spl/src</args>
+		</transformation>
+		<transformation>
+			<name>selectAndMoveComponent</name>
+			<args>TeseDoutoradoAction.java, /rgms/spl/src</args>
+		</transformation>
+		<transformation>
+			<name>selectAndMoveComponent</name>
+			<args>TeseDoutoradoDAO.java, /rgms/spl/src</args>
+		</transformation>
+		<transformation>
+			<name>selectAndMoveComponent</name>
+			<args>cadastra_tese_doutorado.jsp, /rgms/spl/WebContent</args>
+		</transformation>
+		<transformation>
+			<name>selectAndMoveComponent</name>
+			<args>lista_publicacao.jsp, /rgms/spl/WebContent</args>
+		</transformation>		
+	</configuration>	
+	<configuration xmlns="">
+		<expression>portuguese</expression>		
+		<transformation>
+			<name>selectAndMoveComponent</name>
+			<args>in980-rgms_pt.properties, /rgms/spl/src</args>
+		</transformation>				
+	</configuration>	
+	<configuration xmlns="">
+		<expression>english</expression>		
+		<transformation>
+			<name>selectAndMoveComponent</name>
+			<args>in980-rgms_en.properties, /rgms/spl/src</args>
+		</transformation>		
+	</configuration>	
+	<configuration xmlns="">
+		<expression>autenticacao</expression>		
+		<transformation>
+			<name>selectAndMoveComponent</name>
+			<args>in980-rgms_en.properties, /rgms/spl/src</args>
+		</transformation>		
+	</configuration>
+</configurationModel>

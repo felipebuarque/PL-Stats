@@ -1,0 +1,59 @@
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/src
+END
+ConfigurationKnowledge.xml
+K 25
+svn:wc:ra_dav:version-url
+V 105
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/src/ConfigurationKnowledge.xml
+END
+hibernate.cfg.xml
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/src/hibernate.cfg.xml
+END
+in980-rgms_en.properties
+K 25
+svn:wc:ra_dav:version-url
+V 103
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/src/in980-rgms_en.properties
+END
+Main.java
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/src/Main.java
+END
+struts-default.properties
+K 25
+svn:wc:ra_dav:version-url
+V 104
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/src/struts-default.properties
+END
+in980-rgms_pt.properties
+K 25
+svn:wc:ra_dav:version-url
+V 103
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/src/in980-rgms_pt.properties
+END
+struts.xml
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/src/struts.xml
+END
+antenna.properties
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/src/antenna.properties
+END
+struts.properties
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/src/struts.properties
+END

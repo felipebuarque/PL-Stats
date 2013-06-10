@@ -1,0 +1,49 @@
+<unit language="Java" dir="" filename="PublicacaoDAO.java"><package>package <name>in980</name>.<name>rgms</name>.<name>persistence</name>;</package><import>import <name>in980</name>.<name>rgms</name>.<name>domain</name>.<name>Publicacao</name>;</import><import>import <name>java</name>.<name>util</name>.<name>List</name>;</import><import>import <name>org</name>.<name>hibernate</name>.<name>Query</name>;</import><import>import <name>org</name>.<name>hibernate</name>.<name>Session</name>;</import><decl_stmt><decl><type><specifier>public</specifier> class</type><name>PublicacaoDAO</name> extends <name>Dao</name>&lt;<name>Publicacao</name>&gt;<block>{
+
+	@<function><type><name>Override</name><specifier>protected</specifier><name>String</name></type><name>getTabela</name><parameter_list>()</parameter_list><block>{
+		<return>return <expr>"Publicacao"</expr>;</return>
+	}</block></function>
+
+	@<expr_stmt><expr><call><name>SuppressWarnings</name><argument_list>(<argument><expr>"unchecked"</expr></argument>)</argument_list></call>
+	@<name>Override</name>
+	protected <name>Class</name> <call><name>getTipoClasse</name><argument_list>()</argument_list></call> <block>{
+		<return>return <expr><name>Publicacao</name>.class</expr>;</return></block></expr></expr_stmt>
+	}</block></decl></decl_stmt>
+
+	@<expr_stmt><expr><call><name>SuppressWarnings</name><argument_list>(<argument><expr>"unchecked"</expr></argument>)</argument_list></call>
+	@<name>Override</name>
+	protected <name>List</name>&lt;<name>Publicacao</name>&gt; <call><name>montaLista</name><argument_list>(<argument><expr><name>Publicacao</name><name>object</name></expr></argument>,
+			<argument><expr><name>Session</name><name>s</name></expr></argument>)</argument_list></call> <block>{
+		
+		<expr><name>StringBuilder</name><name>sb</name> = new <call><name>StringBuilder</name><argument_list>()</argument_list></call></expr>;	
+		
+		<expr><call><name><name>sb</name>.<name>append</name></name><argument_list>(<argument><expr>" from Publicacao t where 0 = 0 "</expr></argument>)</argument_list></call></expr>;
+		
+		<expr><name>String</name><name>strQuery</name> = <call><name>montaQueryString</name><argument_list>(<argument><expr><name>sb</name></expr></argument>, <argument><expr><name>object</name></expr></argument>)</argument_list></call></expr>; 
+		
+		<expr><name>Query</name><name>q</name> = <call><name><name>s</name>.<name>createQuery</name></name><argument_list>(<argument><expr><name>strQuery</name></expr></argument>)</argument_list></call></expr>;
+		
+		<expr><call><name>montaQuery</name><argument_list>(<argument><expr><name>object</name></expr></argument>, <argument><expr><name>q</name></expr></argument>)</argument_list></call></expr>;		
+		
+		<expr><name>List</name>&lt;<name>Publicacao</name>&gt; <name>listaRetorno</name> = <call><name><name>q</name>.<name>list</name></name><argument_list>()</argument_list></call></expr>;
+		<return>return <expr><name>listaRetorno</name></expr>;</return></block></expr></expr_stmt>
+	}
+
+	<comment type="block">/**
+	 * Hook Method, usado para auxiliar na implementacao com AspectJ 
+	 * @see in980.rgms.persistence.aspect.ListaPublicacaoPorNomeAspect 
+	 * @see in980.rgms.persistence.aspect.ListaPublicacaoPorAnoAspect
+	 * @param object
+	 * @param q
+	 */</comment>
+	<function><type><specifier>private</specifier><name>void</name></type><name>montaQuery</name><parameter_list>(<param><decl><type><name>Publicacao</name></type><name>object</name></decl></param>, <param><decl><type><name>Query</name></type><name>q</name></decl></param>)</parameter_list><block>{		
+	}</block></function>
+	
+	
+	<function><type><specifier>private</specifier><name>String</name></type><name>montaQueryString</name><parameter_list>(<param><decl><type><name>StringBuilder</name></type><name>sb</name></decl></param>, <param><decl><type><name>Publicacao</name></type><name>p</name></decl></param>)</parameter_list><block>{
+		<return>return <expr><call><name><name>sb</name>.<name>toString</name></name><argument_list>()</argument_list></call></expr>;</return>		
+	}</block></function>
+	
+	
+}
+</unit>

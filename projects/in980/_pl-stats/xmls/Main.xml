@@ -1,0 +1,83 @@
+<unit language="Java" dir="" filename="Main.java"><import>import <name>in980</name>.<name>rgms</name>.<name>domain</name>.<name>ArtigoConferencia</name>;</import><import>import <name>in980</name>.<name>rgms</name>.<name>domain</name>.<name>ArtigoRevista</name>;</import><import>import <name>in980</name>.<name>rgms</name>.<name>domain</name>.<name>LinhaPesquisa</name>;</import><import>import <name>in980</name>.<name>rgms</name>.<name>domain</name>.<name>Membro</name>;</import><import>import <name>in980</name>.<name>rgms</name>.<name>domain</name>.<name>Publicacao</name>;</import><import>import <name>in980</name>.<name>rgms</name>.<name>utils</name>.<name>HibernateUtils</name>;</import><import>import <name>java</name>.<name>io</name>.<name>StringWriter</name>;</import><import>import <name>java</name>.<name>util</name>.<name>ArrayList</name>;</import><import>import <name>java</name>.<name>util</name>.<name>List</name>;</import><import>import <name>org</name>.<name>apache</name>.<name>velocity</name>.<name>Template</name>;</import><import>import <name>org</name>.<name>apache</name>.<name>velocity</name>.<name>VelocityContext</name>;</import><import>import <name>org</name>.<name>apache</name>.<name>velocity</name>.<name>app</name>.<name>Velocity</name>;</import><import>import <name>org</name>.<name>hibernate</name>.<name>Session</name>;</import><class><specifier>public</specifier> class <name>Main</name> <block>{
+
+	<function><type><specifier>public</specifier><name>static</name><name>void</name></type><name>main</name><parameter_list>(<param><decl><type><name>String</name><index>[]</index></type><name>args</name></decl></param>)</parameter_list><block>{
+		<try>try <block>{
+			<expr_stmt><expr>new <call><name>Main</name><argument_list>()</argument_list></call>.<call><name>testandoVelocity</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+		}</block></try> <catch>catch (<param><decl><type><name>Exception</name></type><name>e</name></decl></param>) <block>{
+			<comment type="line">// TODO Auto-generated catch block</comment>
+			<expr_stmt><expr><call><name><name>e</name>.<name>printStackTrace</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+		}</block></catch>
+		
+	}</block></function>
+	
+	<function><type><specifier>private</specifier><name>void</name></type><name>testandoVelocity</name><parameter_list>()</parameter_list><throws>throws</throws> Exception<block>{
+		<expr_stmt><expr><call><name><name>Velocity</name>.<name>init</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+
+        <comment type="block">/* lets make a Context and put data into it */</comment>
+
+        <decl_stmt><decl><type><name>VelocityContext</name></type><name>context</name> =<init><expr>new <call><name>VelocityContext</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+
+        <expr_stmt><expr><call><name><name>context</name>.<name>put</name></name><argument_list>(<argument><expr>"name"</expr></argument>, <argument><expr>"Velocity"</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+        <expr_stmt><expr><call><name><name>context</name>.<name>put</name></name><argument_list>(<argument><expr>"project"</expr></argument>, <argument><expr>"Jakarta"</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+        <comment type="block">/* lets render a template */</comment>
+
+        <decl_stmt><decl><type><name>StringWriter</name></type><name>w</name> =<init><expr>new <call><name>StringWriter</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+        
+        <decl_stmt><decl><type><name>Template</name></type><name>template</name> =<init><expr><call><name><name>Velocity</name>.<name>getTemplate</name></name><argument_list>(<argument><expr>"/home/leofernandesmo/workspace/IN980-ResearchGroupManagementSystem/src/testtemplate.vm"</expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+        <comment type="line">//Velocity.mergeTemplate("/home/leofernandesmo/workspace/IN980-ResearchGroupManagementSystem/src/testtemplate.vm", context, w );</comment>
+        <expr_stmt><expr><call><name><name>template</name>.<name>merge</name></name><argument_list>(<argument><expr><name>context</name></expr></argument>, <argument><expr><name>w</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+        <expr_stmt><expr><call><name><name>System</name>.<name>out</name>.<name>println</name></name><argument_list>(<argument><expr>" template : " + <name>w</name></expr></argument> )</argument_list></call></expr>;</expr_stmt>
+
+        <comment type="block">/* lets make our own string to render */</comment>
+
+        <decl_stmt><decl><type><name>String</name></type><name>s</name> =<init><expr>"We are using $project $name to render this."</expr></init></decl>;</decl_stmt>
+        <expr_stmt><expr><name>w</name> = new <call><name>StringWriter</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+        <expr_stmt><expr><call><name><name>Velocity</name>.<name>evaluate</name></name><argument_list>( <argument><expr><name>context</name></expr></argument>, <argument><expr><name>w</name></expr></argument>, <argument><expr>"mystring"</expr></argument>, <argument><expr><name>s</name></expr></argument> )</argument_list></call></expr>;</expr_stmt>
+        <expr_stmt><expr><call><name><name>System</name>.<name>out</name>.<name>println</name></name><argument_list>(<argument><expr>" string : " + <name>w</name></expr></argument> )</argument_list></call></expr>;</expr_stmt>
+
+	}</block></function>
+
+	<function><type><specifier>private</specifier><name>void</name></type><name>teste</name><parameter_list>()</parameter_list><block>{
+		<decl_stmt><decl><type><name>Session</name></type><name>s</name>  =<init><expr><call><name><name>HibernateUtils</name>.<name>getSessionFactory</name></name><argument_list>()</argument_list></call>.<call><name>getCurrentSession</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+		<expr_stmt><expr><call><name><name>s</name>.<name>beginTransaction</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+		
+		<decl_stmt><decl><type><name>Membro</name></type><name>m</name> =<init><expr>new <call><name>Membro</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+		<expr_stmt><expr><call><name><name>m</name>.<name>setNome</name></name><argument_list>(<argument><expr>"Jose"</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name><name>m</name>.<name>setFone</name></name><argument_list>(<argument><expr>"9989897"</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name><name>m</name>.<name>setEmail</name></name><argument_list>(<argument><expr>"a@a"</expr></argument>)</argument_list></call></expr>;</expr_stmt>		
+		<expr_stmt><expr><call><name><name>s</name>.<name>save</name></name><argument_list>(<argument><expr><name>m</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>		
+		
+		<decl_stmt><decl><type><name>Publicacao</name></type><name>p</name> =<init><expr>new <call><name>ArtigoConferencia</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+		<expr_stmt><expr><call><name><name>p</name>.<name>setTitulo</name></name><argument_list>(<argument><expr>"Titulo Teste 1"</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name><name>p</name>.<name>setAno</name></name><argument_list>(<argument><expr>2009</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><name>List</name>&lt;<name>Membro</name>&gt; <name>membros</name> = new <name>ArrayList</name>&lt;<name>Membro</name>&gt;()</expr>;</expr_stmt>
+		<expr_stmt><expr><call><name><name>membros</name>.<name>add</name></name><argument_list>(<argument><expr><name>m</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name><name>p</name>.<name>setAutoresMembros</name></name><argument_list>(<argument><expr><name>membros</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name><name>s</name>.<name>save</name></name><argument_list>(<argument><expr><name>p</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		
+		<decl_stmt><decl><type><name>ArtigoRevista</name></type><name>ar</name> =<init><expr>new <call><name>ArtigoRevista</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+		<expr_stmt><expr><call><name><name>p</name>.<name>setTitulo</name></name><argument_list>(<argument><expr>"Titulo Teste 1"</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name><name>p</name>.<name>setAno</name></name><argument_list>(<argument><expr>2009</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name><name>p</name>.<name>setFilePath</name></name><argument_list>(<argument><expr>"/home/leofernandesmo/woorkspace/teste.jpg"</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name><name>s</name>.<name>save</name></name><argument_list>(<argument><expr><name>ar</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		
+		<decl_stmt><decl><type><name>LinhaPesquisa</name></type><name>lp</name> =<init><expr>new <call><name>LinhaPesquisa</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+		<expr_stmt><expr><call><name><name>lp</name>.<name>setTitulo</name></name><argument_list>(<argument><expr>"Linah Teste 1"</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name><name>lp</name>.<name>setDescricao</name></name><argument_list>(<argument><expr>"Descricao teste 1"</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><name>List</name>&lt;<name>Membro</name>&gt; <name>membros1</name> = new <name>ArrayList</name>&lt;<name>Membro</name>&gt;()</expr>;</expr_stmt>
+		<expr_stmt><expr><call><name><name>membros1</name>.<name>add</name></name><argument_list>(<argument><expr><name>m</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name><name>lp</name>.<name>setMembros</name></name><argument_list>(<argument><expr><name>membros1</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><name>List</name>&lt;<name>Publicacao</name>&gt; <name>publicacoes</name> = new <name>ArrayList</name>&lt;<name>Publicacao</name>&gt;()</expr>;</expr_stmt>
+		<expr_stmt><expr><call><name><name>publicacoes</name>.<name>add</name></name><argument_list>(<argument><expr><name>p</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>		
+		<expr_stmt><expr><call><name><name>lp</name>.<name>setPublicacoes</name></name><argument_list>(<argument><expr><name>publicacoes</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name><name>s</name>.<name>save</name></name><argument_list>(<argument><expr><name>lp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		
+		<expr_stmt><expr><call><name><name>s</name>.<name>getTransaction</name></name><argument_list>()</argument_list></call>.<call><name>commit</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name><name>HibernateUtils</name>.<name>getSessionFactory</name></name><argument_list>()</argument_list></call>.<call><name>close</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+		
+	}</block></function>
+	
+	
+}</block></class></unit>

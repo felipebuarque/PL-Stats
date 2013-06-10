@@ -1,0 +1,2620 @@
+<unit xmlns="http://www.sdml.info/srcML/src" xmlns:cpp="http://www.sdml.info/srcML/cpp" language="C" dir="" filename="TekPrsTbl.c"><comment type="block">/* $XTermId: TekPrsTbl.c,v 1.8 2006/02/13 01:14:57 tom Exp $ */</comment>
+
+<comment type="block">/*
+ * Copyright 1987 by Digital Equipment Corporation, Maynard, Massachusetts.
+ *
+ *                         All Rights Reserved
+ *
+ * Permission to use, copy, modify, and distribute this software and its
+ * documentation for any purpose and without fee is hereby granted,
+ * provided that the above copyright notice appear in all copies and that
+ * both that copyright notice and this permission notice appear in
+ * supporting documentation, and that the name of Digital Equipment
+ * Corporation not be used in advertising or publicity pertaining to
+ * distribution of the software without specific, written prior permission.
+ *
+ *
+ * DIGITAL DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
+ * ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
+ * DIGITAL BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR
+ * ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+ * WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+ * ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+ * SOFTWARE.
+ */</comment>
+<comment type="block">/* $XFree86: xc/programs/xterm/TekPrsTbl.c,v 3.5 2006/02/13 01:14:57 dickey Exp $ */</comment>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;Tekparse.h&gt;</cpp:file></cpp:include>
+
+<decl_stmt><decl><type><name>Const</name> <name>int</name></type> <name><name>Talptable</name><index>[]</index></name> =<init>		<comment type="block">/* US (^_) normal alpha mode */</comment>
+<expr><block>{
+<comment type="block">/*	NUL		SOH		STX		ETX	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	EOT		ENQ		ACK		BEL	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_BEL</name></expr>,
+<comment type="block">/*	BS		HT		NL		VT	*/</comment>
+<expr><name>CASE_BS</name></expr>,
+<expr><name>CASE_TAB</name></expr>,
+<expr><name>CASE_LF</name></expr>,
+<expr><name>CASE_UP</name></expr>,
+<comment type="block">/*	NP		CR		SO		SI	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_CR</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	DLE		DC1		DC2		DC3	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	DC4		NAK		SYN		ETB	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	CAN		EM		SUB		ESC	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_ESC_STATE</name></expr>,
+<comment type="block">/*	FS		GS		RS		US	*/</comment>
+<expr><name>CASE_PT_STATE</name></expr>,
+<expr><name>CASE_PLT_STATE</name></expr>,
+<expr><name>CASE_IPL_STATE</name></expr>,
+<expr><name>CASE_ALP_STATE</name></expr>,
+<comment type="block">/*	SP		!		"		#	*/</comment>
+<expr><name>CASE_SP</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<comment type="block">/*	$		%		&amp;		'	*/</comment>
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<comment type="block">/*	(		)		*		+	*/</comment>
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<comment type="block">/*	,		-		.		/	*/</comment>
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<comment type="block">/*	0		1		2		3	*/</comment>
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<comment type="block">/*	4		5		6		7	*/</comment>
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<comment type="block">/*	8		9		:		;	*/</comment>
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<comment type="block">/*	&lt;		=		&gt;		?	*/</comment>
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<comment type="block">/*	@		A		B		C	*/</comment>
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<comment type="block">/*	D		E		F		G	*/</comment>
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<comment type="block">/*	H		I		J		K	*/</comment>
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<comment type="block">/*	L		M		N		O	*/</comment>
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<comment type="block">/*	P		Q		R		S	*/</comment>
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<comment type="block">/*	T		U		V		W	*/</comment>
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<comment type="block">/*	X		Y		Z		[	*/</comment>
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<comment type="block">/*	\		]		^		_	*/</comment>
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<comment type="block">/*	`		a		b		c	*/</comment>
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<comment type="block">/*	d		e		f		g	*/</comment>
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<comment type="block">/*	h		i		j		k	*/</comment>
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<comment type="block">/*	l		m		n		o	*/</comment>
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<comment type="block">/*	p		q		r		s	*/</comment>
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<comment type="block">/*	t		u		v		w	*/</comment>
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<comment type="block">/*	x		y		z		{	*/</comment>
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<comment type="block">/*	|		}		~		DEL	*/</comment>
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x80            0x81            0x82            0x83    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x84            0x85            0x86            0x87    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x88            0x89            0x8a            0x8b    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x8c            0x8d            0x8e            0x8f    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x90            0x91            0x92            0x93    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x94            0x95            0x96            0x97    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x99            0x99            0x9a            0x9b    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x9c            0x9d            0x9e            0x9f    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      nobreakspace    exclamdown      cent            sterling        */</comment>
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<comment type="block">/*      currency        yen             brokenbar       section         */</comment>
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<comment type="block">/*      diaeresis       copyright       ordfeminine     guillemotleft   */</comment>
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<comment type="block">/*      notsign         hyphen          registered      macron          */</comment>
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<comment type="block">/*      degree          plusminus       twosuperior     threesuperior   */</comment>
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<comment type="block">/*      acute           mu              paragraph       periodcentered  */</comment>
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<comment type="block">/*      cedilla         onesuperior     masculine       guillemotright  */</comment>
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<comment type="block">/*      onequarter      onehalf         threequarters   questiondown    */</comment>
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<comment type="block">/*      Agrave          Aacute          Acircumflex     Atilde          */</comment>
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<comment type="block">/*      Adiaeresis      Aring           AE              Ccedilla        */</comment>
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<comment type="block">/*      Egrave          Eacute          Ecircumflex     Ediaeresis      */</comment>
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<comment type="block">/*      Igrave          Iacute          Icircumflex     Idiaeresis      */</comment>
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<comment type="block">/*      Eth             Ntilde          Ograve          Oacute          */</comment>
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<comment type="block">/*      Ocircumflex     Otilde          Odiaeresis      multiply        */</comment>
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<comment type="block">/*      Ooblique        Ugrave          Uacute          Ucircumflex     */</comment>
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<comment type="block">/*      Udiaeresis      Yacute          Thorn           ssharp          */</comment>
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<comment type="block">/*      agrave          aacute          acircumflex     atilde          */</comment>
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<comment type="block">/*      adiaeresis      aring           ae              ccedilla        */</comment>
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<comment type="block">/*      egrave          eacute          ecircumflex     ediaeresis      */</comment>
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<comment type="block">/*      igrave          iacute          icircumflex     idiaeresis      */</comment>
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<comment type="block">/*      eth             ntilde          ograve          oacute          */</comment>
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<comment type="block">/*      ocircumflex     otilde          odiaeresis      division        */</comment>
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<comment type="block">/*      oslash          ugrave          uacute          ucircumflex     */</comment>
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<comment type="block">/*      udiaeresis      yacute          thorn           ydiaeresis      */</comment>
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+<expr><name>CASE_PRINT</name></expr>,
+}</block></expr></init></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>Const</name> <name>int</name></type> <name><name>Tbestable</name><index>[]</index></name> =<init>		<comment type="block">/* ESC while in bypass state */</comment>
+<expr><block>{
+<comment type="block">/*	NUL		SOH		STX		ETX	*/</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_VT_MODE</name></expr>,
+<comment type="block">/*	EOT		ENQ		ACK		BEL	*/</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_REPORT</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BEL</name></expr>,
+<comment type="block">/*	BS		HT		NL		VT	*/</comment>
+<expr><name>CASE_BS</name></expr>,
+<expr><name>CASE_TAB</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_UP</name></expr>,
+<comment type="block">/*	NP		CR		SO		SI	*/</comment>
+<expr><name>CASE_PAGE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<comment type="block">/*	DLE		DC1		DC2		DC3	*/</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<comment type="block">/*	DC4		NAK		SYN		ETB	*/</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_COPY</name></expr>,
+<comment type="block">/*	CAN		EM		SUB		ESC	*/</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_GIN</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	FS		GS		RS		US	*/</comment>
+<expr><name>CASE_SPT_STATE</name></expr>,
+<expr><name>CASE_PLT_STATE</name></expr>,
+<expr><name>CASE_IPL_STATE</name></expr>,
+<expr><name>CASE_ALP_STATE</name></expr>,
+<comment type="block">/*	SP		!		"		#	*/</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<comment type="block">/*	$		%		&amp;		'	*/</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<comment type="block">/*	(		)		*		+	*/</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<comment type="block">/*	,		-		.		/	*/</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<comment type="block">/*	0		1		2		3	*/</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<comment type="block">/*	4		5		6		7	*/</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<comment type="block">/*	8		9		:		;	*/</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<comment type="block">/*	&lt;		=		&gt;		?	*/</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<comment type="block">/*	@		A		B		C	*/</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<comment type="block">/*	D		E		F		G	*/</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<comment type="block">/*	H		I		J		K	*/</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<comment type="block">/*	L		M		N		O	*/</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<comment type="block">/*	P		Q		R		S	*/</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<comment type="block">/*	T		U		V		W	*/</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<comment type="block">/*	X		Y		Z		[	*/</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<comment type="block">/*	\		]		^		_	*/</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<comment type="block">/*	`		a		b		c	*/</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<comment type="block">/*	d		e		f		g	*/</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<comment type="block">/*	h		i		j		k	*/</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<comment type="block">/*	l		m		n		o	*/</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<comment type="block">/*	p		q		r		s	*/</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<comment type="block">/*	t		u		v		w	*/</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<comment type="block">/*	x		y		z		{	*/</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<comment type="block">/*	|		}		~		DEL	*/</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<comment type="block">/*      0x80            0x81            0x82            0x83    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x84            0x85            0x86            0x87    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x88            0x89            0x8a            0x8b    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x8c            0x8d            0x8e            0x8f    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x90            0x91            0x92            0x93    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x94            0x95            0x96            0x97    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x99            0x99            0x9a            0x9b    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x9c            0x9d            0x9e            0x9f    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      nobreakspace    exclamdown      cent            sterling        */</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<comment type="block">/*      currency        yen             brokenbar       section         */</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<comment type="block">/*      diaeresis       copyright       ordfeminine     guillemotleft   */</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<comment type="block">/*      notsign         hyphen          registered      macron          */</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<comment type="block">/*      degree          plusminus       twosuperior     threesuperior   */</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<comment type="block">/*      acute           mu              paragraph       periodcentered  */</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<comment type="block">/*      cedilla         onesuperior     masculine       guillemotright  */</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<comment type="block">/*      onequarter      onehalf         threequarters   questiondown    */</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<comment type="block">/*      Agrave          Aacute          Acircumflex     Atilde          */</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<comment type="block">/*      Adiaeresis      Aring           AE              Ccedilla        */</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<comment type="block">/*      Egrave          Eacute          Ecircumflex     Ediaeresis      */</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<comment type="block">/*      Igrave          Iacute          Icircumflex     Idiaeresis      */</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<comment type="block">/*      Eth             Ntilde          Ograve          Oacute          */</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<comment type="block">/*      Ocircumflex     Otilde          Odiaeresis      multiply        */</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<comment type="block">/*      Ooblique        Ugrave          Uacute          Ucircumflex     */</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<comment type="block">/*      Udiaeresis      Yacute          Thorn           ssharp          */</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<comment type="block">/*      agrave          aacute          acircumflex     atilde          */</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<comment type="block">/*      adiaeresis      aring           ae              ccedilla        */</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<comment type="block">/*      egrave          eacute          ecircumflex     ediaeresis      */</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<comment type="block">/*      igrave          iacute          icircumflex     idiaeresis      */</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<comment type="block">/*      eth             ntilde          ograve          oacute          */</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<comment type="block">/*      ocircumflex     otilde          odiaeresis      division        */</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<comment type="block">/*      oslash          ugrave          uacute          ucircumflex     */</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<comment type="block">/*      udiaeresis      yacute          thorn           ydiaeresis      */</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_BYP_STATE</name></expr>,
+}</block></expr></init></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>Const</name> <name>int</name></type> <name><name>Tbyptable</name><index>[]</index></name> =<init>		<comment type="block">/* ESC CAN (^X) bypass state */</comment>
+<expr><block>{
+<comment type="block">/*	NUL		SOH		STX		ETX	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	EOT		ENQ		ACK		BEL	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_BEL</name></expr>,
+<comment type="block">/*	BS		HT		NL		VT	*/</comment>
+<expr><name>CASE_BS</name></expr>,
+<expr><name>CASE_TAB</name></expr>,
+<expr><name>CASE_LF</name></expr>,
+<expr><name>CASE_UP</name></expr>,
+<comment type="block">/*	NP		CR		SO		SI	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_CR</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	DLE		DC1		DC2		DC3	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	DC4		NAK		SYN		ETB	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	CAN		EM		SUB		ESC	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_BES_STATE</name></expr>,
+<comment type="block">/*	FS		GS		RS		US	*/</comment>
+<expr><name>CASE_PT_STATE</name></expr>,
+<expr><name>CASE_PLT_STATE</name></expr>,
+<expr><name>CASE_IPL_STATE</name></expr>,
+<expr><name>CASE_ALP_STATE</name></expr>,
+<comment type="block">/*	SP		!		"		#	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	$		%		&amp;		'	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	(		)		*		+	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	,		-		.		/	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	0		1		2		3	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	4		5		6		7	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	8		9		:		;	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	&lt;		=		&gt;		?	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	@		A		B		C	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	D		E		F		G	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	H		I		J		K	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	L		M		N		O	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	P		Q		R		S	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	T		U		V		W	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	X		Y		Z		[	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	\		]		^		_	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	`		a		b		c	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	d		e		f		g	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	h		i		j		k	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	l		m		n		o	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	p		q		r		s	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	t		u		v		w	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	x		y		z		{	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	|		}		~		DEL	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x80            0x81            0x82            0x83    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x84            0x85            0x86            0x87    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x88            0x89            0x8a            0x8b    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x8c            0x8d            0x8e            0x8f    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x90            0x91            0x92            0x93    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x94            0x95            0x96            0x97    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x99            0x99            0x9a            0x9b    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x9c            0x9d            0x9e            0x9f    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      nobreakspace    exclamdown      cent            sterling        */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      currency        yen             brokenbar       section         */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      diaeresis       copyright       ordfeminine     guillemotleft   */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      notsign         hyphen          registered      macron          */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      degree          plusminus       twosuperior     threesuperior   */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      acute           mu              paragraph       periodcentered  */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      cedilla         onesuperior     masculine       guillemotright  */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      onequarter      onehalf         threequarters   questiondown    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      Agrave          Aacute          Acircumflex     Atilde          */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      Adiaeresis      Aring           AE              Ccedilla        */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      Egrave          Eacute          Ecircumflex     Ediaeresis      */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      Igrave          Iacute          Icircumflex     Idiaeresis      */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      Eth             Ntilde          Ograve          Oacute          */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      Ocircumflex     Otilde          Odiaeresis      multiply        */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      Ooblique        Ugrave          Uacute          Ucircumflex     */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      Udiaeresis      Yacute          Thorn           ssharp          */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      agrave          aacute          acircumflex     atilde          */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      adiaeresis      aring           ae              ccedilla        */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      egrave          eacute          ecircumflex     ediaeresis      */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      igrave          iacute          icircumflex     idiaeresis      */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      eth             ntilde          ograve          oacute          */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      ocircumflex     otilde          odiaeresis      division        */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      oslash          ugrave          uacute          ucircumflex     */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      udiaeresis      yacute          thorn           ydiaeresis      */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+}</block></expr></init></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>Const</name> <name>int</name></type> <name><name>Tesctable</name><index>[]</index></name> =<init>		<comment type="block">/* ESC */</comment>
+<expr><block>{
+<comment type="block">/*	NUL		SOH		STX		ETX	*/</comment>
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_VT_MODE</name></expr>,
+<comment type="block">/*	EOT		ENQ		ACK		BEL	*/</comment>
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_REPORT</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_BEL</name></expr>,
+<comment type="block">/*	BS		HT		NL		VT	*/</comment>
+<expr><name>CASE_BS</name></expr>,
+<expr><name>CASE_TAB</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_UP</name></expr>,
+<comment type="block">/*	NP		CR		SO		SI	*/</comment>
+<expr><name>CASE_PAGE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_APL</name></expr>,
+<expr><name>CASE_ASCII</name></expr>,
+<comment type="block">/*	DLE		DC1		DC2		DC3	*/</comment>
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<comment type="block">/*	DC4		NAK		SYN		ETB	*/</comment>
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_COPY</name></expr>,
+<comment type="block">/*	CAN		EM		SUB		ESC	*/</comment>
+<expr><name>CASE_BYP_STATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_GIN</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	FS		GS		RS		US	*/</comment>
+<expr><name>CASE_SPT_STATE</name></expr>,
+<expr><name>CASE_PLT_STATE</name></expr>,
+<expr><name>CASE_IPL_STATE</name></expr>,
+<expr><name>CASE_ALP_STATE</name></expr>,
+<comment type="block">/*	SP		!		"		#	*/</comment>
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<comment type="block">/*	$		%		&amp;		'	*/</comment>
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<comment type="block">/*	(		)		*		+	*/</comment>
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<comment type="block">/*	,		-		.		/	*/</comment>
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<comment type="block">/*	0		1		2		3	*/</comment>
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<comment type="block">/*	4		5		6		7	*/</comment>
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<comment type="block">/*	8		9		:		;	*/</comment>
+<expr><name>CASE_CHAR_SIZE</name></expr>,
+<expr><name>CASE_CHAR_SIZE</name></expr>,
+<expr><name>CASE_CHAR_SIZE</name></expr>,
+<expr><name>CASE_CHAR_SIZE</name></expr>,
+<comment type="block">/*	&lt;		=		&gt;		?	*/</comment>
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<comment type="block">/*	@		A		B		C	*/</comment>
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<comment type="block">/*	D		E		F		G	*/</comment>
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<comment type="block">/*	H		I		J		K	*/</comment>
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<comment type="block">/*	L		M		N		O	*/</comment>
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<comment type="block">/*	P		Q		R		S	*/</comment>
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<comment type="block">/*	T		U		V		W	*/</comment>
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<comment type="block">/*	X		Y		Z		[	*/</comment>
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<comment type="block">/*	\		]		^		_	*/</comment>
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_OSC</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<comment type="block">/*	`		a		b		c	*/</comment>
+<expr><name>CASE_BEAM_VEC</name></expr>,
+<expr><name>CASE_BEAM_VEC</name></expr>,
+<expr><name>CASE_BEAM_VEC</name></expr>,
+<expr><name>CASE_BEAM_VEC</name></expr>,
+<comment type="block">/*	d		e		f		g	*/</comment>
+<expr><name>CASE_BEAM_VEC</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_BEAM_VEC</name></expr>,
+<comment type="block">/*	h		i		j		k	*/</comment>
+<expr><name>CASE_BEAM_VEC</name></expr>,
+<expr><name>CASE_BEAM_VEC</name></expr>,
+<expr><name>CASE_BEAM_VEC</name></expr>,
+<expr><name>CASE_BEAM_VEC</name></expr>,
+<comment type="block">/*	l		m		n		o	*/</comment>
+<expr><name>CASE_BEAM_VEC</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_BEAM_VEC</name></expr>,
+<comment type="block">/*	p		q		r		s	*/</comment>
+<expr><name>CASE_BEAM_VEC</name></expr>,
+<expr><name>CASE_BEAM_VEC</name></expr>,
+<expr><name>CASE_BEAM_VEC</name></expr>,
+<expr><name>CASE_BEAM_VEC</name></expr>,
+<comment type="block">/*	t		u		v		w	*/</comment>
+<expr><name>CASE_BEAM_VEC</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_BEAM_VEC</name></expr>,
+<comment type="block">/*	x		y		z		{	*/</comment>
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<comment type="block">/*	|		}		~		DEL	*/</comment>
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_CURSTATE</name></expr>,
+<comment type="block">/*      0x80            0x81            0x82            0x83    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x84            0x85            0x86            0x87    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x88            0x89            0x8a            0x8b    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x8c            0x8d            0x8e            0x8f    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x90            0x91            0x92            0x93    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x94            0x95            0x96            0x97    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x99            0x99            0x9a            0x9b    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x9c            0x9d            0x9e            0x9f    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      nobreakspace    exclamdown      cent            sterling        */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      currency        yen             brokenbar       section         */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      diaeresis       copyright       ordfeminine     guillemotleft   */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      notsign         hyphen          registered      macron          */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      degree          plusminus       twosuperior     threesuperior   */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      acute           mu              paragraph       periodcentered  */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      cedilla         onesuperior     masculine       guillemotright  */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      onequarter      onehalf         threequarters   questiondown    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      Agrave          Aacute          Acircumflex     Atilde          */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      Adiaeresis      Aring           AE              Ccedilla        */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      Egrave          Eacute          Ecircumflex     Ediaeresis      */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      Igrave          Iacute          Icircumflex     Idiaeresis      */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      Eth             Ntilde          Ograve          Oacute          */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      Ocircumflex     Otilde          Odiaeresis      multiply        */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      Ooblique        Ugrave          Uacute          Ucircumflex     */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      Udiaeresis      Yacute          Thorn           ssharp          */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      agrave          aacute          acircumflex     atilde          */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      adiaeresis      aring           ae              ccedilla        */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      egrave          eacute          ecircumflex     ediaeresis      */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      igrave          iacute          icircumflex     idiaeresis      */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      eth             ntilde          ograve          oacute          */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      ocircumflex     otilde          odiaeresis      division        */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      oslash          ugrave          uacute          ucircumflex     */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      udiaeresis      yacute          thorn           ydiaeresis      */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+}</block></expr></init></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>Const</name> <name>int</name></type> <name><name>Tipltable</name><index>[]</index></name> =<init>		<comment type="block">/* RS (^^) incremental plot */</comment>
+<expr><block>{
+<comment type="block">/*	NUL		SOH		STX		ETX	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	EOT		ENQ		ACK		BEL	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_BEL</name></expr>,
+<comment type="block">/*	BS		HT		NL		VT	*/</comment>
+<expr><name>CASE_BS</name></expr>,
+<expr><name>CASE_TAB</name></expr>,
+<expr><name>CASE_LF</name></expr>,
+<expr><name>CASE_UP</name></expr>,
+<comment type="block">/*	NP		CR		SO		SI	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_CR</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	DLE		DC1		DC2		DC3	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	DC4		NAK		SYN		ETB	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	CAN		EM		SUB		ESC	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_ESC_STATE</name></expr>,
+<comment type="block">/*	FS		GS		RS		US	*/</comment>
+<expr><name>CASE_PT_STATE</name></expr>,
+<expr><name>CASE_PLT_STATE</name></expr>,
+<expr><name>CASE_IPL_STATE</name></expr>,
+<expr><name>CASE_ALP_STATE</name></expr>,
+<comment type="block">/*	SP		!		"		#	*/</comment>
+<expr><name>CASE_PENUP</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	$		%		&amp;		'	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	(		)		*		+	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	,		-		.		/	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	0		1		2		3	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	4		5		6		7	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	8		9		:		;	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	&lt;		=		&gt;		?	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	@		A		B		C	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IPL_POINT</name></expr>,
+<expr><name>CASE_IPL_POINT</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	D		E		F		G	*/</comment>
+<expr><name>CASE_IPL_POINT</name></expr>,
+<expr><name>CASE_IPL_POINT</name></expr>,
+<expr><name>CASE_IPL_POINT</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	H		I		J		K	*/</comment>
+<expr><name>CASE_IPL_POINT</name></expr>,
+<expr><name>CASE_IPL_POINT</name></expr>,
+<expr><name>CASE_IPL_POINT</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	L		M		N		O	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	P		Q		R		S	*/</comment>
+<expr><name>CASE_PENDOWN</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	T		U		V		W	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	X		Y		Z		[	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	\		]		^		_	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	`		a		b		c	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	d		e		f		g	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	h		i		j		k	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	l		m		n		o	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	p		q		r		s	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	t		u		v		w	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	x		y		z		{	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	|		}		~		DEL	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x80            0x81            0x82            0x83    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x84            0x85            0x86            0x87    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x88            0x89            0x8a            0x8b    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x8c            0x8d            0x8e            0x8f    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x90            0x91            0x92            0x93    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x94            0x95            0x96            0x97    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x99            0x99            0x9a            0x9b    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x9c            0x9d            0x9e            0x9f    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      nobreakspace    exclamdown      cent            sterling        */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      currency        yen             brokenbar       section         */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      diaeresis       copyright       ordfeminine     guillemotleft   */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      notsign         hyphen          registered      macron          */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      degree          plusminus       twosuperior     threesuperior   */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      acute           mu              paragraph       periodcentered  */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      cedilla         onesuperior     masculine       guillemotright  */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      onequarter      onehalf         threequarters   questiondown    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      Agrave          Aacute          Acircumflex     Atilde          */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      Adiaeresis      Aring           AE              Ccedilla        */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      Egrave          Eacute          Ecircumflex     Ediaeresis      */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      Igrave          Iacute          Icircumflex     Idiaeresis      */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      Eth             Ntilde          Ograve          Oacute          */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      Ocircumflex     Otilde          Odiaeresis      multiply        */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      Ooblique        Ugrave          Uacute          Ucircumflex     */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      Udiaeresis      Yacute          Thorn           ssharp          */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      agrave          aacute          acircumflex     atilde          */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      adiaeresis      aring           ae              ccedilla        */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      egrave          eacute          ecircumflex     ediaeresis      */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      igrave          iacute          icircumflex     idiaeresis      */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      eth             ntilde          ograve          oacute          */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      ocircumflex     otilde          odiaeresis      division        */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      oslash          ugrave          uacute          ucircumflex     */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      udiaeresis      yacute          thorn           ydiaeresis      */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+}</block></expr></init></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>Const</name> <name>int</name></type> <name><name>Tplttable</name><index>[]</index></name> =<init>		<comment type="block">/* GS (^]) graph (plot) mode */</comment>
+<expr><block>{
+<comment type="block">/*	NUL		SOH		STX		ETX	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	EOT		ENQ		ACK		BEL	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_BEL</name></expr>,
+<comment type="block">/*	BS		HT		NL		VT	*/</comment>
+<expr><name>CASE_BS</name></expr>,
+<expr><name>CASE_TAB</name></expr>,
+<expr><name>CASE_LF</name></expr>,
+<expr><name>CASE_UP</name></expr>,
+<comment type="block">/*	NP		CR		SO		SI	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_CR</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	DLE		DC1		DC2		DC3	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	DC4		NAK		SYN		ETB	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	CAN		EM		SUB		ESC	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_ESC_STATE</name></expr>,
+<comment type="block">/*	FS		GS		RS		US	*/</comment>
+<expr><name>CASE_PT_STATE</name></expr>,
+<expr><name>CASE_PLT_STATE</name></expr>,
+<expr><name>CASE_IPL_STATE</name></expr>,
+<expr><name>CASE_ALP_STATE</name></expr>,
+<comment type="block">/*	SP		!		"		#	*/</comment>
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<comment type="block">/*	$		%		&amp;		'	*/</comment>
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<comment type="block">/*	(		)		*		+	*/</comment>
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<comment type="block">/*	,		-		.		/	*/</comment>
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<comment type="block">/*	0		1		2		3	*/</comment>
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<comment type="block">/*	4		5		6		7	*/</comment>
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<comment type="block">/*	8		9		:		;	*/</comment>
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<comment type="block">/*	&lt;		=		&gt;		?	*/</comment>
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<comment type="block">/*	@		A		B		C	*/</comment>
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<comment type="block">/*	D		E		F		G	*/</comment>
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<comment type="block">/*	H		I		J		K	*/</comment>
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<comment type="block">/*	L		M		N		O	*/</comment>
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<comment type="block">/*	P		Q		R		S	*/</comment>
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<comment type="block">/*	T		U		V		W	*/</comment>
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<comment type="block">/*	X		Y		Z		[	*/</comment>
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<comment type="block">/*	\		]		^		_	*/</comment>
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<comment type="block">/*	`		a		b		c	*/</comment>
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<comment type="block">/*	d		e		f		g	*/</comment>
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<comment type="block">/*	h		i		j		k	*/</comment>
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<comment type="block">/*	l		m		n		o	*/</comment>
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<comment type="block">/*	p		q		r		s	*/</comment>
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<comment type="block">/*	t		u		v		w	*/</comment>
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<comment type="block">/*	x		y		z		{	*/</comment>
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<comment type="block">/*	|		}		~		DEL	*/</comment>
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<expr><name>CASE_PLT_VEC</name></expr>,
+<comment type="block">/*      0x80            0x81            0x82            0x83    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x84            0x85            0x86            0x87    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x88            0x89            0x8a            0x8b    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x8c            0x8d            0x8e            0x8f    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x90            0x91            0x92            0x93    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x94            0x95            0x96            0x97    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x99            0x99            0x9a            0x9b    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x9c            0x9d            0x9e            0x9f    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      nobreakspace    exclamdown      cent            sterling        */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      currency        yen             brokenbar       section         */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      diaeresis       copyright       ordfeminine     guillemotleft   */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      notsign         hyphen          registered      macron          */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      degree          plusminus       twosuperior     threesuperior   */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      acute           mu              paragraph       periodcentered  */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      cedilla         onesuperior     masculine       guillemotright  */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      onequarter      onehalf         threequarters   questiondown    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      Agrave          Aacute          Acircumflex     Atilde          */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      Adiaeresis      Aring           AE              Ccedilla        */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      Egrave          Eacute          Ecircumflex     Ediaeresis      */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      Igrave          Iacute          Icircumflex     Idiaeresis      */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      Eth             Ntilde          Ograve          Oacute          */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      Ocircumflex     Otilde          Odiaeresis      multiply        */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      Ooblique        Ugrave          Uacute          Ucircumflex     */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      Udiaeresis      Yacute          Thorn           ssharp          */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      agrave          aacute          acircumflex     atilde          */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      adiaeresis      aring           ae              ccedilla        */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      egrave          eacute          ecircumflex     ediaeresis      */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      igrave          iacute          icircumflex     idiaeresis      */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      eth             ntilde          ograve          oacute          */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      ocircumflex     otilde          odiaeresis      division        */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      oslash          ugrave          uacute          ucircumflex     */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      udiaeresis      yacute          thorn           ydiaeresis      */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+}</block></expr></init></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>Const</name> <name>int</name></type> <name><name>Tpttable</name><index>[]</index></name> =<init>		<comment type="block">/* FS (^\) point plot mode */</comment>
+<expr><block>{
+<comment type="block">/*	NUL		SOH		STX		ETX	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	EOT		ENQ		ACK		BEL	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_BEL</name></expr>,
+<comment type="block">/*	BS		HT		NL		VT	*/</comment>
+<expr><name>CASE_BS</name></expr>,
+<expr><name>CASE_TAB</name></expr>,
+<expr><name>CASE_LF</name></expr>,
+<expr><name>CASE_UP</name></expr>,
+<comment type="block">/*	NP		CR		SO		SI	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_CR</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	DLE		DC1		DC2		DC3	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	DC4		NAK		SYN		ETB	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	CAN		EM		SUB		ESC	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_ESC_STATE</name></expr>,
+<comment type="block">/*	FS		GS		RS		US	*/</comment>
+<expr><name>CASE_PT_STATE</name></expr>,
+<expr><name>CASE_PLT_STATE</name></expr>,
+<expr><name>CASE_IPL_STATE</name></expr>,
+<expr><name>CASE_ALP_STATE</name></expr>,
+<comment type="block">/*	SP		!		"		#	*/</comment>
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<comment type="block">/*	$		%		&amp;		'	*/</comment>
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<comment type="block">/*	(		)		*		+	*/</comment>
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<comment type="block">/*	,		-		.		/	*/</comment>
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<comment type="block">/*	0		1		2		3	*/</comment>
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<comment type="block">/*	4		5		6		7	*/</comment>
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<comment type="block">/*	8		9		:		;	*/</comment>
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<comment type="block">/*	&lt;		=		&gt;		?	*/</comment>
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<comment type="block">/*	@		A		B		C	*/</comment>
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<comment type="block">/*	D		E		F		G	*/</comment>
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<comment type="block">/*	H		I		J		K	*/</comment>
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<comment type="block">/*	L		M		N		O	*/</comment>
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<comment type="block">/*	P		Q		R		S	*/</comment>
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<comment type="block">/*	T		U		V		W	*/</comment>
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<comment type="block">/*	X		Y		Z		[	*/</comment>
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<comment type="block">/*	\		]		^		_	*/</comment>
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<comment type="block">/*	`		a		b		c	*/</comment>
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<comment type="block">/*	d		e		f		g	*/</comment>
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<comment type="block">/*	h		i		j		k	*/</comment>
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<comment type="block">/*	l		m		n		o	*/</comment>
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<comment type="block">/*	p		q		r		s	*/</comment>
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<comment type="block">/*	t		u		v		w	*/</comment>
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<comment type="block">/*	x		y		z		{	*/</comment>
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<comment type="block">/*	|		}		~		DEL	*/</comment>
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<expr><name>CASE_PT_POINT</name></expr>,
+<comment type="block">/*      0x80            0x81            0x82            0x83    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x84            0x85            0x86            0x87    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x88            0x89            0x8a            0x8b    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x8c            0x8d            0x8e            0x8f    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x90            0x91            0x92            0x93    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x94            0x95            0x96            0x97    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x99            0x99            0x9a            0x9b    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x9c            0x9d            0x9e            0x9f    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      nobreakspace    exclamdown      cent            sterling        */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      currency        yen             brokenbar       section         */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      diaeresis       copyright       ordfeminine     guillemotleft   */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      notsign         hyphen          registered      macron          */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      degree          plusminus       twosuperior     threesuperior   */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      acute           mu              paragraph       periodcentered  */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      cedilla         onesuperior     masculine       guillemotright  */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      onequarter      onehalf         threequarters   questiondown    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      Agrave          Aacute          Acircumflex     Atilde          */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      Adiaeresis      Aring           AE              Ccedilla        */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      Egrave          Eacute          Ecircumflex     Ediaeresis      */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      Igrave          Iacute          Icircumflex     Idiaeresis      */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      Eth             Ntilde          Ograve          Oacute          */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      Ocircumflex     Otilde          Odiaeresis      multiply        */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      Ooblique        Ugrave          Uacute          Ucircumflex     */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      Udiaeresis      Yacute          Thorn           ssharp          */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      agrave          aacute          acircumflex     atilde          */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      adiaeresis      aring           ae              ccedilla        */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      egrave          eacute          ecircumflex     ediaeresis      */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      igrave          iacute          icircumflex     idiaeresis      */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      eth             ntilde          ograve          oacute          */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      ocircumflex     otilde          odiaeresis      division        */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      oslash          ugrave          uacute          ucircumflex     */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      udiaeresis      yacute          thorn           ydiaeresis      */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+}</block></expr></init></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><name>Const</name> <name>int</name></type> <name><name>Tspttable</name><index>[]</index></name> =<init>		<comment type="block">/* ESC FS (^\) special point plot */</comment>
+<expr><block>{
+<comment type="block">/*	NUL		SOH		STX		ETX	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	EOT		ENQ		ACK		BEL	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_BEL</name></expr>,
+<comment type="block">/*	BS		HT		NL		VT	*/</comment>
+<expr><name>CASE_BS</name></expr>,
+<expr><name>CASE_TAB</name></expr>,
+<expr><name>CASE_LF</name></expr>,
+<expr><name>CASE_UP</name></expr>,
+<comment type="block">/*	NP		CR		SO		SI	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_CR</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	DLE		DC1		DC2		DC3	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	DC4		NAK		SYN		ETB	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*	CAN		EM		SUB		ESC	*/</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_ESC_STATE</name></expr>,
+<comment type="block">/*	FS		GS		RS		US	*/</comment>
+<expr><name>CASE_PT_STATE</name></expr>,
+<expr><name>CASE_PLT_STATE</name></expr>,
+<expr><name>CASE_IPL_STATE</name></expr>,
+<expr><name>CASE_ALP_STATE</name></expr>,
+<comment type="block">/*	SP		!		"		#	*/</comment>
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<comment type="block">/*	$		%		&amp;		'	*/</comment>
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<comment type="block">/*	(		)		*		+	*/</comment>
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<comment type="block">/*	,		-		.		/	*/</comment>
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<comment type="block">/*	0		1		2		3	*/</comment>
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<comment type="block">/*	4		5		6		7	*/</comment>
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<comment type="block">/*	8		9		:		;	*/</comment>
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<comment type="block">/*	&lt;		=		&gt;		?	*/</comment>
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<comment type="block">/*	@		A		B		C	*/</comment>
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<comment type="block">/*	D		E		F		G	*/</comment>
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<comment type="block">/*	H		I		J		K	*/</comment>
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<comment type="block">/*	L		M		N		O	*/</comment>
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<comment type="block">/*	P		Q		R		S	*/</comment>
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<comment type="block">/*	T		U		V		W	*/</comment>
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<comment type="block">/*	X		Y		Z		[	*/</comment>
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<comment type="block">/*	\		]		^		_	*/</comment>
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<comment type="block">/*	`		a		b		c	*/</comment>
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<comment type="block">/*	d		e		f		g	*/</comment>
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<comment type="block">/*	h		i		j		k	*/</comment>
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<comment type="block">/*	l		m		n		o	*/</comment>
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<comment type="block">/*	p		q		r		s	*/</comment>
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<comment type="block">/*	t		u		v		w	*/</comment>
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<comment type="block">/*	x		y		z		{	*/</comment>
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<comment type="block">/*	|		}		~		DEL	*/</comment>
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<expr><name>CASE_SPT_POINT</name></expr>,
+<comment type="block">/*      0x80            0x81            0x82            0x83    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x84            0x85            0x86            0x87    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x88            0x89            0x8a            0x8b    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x8c            0x8d            0x8e            0x8f    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x90            0x91            0x92            0x93    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x94            0x95            0x96            0x97    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x99            0x99            0x9a            0x9b    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      0x9c            0x9d            0x9e            0x9f    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      nobreakspace    exclamdown      cent            sterling        */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      currency        yen             brokenbar       section         */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      diaeresis       copyright       ordfeminine     guillemotleft   */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      notsign         hyphen          registered      macron          */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      degree          plusminus       twosuperior     threesuperior   */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      acute           mu              paragraph       periodcentered  */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      cedilla         onesuperior     masculine       guillemotright  */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      onequarter      onehalf         threequarters   questiondown    */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      Agrave          Aacute          Acircumflex     Atilde          */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      Adiaeresis      Aring           AE              Ccedilla        */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      Egrave          Eacute          Ecircumflex     Ediaeresis      */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      Igrave          Iacute          Icircumflex     Idiaeresis      */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      Eth             Ntilde          Ograve          Oacute          */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      Ocircumflex     Otilde          Odiaeresis      multiply        */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      Ooblique        Ugrave          Uacute          Ucircumflex     */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      Udiaeresis      Yacute          Thorn           ssharp          */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      agrave          aacute          acircumflex     atilde          */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      adiaeresis      aring           ae              ccedilla        */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      egrave          eacute          ecircumflex     ediaeresis      */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      igrave          iacute          icircumflex     idiaeresis      */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      eth             ntilde          ograve          oacute          */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      ocircumflex     otilde          odiaeresis      division        */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      oslash          ugrave          uacute          ucircumflex     */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<comment type="block">/*      udiaeresis      yacute          thorn           ydiaeresis      */</comment>
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+<expr><name>CASE_IGNORE</name></expr>,
+}</block></expr></init></decl>;</decl_stmt>
+</unit>

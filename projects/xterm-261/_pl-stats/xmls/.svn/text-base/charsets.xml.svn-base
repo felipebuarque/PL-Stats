@@ -1,0 +1,487 @@
+<unit xmlns="http://www.sdml.info/srcML/src" xmlns:cpp="http://www.sdml.info/srcML/cpp" language="C" dir="" filename="charsets.c"><comment type="block">/* $XTermId: charsets.c,v 1.41 2009/01/25 23:39:12 tom Exp $ */</comment>
+
+<comment type="block">/************************************************************
+
+Copyright 1998-2008,2009 by Thomas E. Dickey
+
+                        All Rights Reserved
+
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
+IN NO EVENT SHALL THE ABOVE LISTED COPYRIGHT HOLDER(S) BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+Except as contained in this notice, the name(s) of the above copyright
+holders shall not be used in advertising or otherwise to promote the
+sale, use or other dealings in this Software without prior written
+authorization.
+
+********************************************************/</comment>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;xterm.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;data.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;fontutils.h&gt;</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;X11/keysym.h&gt;</cpp:file></cpp:include>
+
+<comment type="block">/*
+ * This module performs translation as needed to support the DEC VT220 national
+ * replacement character sets.  We assume that xterm's font is based on the ISO
+ * 8859-1 (Latin 1) character set, which is almost the same as the DEC
+ * multinational character set.  Glyph positions 0-31 have to be the DEC
+ * graphic characters, though.
+ *
+ * References:
+ *	"VT220 Programmer Pocket Guide" EK-VT220-HR-002 (2nd ed., 1984), which
+ *		contains character charts for the national character sets.
+ *	"VT330/VT340 Programmer Reference Manual Volume 1: Text Programming"
+ *		EK-VT3XX-TP-001 (1st ed, 1987), which contains a table (2-1)
+ *		listing the glyphs which are mapped from the multinational
+ *		character set to the national character set.
+ *
+ * The latter reference, though easier to read, has a few errors and omissions.
+ */</comment>
+
+<comment type="block">/*
+ * Translate an input keysym to the corresponding NRC keysym.
+ */</comment>
+<function><type><name>unsigned</name></type>
+<name>xtermCharSetIn</name><parameter_list>(<param><decl><type><name>unsigned</name></type> <name>code</name></decl></param>, <param><decl><type><name>int</name></type> <name>charset</name></decl></param>)</parameter_list>
+<block>{
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>MAP</name>(to, from) case from: code = to; break</cpp:define>
+
+    <if>if <condition>(<expr><name>code</name> &gt;= 128 &amp;&amp; <name>code</name> &lt; 256</expr>)</condition><then> <block>{
+	<switch>switch <condition>(<expr><name>charset</name></expr>)</condition> <block>{
+	<case>case <expr>'A'</expr>:		<comment type="block">/* United Kingdom set (or Latin 1)      */</comment>
+	    <if>if <condition>(<expr><name>code</name> == <name>XK_sterling</name></expr>)</condition><then>
+		<expr_stmt><expr><name>code</name> = 0x23</expr>;</expr_stmt></then></if>
+	    <expr_stmt><expr><name>code</name> &amp;= 0x7f</expr>;</expr_stmt>
+	    <break>break;</break>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_XMC_GLITCH</name></expr></cpp:if>
+	</case><case>case <expr>'?'</expr>:
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+	</case><case>case <expr>'1'</expr>:		<comment type="block">/* Alternate Character ROM standard characters */</comment>
+	</case><case>case <expr>'2'</expr>:		<comment type="block">/* Alternate Character ROM special graphics */</comment>
+	</case><case>case <expr>'B'</expr>:		<comment type="block">/* ASCII set                            */</comment>
+	    <break>break;</break>
+
+	</case><case>case <expr>'0'</expr>:		<comment type="block">/* special graphics (line drawing)      */</comment>
+	    <break>break;</break>
+
+	</case><case>case <expr>'4'</expr>:		<comment type="block">/* Dutch */</comment>
+	    <switch>switch <condition>(<expr><name>code</name></expr>)</condition> <block>{
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x23</expr></argument>, <argument><expr><name>XK_sterling</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x40</expr></argument>, <argument><expr><name>XK_threequarters</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5b</expr></argument>, <argument><expr><name>XK_ydiaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5c</expr></argument>, <argument><expr><name>XK_onehalf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5d</expr></argument>, <argument><expr><name>XK_bar</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>	<comment type="block">/* glyph is not ISO-8859-1 */</comment>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7b</expr></argument>, <argument><expr><name>XK_diaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7c</expr></argument>, <argument><expr><name>XK_f</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>	<comment type="block">/* glyph is not ISO-8859-1 */</comment>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7d</expr></argument>, <argument><expr><name>XK_onequarter</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7e</expr></argument>, <argument><expr><name>XK_acute</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    }</block></switch>
+	    <break>break;</break>
+
+	</case><case>case <expr>'C'</expr>:
+	</case><case>case <expr>'5'</expr>:		<comment type="block">/* Finnish */</comment>
+	    <switch>switch <condition>(<expr><name>code</name></expr>)</condition> <block>{
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5b</expr></argument>, <argument><expr><name>XK_Adiaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5c</expr></argument>, <argument><expr><name>XK_Odiaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5d</expr></argument>, <argument><expr><name>XK_Aring</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5e</expr></argument>, <argument><expr><name>XK_Udiaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x60</expr></argument>, <argument><expr><name>XK_eacute</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7b</expr></argument>, <argument><expr><name>XK_adiaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7c</expr></argument>, <argument><expr><name>XK_odiaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7d</expr></argument>, <argument><expr><name>XK_aring</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7e</expr></argument>, <argument><expr><name>XK_udiaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    }</block></switch>
+	    <break>break;</break>
+
+	</case><case>case <expr>'R'</expr>:		<comment type="block">/* French */</comment>
+	    <switch>switch <condition>(<expr><name>code</name></expr>)</condition> <block>{
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x23</expr></argument>, <argument><expr><name>XK_sterling</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x40</expr></argument>, <argument><expr><name>XK_agrave</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5b</expr></argument>, <argument><expr><name>XK_degree</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5c</expr></argument>, <argument><expr><name>XK_ccedilla</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5d</expr></argument>, <argument><expr><name>XK_section</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7b</expr></argument>, <argument><expr><name>XK_eacute</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7c</expr></argument>, <argument><expr><name>XK_ugrave</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7d</expr></argument>, <argument><expr><name>XK_egrave</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7e</expr></argument>, <argument><expr><name>XK_diaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    }</block></switch>
+	    <break>break;</break>
+
+	</case><case>case <expr>'Q'</expr>:		<comment type="block">/* French Canadian */</comment>
+	    <switch>switch <condition>(<expr><name>code</name></expr>)</condition> <block>{
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x40</expr></argument>, <argument><expr><name>XK_agrave</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5b</expr></argument>, <argument><expr><name>XK_acircumflex</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5c</expr></argument>, <argument><expr><name>XK_ccedilla</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5d</expr></argument>, <argument><expr><name>XK_ecircumflex</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5e</expr></argument>, <argument><expr><name>XK_icircumflex</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x60</expr></argument>, <argument><expr><name>XK_ocircumflex</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7b</expr></argument>, <argument><expr><name>XK_eacute</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7c</expr></argument>, <argument><expr><name>XK_ugrave</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7d</expr></argument>, <argument><expr><name>XK_egrave</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7e</expr></argument>, <argument><expr><name>XK_ucircumflex</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    }</block></switch>
+	    <break>break;</break>
+
+	</case><case>case <expr>'K'</expr>:		<comment type="block">/* German */</comment>
+	    <switch>switch <condition>(<expr><name>code</name></expr>)</condition> <block>{
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x40</expr></argument>, <argument><expr><name>XK_section</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5b</expr></argument>, <argument><expr><name>XK_Adiaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5c</expr></argument>, <argument><expr><name>XK_Odiaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5d</expr></argument>, <argument><expr><name>XK_Udiaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7b</expr></argument>, <argument><expr><name>XK_adiaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7c</expr></argument>, <argument><expr><name>XK_odiaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7d</expr></argument>, <argument><expr><name>XK_udiaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7e</expr></argument>, <argument><expr><name>XK_ssharp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    }</block></switch>
+	    <break>break;</break>
+
+	</case><case>case <expr>'Y'</expr>:		<comment type="block">/* Italian */</comment>
+	    <switch>switch <condition>(<expr><name>code</name></expr>)</condition> <block>{
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x23</expr></argument>, <argument><expr><name>XK_sterling</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x40</expr></argument>, <argument><expr><name>XK_section</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5b</expr></argument>, <argument><expr><name>XK_degree</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5c</expr></argument>, <argument><expr><name>XK_ccedilla</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5d</expr></argument>, <argument><expr><name>XK_eacute</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x60</expr></argument>, <argument><expr><name>XK_ugrave</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7b</expr></argument>, <argument><expr><name>XK_agrave</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7c</expr></argument>, <argument><expr><name>XK_ograve</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7d</expr></argument>, <argument><expr><name>XK_egrave</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7e</expr></argument>, <argument><expr><name>XK_igrave</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    }</block></switch>
+	    <break>break;</break>
+
+	</case><case>case <expr>'E'</expr>:
+	</case><case>case <expr>'6'</expr>:		<comment type="block">/* Norwegian/Danish */</comment>
+	    <switch>switch <condition>(<expr><name>code</name></expr>)</condition> <block>{
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x40</expr></argument>, <argument><expr><name>XK_Adiaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5b</expr></argument>, <argument><expr><name>XK_AE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5c</expr></argument>, <argument><expr><name>XK_Ooblique</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5d</expr></argument>, <argument><expr><name>XK_Aring</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5e</expr></argument>, <argument><expr><name>XK_Udiaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x60</expr></argument>, <argument><expr><name>XK_adiaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7b</expr></argument>, <argument><expr><name>XK_ae</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7c</expr></argument>, <argument><expr><name>XK_oslash</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7d</expr></argument>, <argument><expr><name>XK_aring</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7e</expr></argument>, <argument><expr><name>XK_udiaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    }</block></switch>
+	    <break>break;</break>
+
+	</case><case>case <expr>'Z'</expr>:		<comment type="block">/* Spanish */</comment>
+	    <switch>switch <condition>(<expr><name>code</name></expr>)</condition> <block>{
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x23</expr></argument>, <argument><expr><name>XK_sterling</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x40</expr></argument>, <argument><expr><name>XK_section</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5b</expr></argument>, <argument><expr><name>XK_exclamdown</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5c</expr></argument>, <argument><expr><name>XK_Ntilde</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5d</expr></argument>, <argument><expr><name>XK_questiondown</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7b</expr></argument>, <argument><expr><name>XK_degree</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7c</expr></argument>, <argument><expr><name>XK_ntilde</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7d</expr></argument>, <argument><expr><name>XK_ccedilla</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    }</block></switch>
+	    <break>break;</break>
+
+	</case><case>case <expr>'H'</expr>:
+	</case><case>case <expr>'7'</expr>:		<comment type="block">/* Swedish */</comment>
+	    <switch>switch <condition>(<expr><name>code</name></expr>)</condition> <block>{
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x40</expr></argument>, <argument><expr><name>XK_Eacute</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5b</expr></argument>, <argument><expr><name>XK_Adiaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5c</expr></argument>, <argument><expr><name>XK_Odiaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5d</expr></argument>, <argument><expr><name>XK_Aring</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5e</expr></argument>, <argument><expr><name>XK_Udiaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x60</expr></argument>, <argument><expr><name>XK_eacute</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7b</expr></argument>, <argument><expr><name>XK_adiaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7c</expr></argument>, <argument><expr><name>XK_odiaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7d</expr></argument>, <argument><expr><name>XK_aring</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7e</expr></argument>, <argument><expr><name>XK_udiaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    }</block></switch>
+	    <break>break;</break>
+
+	</case><case>case <expr>'='</expr>:		<comment type="block">/* Swiss */</comment>
+	    <switch>switch <condition>(<expr><name>code</name></expr>)</condition> <block>{
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x23</expr></argument>, <argument><expr><name>XK_ugrave</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x40</expr></argument>, <argument><expr><name>XK_agrave</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5b</expr></argument>, <argument><expr><name>XK_eacute</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5c</expr></argument>, <argument><expr><name>XK_ccedilla</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5d</expr></argument>, <argument><expr><name>XK_ecircumflex</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5e</expr></argument>, <argument><expr><name>XK_icircumflex</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5f</expr></argument>, <argument><expr><name>XK_egrave</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x60</expr></argument>, <argument><expr><name>XK_ocircumflex</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7b</expr></argument>, <argument><expr><name>XK_adiaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7c</expr></argument>, <argument><expr><name>XK_odiaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7d</expr></argument>, <argument><expr><name>XK_udiaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7e</expr></argument>, <argument><expr><name>XK_ucircumflex</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    }</block></switch>
+	    <break>break;</break>
+
+	</case><default>default:		<comment type="block">/* any character sets we don't recognize */</comment>
+	    <break>break;</break>
+	</default>}</block></switch>
+	<expr_stmt><expr><name>code</name> &amp;= 0x7f</expr>;</expr_stmt>		<comment type="block">/* NRC in any case is 7-bit */</comment>
+    }</block></then></if>
+    <return>return <expr><name>code</name></expr>;</return>
+<cpp:undef>#<cpp:directive>undef</cpp:directive> <name>MAP</name></cpp:undef>
+}</block></function>
+
+<comment type="block">/*
+ * Translate a string to the display form.  This assumes the font has the
+ * DEC graphic characters in cells 0-31, and otherwise is ISO-8859-1.
+ */</comment>
+<function><type><name>int</name></type>
+<name>xtermCharSetOut</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>, <param><decl><type><name>IChar</name> *</type> <name>buf</name></decl></param>, <param><decl><type><name>IChar</name> *</type> <name>ptr</name></decl></param>, <param><decl><type><name>int</name></type> <name>leftset</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>IChar</name> *</type><name>s</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>TScreen</name> *</type><name>screen</name> =<init> <expr><call><name>TScreenOf</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>int</name></type> <name>count</name> =<init> <expr>0</expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>int</name></type> <name>rightset</name> =<init> <expr><name>screen</name>-&gt;<name><name>gsets</name><index>[<expr><call>(<name>int</name>) <argument_list>(<argument><expr><name>screen</name>-&gt;<name>curgr</name></expr></argument>)</argument_list></call></expr>]</index></name></expr></init></decl>;</decl_stmt>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>MAP</name>(from, to) case from: chr = to; break</cpp:define>
+
+    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("CHARSET GL=%c(G%d) GR=%c(G%d) SS%d\n\t%s\n",
+	   <name>leftset</name>, <name>screen</name>-&gt;<name>curgl</name>,
+	   <name>rightset</name>, <name>screen</name>-&gt;<name>curgr</name>,
+	   <name>screen</name>-&gt;<name>curss</name>,
+	   <call><name>visibleIChar</name><argument_list>(<argument><expr><name>buf</name></expr></argument>, <argument><expr><call>(<name>unsigned</name>) <argument_list>(<argument><expr><name>ptr</name> - <name>buf</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+    <for>for (<init><expr><name>s</name> = <name>buf</name></expr>;</init> <condition><expr><name>s</name> &lt; <name>ptr</name></expr>;</condition> <incr><expr>++<name>s</name></expr></incr>) <block>{
+	<decl_stmt><decl><type><name>int</name></type> <name>eight</name> =<init> <expr><call><name>CharOf</name><argument_list>(<argument><expr><call><name>E2A</name><argument_list>(<argument><expr>*<name>s</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+	<decl_stmt><decl><type><name>int</name></type> <name>seven</name> =<init> <expr><name>eight</name> &amp; 0x7f</expr></init></decl>;</decl_stmt>
+	<decl_stmt><decl><type><name>int</name></type> <name>cs</name> =<init> <expr>(<name>eight</name> &gt;= 128) ? <name>rightset</name> : <name>leftset</name></expr></init></decl>;</decl_stmt>
+	<decl_stmt><decl><type><name>int</name></type> <name>chr</name> =<init> <expr><name>eight</name></expr></init></decl>;</decl_stmt>
+
+	<expr_stmt><expr><name>count</name>++</expr>;</expr_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_WIDE_CHARS</name></expr></cpp:if>
+	<comment type="block">/*
+	 * This is only partly right - prevent inadvertant remapping of
+	 * the replacement character and other non-8bit codes into bogus
+	 * 8bit codes.
+	 */</comment>
+	<if>if <condition>(<expr><name>screen</name>-&gt;<name>utf8_mode</name></expr>)</condition><then> <block>{
+	    <if>if <condition>(<expr>*<name>s</name> &gt; 255</expr>)</condition><then>
+		<continue>continue;</continue></then></if>
+	}</block></then></if>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+	<switch>switch <condition>(<expr><name>cs</name></expr>)</condition> <block>{
+	<case>case <expr>'A'</expr>:		<comment type="block">/* United Kingdom set (or Latin 1)      */</comment>
+	    <if>if <condition>(<expr>(<name>xw</name>-&gt;<name>flags</name> &amp; <name>NATIONAL</name>)
+		|| (<name>screen</name>-&gt;<name>vtXX_level</name> &lt;= 1)</expr>)</condition><then> <block>{
+		<if>if <condition>(<expr><name>chr</name> == 0x23</expr>)</condition><then> <block>{
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_WIDE_CHARS</name></expr></cpp:if>
+		    <expr_stmt><expr><name>chr</name> = (<name>screen</name>-&gt;<name>utf8_mode</name>
+			   ? 0xa3
+			   : <name>XTERM_POUND</name>)</expr>;</expr_stmt>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+		    <expr_stmt><expr><name>chr</name> = <name>XTERM_POUND</name></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+		}</block></then></if>
+	    }</block></then> <else>else <block>{
+		<expr_stmt><expr><name>chr</name> = (<name>seven</name> | 0x80)</expr>;</expr_stmt>
+	    }</block></else></if>
+	    <break>break;</break>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_XMC_GLITCH</name></expr></cpp:if>
+	</case><case>case <expr>'?'</expr>:
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+	</case><case>case <expr>'1'</expr>:		<comment type="block">/* Alternate Character ROM standard characters */</comment>
+	</case><case>case <expr>'2'</expr>:		<comment type="block">/* Alternate Character ROM special graphics */</comment>
+	</case><case>case <expr>'B'</expr>:		<comment type="block">/* ASCII set                            */</comment>
+	    <break>break;</break>
+
+	</case><case>case <expr>'0'</expr>:		<comment type="block">/* special graphics (line drawing)      */</comment>
+	    <if>if <condition>(<expr><name>seven</name> &gt; 0x5f &amp;&amp; <name>seven</name> &lt;= 0x7e</expr>)</condition><then> <block>{
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_WIDE_CHARS</name></expr></cpp:if>
+		<if>if <condition>(<expr><name>screen</name>-&gt;<name>utf8_mode</name></expr>)</condition><then>
+		    <expr_stmt><expr><name>chr</name> = (<name>int</name>) <call><name>dec2ucs</name><argument_list>(<argument><expr><call>(<name>unsigned</name>) <argument_list>(<argument><expr><name>seven</name> - 0x5f</expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></then>
+		<else>else
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+		    <expr_stmt><expr><name>chr</name> = <name>seven</name> - 0x5f</expr>;</expr_stmt></else></if>
+	    }</block></then> <else>else <block>{
+		<expr_stmt><expr><name>chr</name> = <name>seven</name></expr>;</expr_stmt>
+	    }</block></else></if>
+	    <break>break;</break>
+
+	</case><case>case <expr>'4'</expr>:		<comment type="block">/* Dutch */</comment>
+	    <switch>switch <condition>(<expr><name>chr</name> = <name>seven</name></expr>)</condition> <block>{
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x23</expr></argument>, <argument><expr><name>XK_sterling</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x40</expr></argument>, <argument><expr><name>XK_threequarters</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5b</expr></argument>, <argument><expr><name>XK_ydiaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5c</expr></argument>, <argument><expr><name>XK_onehalf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5d</expr></argument>, <argument><expr><name>XK_bar</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7b</expr></argument>, <argument><expr><name>XK_diaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7c</expr></argument>, <argument><expr><name>XK_f</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7d</expr></argument>, <argument><expr><name>XK_onequarter</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7e</expr></argument>, <argument><expr><name>XK_acute</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    }</block></switch>
+	    <break>break;</break>
+
+	</case><case>case <expr>'C'</expr>:
+	</case><case>case <expr>'5'</expr>:		<comment type="block">/* Finnish */</comment>
+	    <switch>switch <condition>(<expr><name>chr</name> = <name>seven</name></expr>)</condition> <block>{
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5b</expr></argument>, <argument><expr><name>XK_Adiaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5c</expr></argument>, <argument><expr><name>XK_Odiaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5d</expr></argument>, <argument><expr><name>XK_Aring</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5e</expr></argument>, <argument><expr><name>XK_Udiaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x60</expr></argument>, <argument><expr><name>XK_eacute</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7b</expr></argument>, <argument><expr><name>XK_adiaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7c</expr></argument>, <argument><expr><name>XK_odiaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7d</expr></argument>, <argument><expr><name>XK_aring</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7e</expr></argument>, <argument><expr><name>XK_udiaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    }</block></switch>
+	    <break>break;</break>
+
+	</case><case>case <expr>'R'</expr>:		<comment type="block">/* French */</comment>
+	    <switch>switch <condition>(<expr><name>chr</name> = <name>seven</name></expr>)</condition> <block>{
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x23</expr></argument>, <argument><expr><name>XK_sterling</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x40</expr></argument>, <argument><expr><name>XK_agrave</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5b</expr></argument>, <argument><expr><name>XK_degree</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5c</expr></argument>, <argument><expr><name>XK_ccedilla</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5d</expr></argument>, <argument><expr><name>XK_section</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7b</expr></argument>, <argument><expr><name>XK_eacute</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7c</expr></argument>, <argument><expr><name>XK_ugrave</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7d</expr></argument>, <argument><expr><name>XK_egrave</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7e</expr></argument>, <argument><expr><name>XK_diaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    }</block></switch>
+	    <break>break;</break>
+
+	</case><case>case <expr>'Q'</expr>:		<comment type="block">/* French Canadian */</comment>
+	    <switch>switch <condition>(<expr><name>chr</name> = <name>seven</name></expr>)</condition> <block>{
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x40</expr></argument>, <argument><expr><name>XK_agrave</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5b</expr></argument>, <argument><expr><name>XK_acircumflex</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5c</expr></argument>, <argument><expr><name>XK_ccedilla</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5d</expr></argument>, <argument><expr><name>XK_ecircumflex</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5e</expr></argument>, <argument><expr><name>XK_icircumflex</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x60</expr></argument>, <argument><expr><name>XK_ocircumflex</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7b</expr></argument>, <argument><expr><name>XK_eacute</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7c</expr></argument>, <argument><expr><name>XK_ugrave</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7d</expr></argument>, <argument><expr><name>XK_egrave</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7e</expr></argument>, <argument><expr><name>XK_ucircumflex</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    }</block></switch>
+	    <break>break;</break>
+
+	</case><case>case <expr>'K'</expr>:		<comment type="block">/* German */</comment>
+	    <switch>switch <condition>(<expr><name>chr</name> = <name>seven</name></expr>)</condition> <block>{
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x40</expr></argument>, <argument><expr><name>XK_section</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5b</expr></argument>, <argument><expr><name>XK_Adiaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5c</expr></argument>, <argument><expr><name>XK_Odiaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5d</expr></argument>, <argument><expr><name>XK_Udiaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7b</expr></argument>, <argument><expr><name>XK_adiaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7c</expr></argument>, <argument><expr><name>XK_odiaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7d</expr></argument>, <argument><expr><name>XK_udiaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7e</expr></argument>, <argument><expr><name>XK_ssharp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    }</block></switch>
+	    <break>break;</break>
+
+	</case><case>case <expr>'Y'</expr>:		<comment type="block">/* Italian */</comment>
+	    <switch>switch <condition>(<expr><name>chr</name> = <name>seven</name></expr>)</condition> <block>{
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x23</expr></argument>, <argument><expr><name>XK_sterling</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x40</expr></argument>, <argument><expr><name>XK_section</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5b</expr></argument>, <argument><expr><name>XK_degree</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5c</expr></argument>, <argument><expr><name>XK_ccedilla</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5d</expr></argument>, <argument><expr><name>XK_eacute</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x60</expr></argument>, <argument><expr><name>XK_ugrave</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7b</expr></argument>, <argument><expr><name>XK_agrave</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7c</expr></argument>, <argument><expr><name>XK_ograve</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7d</expr></argument>, <argument><expr><name>XK_egrave</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7e</expr></argument>, <argument><expr><name>XK_igrave</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    }</block></switch>
+	    <break>break;</break>
+
+	</case><case>case <expr>'E'</expr>:
+	</case><case>case <expr>'6'</expr>:		<comment type="block">/* Norwegian/Danish */</comment>
+	    <switch>switch <condition>(<expr><name>chr</name> = <name>seven</name></expr>)</condition> <block>{
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x40</expr></argument>, <argument><expr><name>XK_Adiaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5b</expr></argument>, <argument><expr><name>XK_AE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5c</expr></argument>, <argument><expr><name>XK_Ooblique</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5d</expr></argument>, <argument><expr><name>XK_Aring</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5e</expr></argument>, <argument><expr><name>XK_Udiaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x60</expr></argument>, <argument><expr><name>XK_adiaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7b</expr></argument>, <argument><expr><name>XK_ae</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7c</expr></argument>, <argument><expr><name>XK_oslash</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7d</expr></argument>, <argument><expr><name>XK_aring</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7e</expr></argument>, <argument><expr><name>XK_udiaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    }</block></switch>
+	    <break>break;</break>
+
+	</case><case>case <expr>'Z'</expr>:		<comment type="block">/* Spanish */</comment>
+	    <switch>switch <condition>(<expr><name>chr</name> = <name>seven</name></expr>)</condition> <block>{
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x23</expr></argument>, <argument><expr><name>XK_sterling</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x40</expr></argument>, <argument><expr><name>XK_section</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5b</expr></argument>, <argument><expr><name>XK_exclamdown</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5c</expr></argument>, <argument><expr><name>XK_Ntilde</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5d</expr></argument>, <argument><expr><name>XK_questiondown</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7b</expr></argument>, <argument><expr><name>XK_degree</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7c</expr></argument>, <argument><expr><name>XK_ntilde</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7d</expr></argument>, <argument><expr><name>XK_ccedilla</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    }</block></switch>
+	    <break>break;</break>
+
+	</case><case>case <expr>'H'</expr>:
+	</case><case>case <expr>'7'</expr>:		<comment type="block">/* Swedish */</comment>
+	    <switch>switch <condition>(<expr><name>chr</name> = <name>seven</name></expr>)</condition> <block>{
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x40</expr></argument>, <argument><expr><name>XK_Eacute</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5b</expr></argument>, <argument><expr><name>XK_Adiaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5c</expr></argument>, <argument><expr><name>XK_Odiaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5d</expr></argument>, <argument><expr><name>XK_Aring</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5e</expr></argument>, <argument><expr><name>XK_Udiaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x60</expr></argument>, <argument><expr><name>XK_eacute</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7b</expr></argument>, <argument><expr><name>XK_adiaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7c</expr></argument>, <argument><expr><name>XK_odiaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7d</expr></argument>, <argument><expr><name>XK_aring</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7e</expr></argument>, <argument><expr><name>XK_udiaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    }</block></switch>
+	    <break>break;</break>
+
+	</case><case>case <expr>'='</expr>:		<comment type="block">/* Swiss */</comment>
+	    <switch>switch <condition>(<expr><name>chr</name> = <name>seven</name></expr>)</condition> <block>{
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x23</expr></argument>, <argument><expr><name>XK_ugrave</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x40</expr></argument>, <argument><expr><name>XK_agrave</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5b</expr></argument>, <argument><expr><name>XK_eacute</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5c</expr></argument>, <argument><expr><name>XK_ccedilla</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5d</expr></argument>, <argument><expr><name>XK_ecircumflex</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5e</expr></argument>, <argument><expr><name>XK_icircumflex</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x5f</expr></argument>, <argument><expr><name>XK_egrave</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x60</expr></argument>, <argument><expr><name>XK_ocircumflex</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7b</expr></argument>, <argument><expr><name>XK_adiaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7c</expr></argument>, <argument><expr><name>XK_odiaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7d</expr></argument>, <argument><expr><name>XK_udiaeresis</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name>MAP</name><argument_list>(<argument><expr>0x7e</expr></argument>, <argument><expr><name>XK_ucircumflex</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    }</block></switch>
+	    <break>break;</break>
+
+	</case><default>default:		<comment type="block">/* any character sets we don't recognize */</comment>
+	    <expr_stmt><expr><name>count</name>--</expr>;</expr_stmt>
+	    <break>break;</break>
+	</default>}</block></switch>
+	<comment type="block">/*
+	 * The state machine already treated DEL as a nonprinting and
+	 * nonspacing character.  If we have DEL now, simply render
+	 * it as a blank.
+	 */</comment>
+	<if>if <condition>(<expr><name>chr</name> == <name>ANSI_DEL</name></expr>)</condition><then>
+	    <expr_stmt><expr><name>chr</name> = ' '</expr>;</expr_stmt></then></if>
+	<expr_stmt><expr>*<name>s</name> = (<name>IChar</name>) <call><name>A2E</name><argument_list>(<argument><expr><name>chr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></for>
+    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("%d\t%s\n",
+	   <name>count</name>,
+	   <call><name>visibleIChar</name><argument_list>(<argument><expr><name>buf</name></expr></argument>, <argument><expr><call>(<name>unsigned</name>) <argument_list>(<argument><expr><name>ptr</name> - <name>buf</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <return>return <expr><name>count</name></expr>;</return>
+<cpp:undef>#<cpp:directive>undef</cpp:directive> <name>MAP</name></cpp:undef>
+}</block></function>
+</unit>

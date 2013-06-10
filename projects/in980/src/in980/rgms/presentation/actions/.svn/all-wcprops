@@ -1,0 +1,77 @@
+K 25
+svn:wc:ra_dav:version-url
+V 110
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/src/in980/rgms/presentation/actions
+END
+MembroAction.java
+K 25
+svn:wc:ra_dav:version-url
+V 128
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/src/in980/rgms/presentation/actions/MembroAction.java
+END
+ActionPublicacaoBase.java
+K 25
+svn:wc:ra_dav:version-url
+V 136
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/src/in980/rgms/presentation/actions/ActionPublicacaoBase.java
+END
+ListarPublicacaoAction.java
+K 25
+svn:wc:ra_dav:version-url
+V 138
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/src/in980/rgms/presentation/actions/ListarPublicacaoAction.java
+END
+AutenticacaoAction.java
+K 25
+svn:wc:ra_dav:version-url
+V 134
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/src/in980/rgms/presentation/actions/AutenticacaoAction.java
+END
+DissertacaoMestradoAction.java
+K 25
+svn:wc:ra_dav:version-url
+V 141
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/src/in980/rgms/presentation/actions/DissertacaoMestradoAction.java
+END
+ArtigoConferenciaAction.java
+K 25
+svn:wc:ra_dav:version-url
+V 139
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/src/in980/rgms/presentation/actions/ArtigoConferenciaAction.java
+END
+RelatorioMembroAction.java
+K 25
+svn:wc:ra_dav:version-url
+V 137
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/src/in980/rgms/presentation/actions/RelatorioMembroAction.java
+END
+LinhaPesquisaAction.java
+K 25
+svn:wc:ra_dav:version-url
+V 135
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/src/in980/rgms/presentation/actions/LinhaPesquisaAction.java
+END
+ActionCRUDBase.java
+K 25
+svn:wc:ra_dav:version-url
+V 130
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/src/in980/rgms/presentation/actions/ActionCRUDBase.java
+END
+TeseDoutoradoAction.java
+K 25
+svn:wc:ra_dav:version-url
+V 135
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/src/in980/rgms/presentation/actions/TeseDoutoradoAction.java
+END
+ArtigoRevistaAction.java
+K 25
+svn:wc:ra_dav:version-url
+V 135
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/src/in980/rgms/presentation/actions/ArtigoRevistaAction.java
+END
+MudaLocaleLingua.java
+K 25
+svn:wc:ra_dav:version-url
+V 132
+/svn/spg/!svn/ver/1436/tools/pl-stats/branches/lxml-version/projects/in980/src/in980/rgms/presentation/actions/MudaLocaleLingua.java
+END

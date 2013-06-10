@@ -1,0 +1,633 @@
+<unit xmlns="http://www.sdml.info/srcML/src" xmlns:cpp="http://www.sdml.info/srcML/cpp" language="C" dir="" filename="xtermcap.c"><comment type="block">/* $XTermId: xtermcap.c,v 1.44 2010/06/13 17:46:27 tom Exp $ */</comment>
+
+<comment type="block">/*
+ * Copyright 2007-2009,2010 by Thomas E. Dickey
+ *
+ *                         All Rights Reserved
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE ABOVE LISTED COPYRIGHT HOLDER(S) BE LIABLE FOR ANY
+ * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * Except as contained in this notice, the name(s) of the above copyright
+ * holders shall not be used in advertising or otherwise to promote the
+ * sale, use or other dealings in this Software without prior written
+ * authorization.
+ */</comment>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;xtermcap.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;data.h&gt;</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;X11/keysym.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;ctype.h&gt;</cpp:file></cpp:include>
+
+<cpp:ifdef>#<cpp:directive>ifdef</cpp:directive> <name>VMS</name></cpp:ifdef>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;X11/keysymdef.h&gt;</cpp:file></cpp:include>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;xstrings.h&gt;</cpp:file></cpp:include>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>USE_TERMINFO</name> &amp;&amp; <call><name>defined</name><argument_list>(<argument><expr><name>NCURSES_VERSION</name></expr></argument>)</argument_list></call> &amp;&amp; <call><name>defined</name><argument_list>(<argument><expr><name>HAVE_USE_EXTENDED_NAMES</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>USE_EXTENDED_NAMES</name> 1</cpp:define>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>USE_EXTENDED_NAMES</name> 0</cpp:define>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>USE_TERMINFO</name></expr></cpp:if>
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>TcapInit</name>(buffer, name) (setupterm(name, fileno(stdout), &amp;ignored) == OK)</cpp:define>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>TcapInit</name>(buffer, name) (tgetent(buffer, name) == 1)</cpp:define>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>NO_STRING</name> (char *)(-1)</cpp:define>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_TCAP_QUERY</name> || <name>OPT_TCAP_FKEYS</name></expr></cpp:if>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>SHIFT</name> (MOD_NONE + MOD_SHIFT)</cpp:define>
+
+<typedef>typedef <type><struct>struct <block>{
+    <decl_stmt><decl><type><name>const</name> <name>char</name> *</type><name>tc</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>const</name> <name>char</name> *</type><name>ti</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>int</name></type> <name>code</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>unsigned</name></type> <name>param</name></decl>;</decl_stmt>		<comment type="block">/* see xtermStateToParam() */</comment>
+}</block></struct></type> <name>TCAPINFO</name>;</typedef>
+<comment type="block">/* *INDENT-OFF* */</comment>
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>DATA</name>(tc,ti,x,y) { tc, ti, x, y }</cpp:define>
+<decl_stmt><decl><type><name>static</name> <name>TCAPINFO</name></type> <name><name>table</name><index>[]</index></name> =<init> <expr><block>{
+	<comment type="block">/*	tcap	terminfo	code		state */</comment>
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"%1"</expr></argument>,	<argument><expr>"khlp"</expr></argument>,		<argument><expr><name>XK_Help</name></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"#1"</expr></argument>,	<argument><expr>"kHLP"</expr></argument>,		<argument><expr><name>XK_Help</name></expr></argument>,	<argument><expr><name>SHIFT</name></expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"@0"</expr></argument>,	<argument><expr>"kfnd"</expr></argument>,		<argument><expr><name>XK_Find</name></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"*0"</expr></argument>,	<argument><expr>"kFND"</expr></argument>,		<argument><expr><name>XK_Find</name></expr></argument>,	<argument><expr><name>SHIFT</name></expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"*6"</expr></argument>,	<argument><expr>"kslt"</expr></argument>,		<argument><expr><name>XK_Select</name></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"#6"</expr></argument>,	<argument><expr>"kSLT"</expr></argument>,		<argument><expr><name>XK_Select</name></expr></argument>,	<argument><expr><name>SHIFT</name></expr></argument>	)</argument_list></call></expr>,
+
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"kh"</expr></argument>,	<argument><expr>"khome"</expr></argument>,	<argument><expr><name>XK_Home</name></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"#2"</expr></argument>,	<argument><expr>"kHOM"</expr></argument>,		<argument><expr><name>XK_Home</name></expr></argument>,	<argument><expr><name>SHIFT</name></expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"@7"</expr></argument>,	<argument><expr>"kend"</expr></argument>,		<argument><expr><name>XK_End</name></expr></argument>,		<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"*7"</expr></argument>,	<argument><expr>"kEND"</expr></argument>,		<argument><expr><name>XK_End</name></expr></argument>,		<argument><expr><name>SHIFT</name></expr></argument>	)</argument_list></call></expr>,
+
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"kl"</expr></argument>,	<argument><expr>"kcub1"</expr></argument>,	<argument><expr><name>XK_Left</name></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"kr"</expr></argument>,	<argument><expr>"kcuf1"</expr></argument>,	<argument><expr><name>XK_Right</name></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"ku"</expr></argument>,	<argument><expr>"kcuu1"</expr></argument>,	<argument><expr><name>XK_Up</name></expr></argument>,		<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"kd"</expr></argument>,	<argument><expr>"kcud1"</expr></argument>,	<argument><expr><name>XK_Down</name></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"#4"</expr></argument>,	<argument><expr>"kLFT"</expr></argument>,		<argument><expr><name>XK_Left</name></expr></argument>,	<argument><expr><name>SHIFT</name></expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"%i"</expr></argument>,	<argument><expr>"kRIT"</expr></argument>,		<argument><expr><name>XK_Right</name></expr></argument>,	<argument><expr><name>SHIFT</name></expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"kF"</expr></argument>,	<argument><expr>"kind"</expr></argument>,		<argument><expr><name>XK_Up</name></expr></argument>,		<argument><expr><name>SHIFT</name></expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"kR"</expr></argument>,	<argument><expr>"kri"</expr></argument>,		<argument><expr><name>XK_Down</name></expr></argument>,	<argument><expr><name>SHIFT</name></expr></argument>	)</argument_list></call></expr>,
+
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"k1"</expr></argument>,	<argument><expr>"kf1"</expr></argument>,		<argument><expr><call><name>XK_Fn</name><argument_list>(<argument><expr>1</expr></argument>)</argument_list></call></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"k2"</expr></argument>,	<argument><expr>"kf2"</expr></argument>,		<argument><expr><call><name>XK_Fn</name><argument_list>(<argument><expr>2</expr></argument>)</argument_list></call></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"k3"</expr></argument>,	<argument><expr>"kf3"</expr></argument>,		<argument><expr><call><name>XK_Fn</name><argument_list>(<argument><expr>3</expr></argument>)</argument_list></call></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"k4"</expr></argument>,	<argument><expr>"kf4"</expr></argument>,		<argument><expr><call><name>XK_Fn</name><argument_list>(<argument><expr>4</expr></argument>)</argument_list></call></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"k5"</expr></argument>,	<argument><expr>"kf5"</expr></argument>,		<argument><expr><call><name>XK_Fn</name><argument_list>(<argument><expr>5</expr></argument>)</argument_list></call></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"k6"</expr></argument>,	<argument><expr>"kf6"</expr></argument>,		<argument><expr><call><name>XK_Fn</name><argument_list>(<argument><expr>6</expr></argument>)</argument_list></call></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"k7"</expr></argument>,	<argument><expr>"kf7"</expr></argument>,		<argument><expr><call><name>XK_Fn</name><argument_list>(<argument><expr>7</expr></argument>)</argument_list></call></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"k8"</expr></argument>,	<argument><expr>"kf8"</expr></argument>,		<argument><expr><call><name>XK_Fn</name><argument_list>(<argument><expr>8</expr></argument>)</argument_list></call></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"k9"</expr></argument>,	<argument><expr>"kf9"</expr></argument>,		<argument><expr><call><name>XK_Fn</name><argument_list>(<argument><expr>9</expr></argument>)</argument_list></call></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"k;"</expr></argument>,	<argument><expr>"kf10"</expr></argument>,		<argument><expr><call><name>XK_Fn</name><argument_list>(<argument><expr>10</expr></argument>)</argument_list></call></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"F1"</expr></argument>,	<argument><expr>"kf11"</expr></argument>,		<argument><expr><call><name>XK_Fn</name><argument_list>(<argument><expr>11</expr></argument>)</argument_list></call></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"F2"</expr></argument>,	<argument><expr>"kf12"</expr></argument>,		<argument><expr><call><name>XK_Fn</name><argument_list>(<argument><expr>12</expr></argument>)</argument_list></call></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"F3"</expr></argument>,	<argument><expr>"kf13"</expr></argument>,		<argument><expr><call><name>XK_Fn</name><argument_list>(<argument><expr>13</expr></argument>)</argument_list></call></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"F4"</expr></argument>,	<argument><expr>"kf14"</expr></argument>,		<argument><expr><call><name>XK_Fn</name><argument_list>(<argument><expr>14</expr></argument>)</argument_list></call></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"F5"</expr></argument>,	<argument><expr>"kf15"</expr></argument>,		<argument><expr><call><name>XK_Fn</name><argument_list>(<argument><expr>15</expr></argument>)</argument_list></call></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"F6"</expr></argument>,	<argument><expr>"kf16"</expr></argument>,		<argument><expr><call><name>XK_Fn</name><argument_list>(<argument><expr>16</expr></argument>)</argument_list></call></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"F7"</expr></argument>,	<argument><expr>"kf17"</expr></argument>,		<argument><expr><call><name>XK_Fn</name><argument_list>(<argument><expr>17</expr></argument>)</argument_list></call></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"F8"</expr></argument>,	<argument><expr>"kf18"</expr></argument>,		<argument><expr><call><name>XK_Fn</name><argument_list>(<argument><expr>18</expr></argument>)</argument_list></call></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"F9"</expr></argument>,	<argument><expr>"kf19"</expr></argument>,		<argument><expr><call><name>XK_Fn</name><argument_list>(<argument><expr>19</expr></argument>)</argument_list></call></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"FA"</expr></argument>,	<argument><expr>"kf20"</expr></argument>,		<argument><expr><call><name>XK_Fn</name><argument_list>(<argument><expr>20</expr></argument>)</argument_list></call></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"FB"</expr></argument>,	<argument><expr>"kf21"</expr></argument>,		<argument><expr><call><name>XK_Fn</name><argument_list>(<argument><expr>21</expr></argument>)</argument_list></call></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"FC"</expr></argument>,	<argument><expr>"kf22"</expr></argument>,		<argument><expr><call><name>XK_Fn</name><argument_list>(<argument><expr>22</expr></argument>)</argument_list></call></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"FD"</expr></argument>,	<argument><expr>"kf23"</expr></argument>,		<argument><expr><call><name>XK_Fn</name><argument_list>(<argument><expr>23</expr></argument>)</argument_list></call></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"FE"</expr></argument>,	<argument><expr>"kf24"</expr></argument>,		<argument><expr><call><name>XK_Fn</name><argument_list>(<argument><expr>24</expr></argument>)</argument_list></call></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"FF"</expr></argument>,	<argument><expr>"kf25"</expr></argument>,		<argument><expr><call><name>XK_Fn</name><argument_list>(<argument><expr>25</expr></argument>)</argument_list></call></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"FG"</expr></argument>,	<argument><expr>"kf26"</expr></argument>,		<argument><expr><call><name>XK_Fn</name><argument_list>(<argument><expr>26</expr></argument>)</argument_list></call></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"FH"</expr></argument>,	<argument><expr>"kf27"</expr></argument>,		<argument><expr><call><name>XK_Fn</name><argument_list>(<argument><expr>27</expr></argument>)</argument_list></call></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"FI"</expr></argument>,	<argument><expr>"kf28"</expr></argument>,		<argument><expr><call><name>XK_Fn</name><argument_list>(<argument><expr>28</expr></argument>)</argument_list></call></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"FJ"</expr></argument>,	<argument><expr>"kf29"</expr></argument>,		<argument><expr><call><name>XK_Fn</name><argument_list>(<argument><expr>29</expr></argument>)</argument_list></call></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"FK"</expr></argument>,	<argument><expr>"kf30"</expr></argument>,		<argument><expr><call><name>XK_Fn</name><argument_list>(<argument><expr>30</expr></argument>)</argument_list></call></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"FL"</expr></argument>,	<argument><expr>"kf31"</expr></argument>,		<argument><expr><call><name>XK_Fn</name><argument_list>(<argument><expr>31</expr></argument>)</argument_list></call></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"FM"</expr></argument>,	<argument><expr>"kf32"</expr></argument>,		<argument><expr><call><name>XK_Fn</name><argument_list>(<argument><expr>32</expr></argument>)</argument_list></call></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"FN"</expr></argument>,	<argument><expr>"kf33"</expr></argument>,		<argument><expr><call><name>XK_Fn</name><argument_list>(<argument><expr>33</expr></argument>)</argument_list></call></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"FO"</expr></argument>,	<argument><expr>"kf34"</expr></argument>,		<argument><expr><call><name>XK_Fn</name><argument_list>(<argument><expr>34</expr></argument>)</argument_list></call></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"FP"</expr></argument>,	<argument><expr>"kf35"</expr></argument>,		<argument><expr><call><name>XK_Fn</name><argument_list>(<argument><expr>35</expr></argument>)</argument_list></call></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"FQ"</expr></argument>,	<argument><expr>"kf36"</expr></argument>,		<argument><expr>-36</expr></argument>,		<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"FR"</expr></argument>,	<argument><expr>"kf37"</expr></argument>,		<argument><expr>-37</expr></argument>,		<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"FS"</expr></argument>,	<argument><expr>"kf38"</expr></argument>,		<argument><expr>-38</expr></argument>,		<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"FT"</expr></argument>,	<argument><expr>"kf39"</expr></argument>,		<argument><expr>-39</expr></argument>,		<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"FU"</expr></argument>,	<argument><expr>"kf40"</expr></argument>,		<argument><expr>-40</expr></argument>,		<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"FV"</expr></argument>,	<argument><expr>"kf41"</expr></argument>,		<argument><expr>-41</expr></argument>,		<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"FW"</expr></argument>,	<argument><expr>"kf42"</expr></argument>,		<argument><expr>-42</expr></argument>,		<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"FX"</expr></argument>,	<argument><expr>"kf43"</expr></argument>,		<argument><expr>-43</expr></argument>,		<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"FY"</expr></argument>,	<argument><expr>"kf44"</expr></argument>,		<argument><expr>-44</expr></argument>,		<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"FZ"</expr></argument>,	<argument><expr>"kf45"</expr></argument>,		<argument><expr>-45</expr></argument>,		<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"Fa"</expr></argument>,	<argument><expr>"kf46"</expr></argument>,		<argument><expr>-46</expr></argument>,		<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"Fb"</expr></argument>,	<argument><expr>"kf47"</expr></argument>,		<argument><expr>-47</expr></argument>,		<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"Fc"</expr></argument>,	<argument><expr>"kf48"</expr></argument>,		<argument><expr>-48</expr></argument>,		<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"Fd"</expr></argument>,	<argument><expr>"kf49"</expr></argument>,		<argument><expr>-49</expr></argument>,		<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"Fe"</expr></argument>,	<argument><expr>"kf50"</expr></argument>,		<argument><expr>-50</expr></argument>,		<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"Ff"</expr></argument>,	<argument><expr>"kf51"</expr></argument>,		<argument><expr>-51</expr></argument>,		<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"Fg"</expr></argument>,	<argument><expr>"kf52"</expr></argument>,		<argument><expr>-52</expr></argument>,		<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"Fh"</expr></argument>,	<argument><expr>"kf53"</expr></argument>,		<argument><expr>-53</expr></argument>,		<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"Fi"</expr></argument>,	<argument><expr>"kf54"</expr></argument>,		<argument><expr>-54</expr></argument>,		<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"Fj"</expr></argument>,	<argument><expr>"kf55"</expr></argument>,		<argument><expr>-55</expr></argument>,		<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"Fk"</expr></argument>,	<argument><expr>"kf56"</expr></argument>,		<argument><expr>-56</expr></argument>,		<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"Fl"</expr></argument>,	<argument><expr>"kf57"</expr></argument>,		<argument><expr>-57</expr></argument>,		<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"Fm"</expr></argument>,	<argument><expr>"kf58"</expr></argument>,		<argument><expr>-58</expr></argument>,		<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"Fn"</expr></argument>,	<argument><expr>"kf59"</expr></argument>,		<argument><expr>-59</expr></argument>,		<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"Fo"</expr></argument>,	<argument><expr>"kf60"</expr></argument>,		<argument><expr>-60</expr></argument>,		<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"Fp"</expr></argument>,	<argument><expr>"kf61"</expr></argument>,		<argument><expr>-61</expr></argument>,		<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"Fq"</expr></argument>,	<argument><expr>"kf62"</expr></argument>,		<argument><expr>-62</expr></argument>,		<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"Fr"</expr></argument>,	<argument><expr>"kf63"</expr></argument>,		<argument><expr>-63</expr></argument>,		<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"K1"</expr></argument>,	<argument><expr>"ka1"</expr></argument>,		<argument><expr><name>XK_KP_Home</name></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"K4"</expr></argument>,	<argument><expr>"kc1"</expr></argument>,		<argument><expr><name>XK_KP_End</name></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"K3"</expr></argument>,	<argument><expr>"ka3"</expr></argument>,		<argument><expr><name>XK_KP_Prior</name></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"K5"</expr></argument>,	<argument><expr>"kc3"</expr></argument>,		<argument><expr><name>XK_KP_Next</name></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+
+<cpp:ifdef>#<cpp:directive>ifdef</cpp:directive> <name>XK_ISO_Left_Tab</name></cpp:ifdef>
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"kB"</expr></argument>,	<argument><expr>"kcbt"</expr></argument>,		<argument><expr><name>XK_ISO_Left_Tab</name></expr></argument>, <argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"kC"</expr></argument>,	<argument><expr>"kclr"</expr></argument>,		<argument><expr><name>XK_Clear</name></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"kD"</expr></argument>,	<argument><expr>"kdch1"</expr></argument>,	<argument><expr><name>XK_Delete</name></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"kI"</expr></argument>,	<argument><expr>"kich1"</expr></argument>,	<argument><expr><name>XK_Insert</name></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"kN"</expr></argument>,	<argument><expr>"knp"</expr></argument>,		<argument><expr><name>XK_Next</name></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"kP"</expr></argument>,	<argument><expr>"kpp"</expr></argument>,		<argument><expr><name>XK_Prior</name></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"%c"</expr></argument>,	<argument><expr>"kNXT"</expr></argument>,		<argument><expr><name>XK_Next</name></expr></argument>,	<argument><expr><name>SHIFT</name></expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"%e"</expr></argument>,	<argument><expr>"kPRV"</expr></argument>,		<argument><expr><name>XK_Prior</name></expr></argument>,	<argument><expr><name>SHIFT</name></expr></argument>	)</argument_list></call></expr>,
+
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"&amp;8"</expr></argument>,	<argument><expr>"kund"</expr></argument>,		<argument><expr><name>XK_Undo</name></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"kb"</expr></argument>,	<argument><expr>"kbs"</expr></argument>,		<argument><expr><name>XK_BackSpace</name></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+<cpp:if># <cpp:directive>if</cpp:directive> <expr><name>OPT_TCAP_QUERY</name> &amp;&amp; <name>OPT_ISO_COLORS</name></expr></cpp:if>
+	<comment type="block">/* XK_COLORS is a fake code. */</comment>
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"Co"</expr></argument>,	<argument><expr>"colors"</expr></argument>,	<argument><expr><name>XK_COLORS</name></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+<cpp:endif># <cpp:directive>endif</cpp:directive></cpp:endif>
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>"TN"</expr></argument>,	<argument><expr>"name"</expr></argument>,		<argument><expr><name>XK_TCAPNAME</name></expr></argument>,	<argument><expr>0</expr></argument>	)</argument_list></call></expr>,
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>USE_EXTENDED_NAMES</name></expr></cpp:if>
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>DEXT</name>(name, parm, code) DATA("", name, code, parm)</cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>D1ST</name>(name, parm, code) DEXT("k" #name, parm, code)</cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>DMOD</name>(name, parm, code) DEXT("k" #name #parm, parm, code)</cpp:define>
+
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>DGRP</name>(name, code) \
+	D1ST(name, 2, code), \
+	DMOD(name, 3, code), \
+	DMOD(name, 4, code), \
+	DMOD(name, 5, code), \
+	DMOD(name, 6, code), \
+	DMOD(name, 7, code), \
+	DMOD(name, 8, code)</cpp:define>
+
+	<comment type="block">/* the terminfo codes here are ncurses extensions */</comment>
+	<comment type="block">/* ignore the termcap names, which are empty */</comment>
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>""</expr></argument>,	<argument><expr>"kUP"</expr></argument>,		<argument><expr><name>XK_Up</name></expr></argument>,		<argument><expr><name>SHIFT</name></expr></argument>	)</argument_list></call></expr>,
+	<expr><call><name>DATA</name><argument_list>(	<argument><expr>""</expr></argument>,	<argument><expr>"kDN"</expr></argument>,		<argument><expr><name>XK_Up</name></expr></argument>,		<argument><expr><name>SHIFT</name></expr></argument>	)</argument_list></call></expr>,
+
+	<expr><call><name>DGRP</name><argument_list>(<argument><expr><name>DN</name></expr></argument>,   <argument><expr><name>XK_Down</name></expr></argument>)</argument_list></call></expr>,
+	<expr><call><name>DGRP</name><argument_list>(<argument><expr><name>LFT</name></expr></argument>,  <argument><expr><name>XK_Left</name></expr></argument>)</argument_list></call></expr>,
+	<expr><call><name>DGRP</name><argument_list>(<argument><expr><name>RIT</name></expr></argument>,  <argument><expr><name>XK_Right</name></expr></argument>)</argument_list></call></expr>,
+	<expr><call><name>DGRP</name><argument_list>(<argument><expr><name>UP</name></expr></argument>,   <argument><expr><name>XK_Up</name></expr></argument>)</argument_list></call></expr>,
+	<expr><call><name>DGRP</name><argument_list>(<argument><expr><name>DC</name></expr></argument>,   <argument><expr><name>XK_Delete</name></expr></argument>)</argument_list></call></expr>,
+	<expr><call><name>DGRP</name><argument_list>(<argument><expr><name>END</name></expr></argument>,  <argument><expr><name>XK_End</name></expr></argument>)</argument_list></call></expr>,
+	<expr><call><name>DGRP</name><argument_list>(<argument><expr><name>HOM</name></expr></argument>,  <argument><expr><name>XK_Home</name></expr></argument>)</argument_list></call></expr>,
+	<expr><call><name>DGRP</name><argument_list>(<argument><expr><name>IC</name></expr></argument>,   <argument><expr><name>XK_Insert</name></expr></argument>)</argument_list></call></expr>,
+	<expr><call><name>DGRP</name><argument_list>(<argument><expr><name>NXT</name></expr></argument>,  <argument><expr><name>XK_Next</name></expr></argument>)</argument_list></call></expr>,
+	<expr><call><name>DGRP</name><argument_list>(<argument><expr><name>PRV</name></expr></argument>,  <argument><expr><name>XK_Prior</name></expr></argument>)</argument_list></call></expr>,
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+}</block></expr></init></decl>;</decl_stmt>
+<cpp:undef>#<cpp:directive>undef</cpp:directive> <name>DATA</name></cpp:undef>
+<comment type="block">/* *INDENT-ON* */</comment>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_TCAP_FKEYS</name></expr></cpp:if>
+<function><type><name>static</name> <name>void</name></type>
+<name>loadTermcapStrings</name><parameter_list>(<param><decl><type><name>TScreen</name> *</type> <name>screen</name></decl></param>)</parameter_list>
+<block>{
+    <if>if <condition>(<expr><name>screen</name>-&gt;<name>tcap_fkeys</name> == 0</expr>)</condition><then> <block>{
+	<decl_stmt><decl><type><name>char</name></type> <name><name>name</name><index>[<expr>80</expr>]</index></name></decl>;</decl_stmt>
+	<decl_stmt><decl><type><name>Cardinal</name></type> <name>want</name> =<init> <expr><call><name>XtNumber</name><argument_list>(<argument><expr><name>table</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+	<decl_stmt><decl><type><name>Cardinal</name></type> <name>have</name></decl>;</decl_stmt>
+	<decl_stmt><decl><type><name>char</name> *</type><name>fkey</name></decl>;</decl_stmt>
+<cpp:ifdef>#<cpp:directive>ifdef</cpp:directive> <name>USE_TERMCAP</name></cpp:ifdef>
+	<decl_stmt><decl><type><name>char</name> *</type><name>area</name> =<init> <expr><name>screen</name>-&gt;<name>tcap_area</name></expr></init></decl>;</decl_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+	<expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("loadTermcapStrings\n")</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<if>if <condition>(<expr>(<name>screen</name>-&gt;<name>tcap_fkeys</name> = <call><name>TypeCallocN</name><argument_list>(<argument><expr><name>char</name> *</expr></argument>, <argument><expr><name>want</name></expr></argument>)</argument_list></call>) != 0</expr>)</condition><then> <block>{
+	    <for>for (<init><expr><name>have</name> = 0</expr>;</init> <condition><expr><name>have</name> &lt; <name>want</name></expr>;</condition> <incr><expr>++<name>have</name></expr></incr>) <block>{
+<cpp:ifndef>#<cpp:directive>ifndef</cpp:directive> <name>USE_TERMCAP</name></cpp:ifndef>
+		<expr_stmt><expr><name>fkey</name> = <call><name>tigetstr</name><argument_list>(<argument><expr><call><name>strcpy</name><argument_list>(<argument><expr><name>name</name></expr></argument>, <argument><expr><name><name>table</name><index>[<expr><name>have</name></expr>]</index></name>.<name>ti</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+		<expr_stmt><expr><name>fkey</name> = <call><name>tgetstr</name><argument_list>(<argument><expr><call><name>strcpy</name><argument_list>(<argument><expr><name>name</name></expr></argument>, <argument><expr><name><name>table</name><index>[<expr><name>have</name></expr>]</index></name>.<name>tc</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr>&amp;<name>area</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+		<if>if <condition>(<expr><name>fkey</name> != 0 &amp;&amp; <name>fkey</name> != <name>NO_STRING</name></expr>)</condition><then> <block>{
+		    <expr_stmt><expr><name>screen</name>-&gt;<name><name>tcap_fkeys</name><index>[<expr><name>have</name></expr>]</index></name> = <call><name>x_strdup</name><argument_list>(<argument><expr><name>fkey</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		}</block></then> <else>else <block>{
+		    <expr_stmt><expr><name>screen</name>-&gt;<name><name>tcap_fkeys</name><index>[<expr><name>have</name></expr>]</index></name> = <name>NO_STRING</name></expr>;</expr_stmt>
+		}</block></else></if>
+	    }</block></for>
+	}</block></then></if>
+    }</block></then></if>
+}</block></function>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_TCAP_QUERY</name></expr></cpp:if>
+<function><type><name>static</name> <name>Boolean</name></type>
+<name>keyIsDistinct</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>, <param><decl><type><name>int</name></type> <name>which</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>Boolean</name></type> <name>result</name> =<init> <expr><name>True</name></expr></init></decl>;</decl_stmt>
+
+    <switch>switch <condition>(<expr><name>xw</name>-&gt;<name>keyboard</name>.<name>type</name></expr>)</condition> <block>{
+    <case>case <expr><name>keyboardIsTermcap</name></expr>:
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_TCAP_FKEYS</name></expr></cpp:if>
+	<if>if <condition>(<expr><name><name>table</name><index>[<expr><name>which</name></expr>]</index></name>.<name>param</name> == <name>SHIFT</name></expr>)</condition><then> <block>{
+	    <decl_stmt><decl><type><name>TScreen</name> *</type><name>screen</name> =<init> <expr><call><name>TScreenOf</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+	    <decl_stmt><decl><type><name>Cardinal</name></type> <name>k</name></decl>;</decl_stmt>
+	    <decl_stmt><decl><type><name>char</name> *</type><name>fkey</name></decl>;</decl_stmt>
+
+	    <expr_stmt><expr><call><name>loadTermcapStrings</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <if>if <condition>(<expr><name>screen</name>-&gt;<name><name>tcap_fkeys</name><index>[<expr><name>which</name></expr>]</index></name> != <name>NO_STRING</name></expr>)</condition><then> <block>{
+		<for>for (<init><expr><name>k</name> = 0</expr>;</init> <condition><expr><name>k</name> &lt; <call><name>XtNumber</name><argument_list>(<argument><expr><name>table</name></expr></argument>)</argument_list></call></expr>;</condition> <incr><expr><name>k</name>++</expr></incr>) <block>{
+		    <if>if <condition>(<expr><name><name>table</name><index>[<expr><name>k</name></expr>]</index></name>.<name>code</name> == <name><name>table</name><index>[<expr><name>which</name></expr>]</index></name>.<name>code</name>
+			&amp;&amp; <name><name>table</name><index>[<expr><name>k</name></expr>]</index></name>.<name>param</name> == 0</expr>)</condition><then> <block>{
+			<if>if <condition>(<expr>(<name>fkey</name> = <name>screen</name>-&gt;<name><name>tcap_fkeys</name><index>[<expr><name>k</name></expr>]</index></name>) != <name>NO_STRING</name>
+			    &amp;&amp; !<call><name>strcmp</name><argument_list>(<argument><expr><name>fkey</name></expr></argument>, <argument><expr><name>screen</name>-&gt;<name><name>tcap_fkeys</name><index>[<expr><name>which</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>)</condition><then> <block>{
+			    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("shifted/unshifted keys do not differ\n")</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+			    <expr_stmt><expr><name>result</name> = <name>False</name></expr>;</expr_stmt>
+			}</block></then></if>
+			<break>break;</break>
+		    }</block></then></if>
+		}</block></for>
+	    }</block></then> <else>else <block>{
+		<comment type="block">/* there is no data for the shifted key */</comment>
+		<expr_stmt><expr><name>result</name> = -1</expr>;</expr_stmt>
+	    }</block></else></if>
+	}</block></then></if>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+	<break>break;</break>
+	<comment type="block">/*
+	 * The vt220-keyboard will not return distinct key sequences for
+	 * shifted cursor-keys.  Just pretend they do not exist, since some
+	 * programs may be confused if we return the same data for
+	 * shifted/unshifted keys.
+	 */</comment>
+    </case><case>case <expr><name>keyboardIsVT220</name></expr>:
+	<if>if <condition>(<expr><name><name>table</name><index>[<expr><name>which</name></expr>]</index></name>.<name>param</name> == <name>SHIFT</name></expr>)</condition><then> <block>{
+	    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("shifted/unshifted keys do not differ\n")</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><name>result</name> = <name>False</name></expr>;</expr_stmt>
+	}</block></then></if>
+	<break>break;</break>
+    </case><case>case <expr><name>keyboardIsLegacy</name></expr>:
+    </case><case>case <expr><name>keyboardIsDefault</name></expr>:
+    </case><case>case <expr><name>keyboardIsHP</name></expr>:
+    </case><case>case <expr><name>keyboardIsSCO</name></expr>:
+    </case><case>case <expr><name>keyboardIsSun</name></expr>:
+	<break>break;</break>
+    </case>}</block></switch>
+
+    <return>return <expr><name>result</name></expr>;</return>
+}</block></function>
+
+<function><type><name>static</name> <name>int</name></type>
+<name>lookupTcapByName</name><parameter_list>(<param><decl><type><name>const</name> <name>char</name> *</type><name>name</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>int</name></type> <name>result</name> =<init> <expr>-2</expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>Cardinal</name></type> <name>j</name></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr>!<call><name>IsEmpty</name><argument_list>(<argument><expr><name>name</name></expr></argument>)</argument_list></call></expr>)</condition><then> <block>{
+	<for>for (<init><expr><name>j</name> = 0</expr>;</init> <condition><expr><name>j</name> &lt; <call><name>XtNumber</name><argument_list>(<argument><expr><name>table</name></expr></argument>)</argument_list></call></expr>;</condition> <incr><expr><name>j</name>++</expr></incr>) <block>{
+	    <if>if <condition>(<expr>!<call><name>strcmp</name><argument_list>(<argument><expr><name><name>table</name><index>[<expr><name>j</name></expr>]</index></name>.<name>ti</name></expr></argument>, <argument><expr><name>name</name></expr></argument>)</argument_list></call> || !<call><name>strcmp</name><argument_list>(<argument><expr><name><name>table</name><index>[<expr><name>j</name></expr>]</index></name>.<name>tc</name></expr></argument>, <argument><expr><name>name</name></expr></argument>)</argument_list></call></expr>)</condition><then> <block>{
+		<expr_stmt><expr><name>result</name> = (<name>int</name>) <name>j</name></expr>;</expr_stmt>
+		<break>break;</break>
+	    }</block></then></if>
+	}</block></for>
+    }</block></then></if>
+
+    <if>if <condition>(<expr><name>result</name> &gt;= 0</expr>)</condition><then> <block>{
+	<expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("lookupTcapByName(%s) tc=%s, ti=%s code %#x, param %#x\n",
+	       <name>name</name>,
+	       <name><name>table</name><index>[<expr><name>result</name></expr>]</index></name>.<name>tc</name>,
+	       <name><name>table</name><index>[<expr><name>result</name></expr>]</index></name>.<name>ti</name>,
+	       <name><name>table</name><index>[<expr><name>result</name></expr>]</index></name>.<name>code</name>,
+	       <name><name>table</name><index>[<expr><name>result</name></expr>]</index></name>.<name>param</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></then> <else>else <block>{
+	<expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("lookupTcapByName(%s) FAIL\n", <name>name</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></else></if>
+    <return>return <expr><name>result</name></expr>;</return>
+}</block></function>
+
+<comment type="block">/*
+ * Parse the termcap/terminfo name from the string, returning a positive number
+ * (the keysym) if found, otherwise -1.  Update the string pointer.
+ * Returns the (shift, control) state in *state.
+ *
+ * This does not attempt to construct control/shift modifiers to construct
+ * function-key values.  Instead, it sets the *fkey flag to pass to Input()
+ * and bypass the lookup of keysym altogether.
+ */</comment>
+<function><type><name>int</name></type>
+<name>xtermcapKeycode</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>, <param><decl><type><name>const</name> <name>char</name> **</type><name>params</name></decl></param>, <param><decl><type><name>unsigned</name> *</type><name>state</name></decl></param>, <param><decl><type><name>Bool</name> *</type> <name>fkey</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>TCAPINFO</name> *</type><name>data</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>int</name></type> <name>which</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>int</name></type> <name>code</name> =<init> <expr>-1</expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>char</name> *</type><name>name</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>const</name> <name>char</name> *</type><name>p</name></decl>;</decl_stmt>
+
+    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("xtermcapKeycode(%s)\n", *<name>params</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+    <comment type="block">/* Convert hex encoded name to ascii */</comment>
+    <expr_stmt><expr><name>name</name> = <call><name>x_decode_hex</name><argument_list>(<argument><expr>*<name>params</name></expr></argument>, <argument><expr>&amp;<name>p</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr>*<name>params</name> = <name>p</name></expr>;</expr_stmt>
+
+    <expr_stmt><expr>*<name>state</name> = 0</expr>;</expr_stmt>
+    <expr_stmt><expr>*<name>fkey</name> = <name>False</name></expr>;</expr_stmt>
+
+    <if>if <condition>(<expr>!<call><name>IsEmpty</name><argument_list>(<argument><expr><name>name</name></expr></argument>)</argument_list></call> &amp;&amp; (*<name>p</name> == 0 || *<name>p</name> == ';')</expr>)</condition><then> <block>{
+	<if>if <condition>(<expr>(<name>which</name> = <call><name>lookupTcapByName</name><argument_list>(<argument><expr><name>name</name></expr></argument>)</argument_list></call>) &gt;= 0</expr>)</condition><then> <block>{
+	    <if>if <condition>(<expr><call><name>keyIsDistinct</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>which</name></expr></argument>)</argument_list></call></expr>)</condition><then> <block>{
+		<expr_stmt><expr><name>data</name> = <name>table</name> + <name>which</name></expr>;</expr_stmt>
+		<expr_stmt><expr><name>code</name> = <name>data</name>-&gt;<name>code</name></expr>;</expr_stmt>
+		<expr_stmt><expr>*<name>state</name> = <call><name>xtermParamToState</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>data</name>-&gt;<name>param</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<if>if <condition>(<expr><call><name>IsFunctionKey</name><argument_list>(<argument><expr><name>code</name></expr></argument>)</argument_list></call></expr>)</condition><then> <block>{
+		    <expr_stmt><expr>*<name>fkey</name> = <name>True</name></expr>;</expr_stmt>
+		}</block></then> <else>else <if>if <condition>(<expr><name>code</name> &lt; 0</expr>)</condition><then> <block>{
+		    <expr_stmt><expr>*<name>fkey</name> = <name>True</name></expr>;</expr_stmt>
+		    <expr_stmt><expr><name>code</name> = <call><name>XK_Fn</name><argument_list>(<argument><expr>(-<name>code</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		}</block></then></if></else></if>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_SUN_FUNC_KEYS</name></expr></cpp:if>
+		<if>if <condition>(<expr>*<name>fkey</name> &amp;&amp; <name>xw</name>-&gt;<name>keyboard</name>.<name>type</name> == <name>keyboardIsSun</name></expr>)</condition><then> <block>{
+		    <decl_stmt><decl><type><name>int</name></type> <name>num</name> =<init> <expr><name>code</name> - <call><name>XK_Fn</name><argument_list>(<argument><expr>0</expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+		    <comment type="block">/* match function-key case in sunfuncvalue() */</comment>
+		    <if>if <condition>(<expr><name>num</name> &gt; 20</expr>)</condition><then> <block>{
+			<if>if <condition>(<expr><name>num</name> &lt;= 30 || <name>num</name> &gt; 47</expr>)</condition><then> <block>{
+			    <expr_stmt><expr><name>code</name> = -1</expr>;</expr_stmt>
+			}</block></then> <else>else <block>{
+			    <expr_stmt><expr><name>code</name> -= 10</expr>;</expr_stmt>
+			    <switch>switch <condition>(<expr><name>num</name></expr>)</condition> <block>{
+			    <case>case <expr>37</expr>:	<comment type="block">/* khome */</comment>
+			    </case><case>case <expr>39</expr>:	<comment type="block">/* kpp */</comment>
+			    </case><case>case <expr>41</expr>:	<comment type="block">/* kb2 */</comment>
+			    </case><case>case <expr>43</expr>:	<comment type="block">/* kend */</comment>
+			    </case><case>case <expr>45</expr>:	<comment type="block">/* knp */</comment>
+				<expr_stmt><expr><name>code</name> = -1</expr>;</expr_stmt>
+				<break>break;</break>
+			    </case>}</block></switch>
+			}</block></else></if>
+		    }</block></then></if>
+		}</block></then></if>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+	    }</block></then> <else>else <block>{
+		<expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("... name ok, data not ok\n")</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><name>code</name> = -1</expr>;</expr_stmt>
+	    }</block></else></if>
+	}</block></then> <else>else <block>{
+	    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("... name not ok\n")</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><name>code</name> = -2</expr>;</expr_stmt>
+	}</block></else></if>
+    }</block></then> <else>else <block>{
+	<expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("... name not ok\n")</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><name>code</name> = -2</expr>;</expr_stmt>
+    }</block></else></if>
+
+    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("... xtermcapKeycode(%s, %u, %d) -&gt; %#06x\n",
+	   <name>name</name>, *<name>state</name>, *<name>fkey</name>, <name>code</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>name</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <return>return <expr><name>code</name></expr>;</return>
+}</block></function>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif> <comment type="block">/* OPT_TCAP_QUERY */</comment>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_TCAP_FKEYS</name></expr></cpp:if>
+<function><type><name>static</name> <name>int</name></type>
+<name>nextTcapByCode</name><parameter_list>(<param><decl><type><name>int</name></type> <name>code</name></decl></param>, <param><decl><type><name>unsigned</name></type> <name>param</name></decl></param>, <param><decl><type><name>int</name></type> <name>last</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>int</name></type> <name>result</name> =<init> <expr>-1</expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>int</name></type> <name>n</name></decl>;</decl_stmt>
+
+    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("lookupTcapByCode %#x:%#x\n", <name>code</name>, <name>param</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <for>for (<init><expr><name>n</name> = <name>last</name> + 1</expr>;</init> <condition><expr><name>n</name> &lt; (<name>int</name>) <call><name>XtNumber</name><argument_list>(<argument><expr><name>table</name></expr></argument>)</argument_list></call></expr>;</condition> <incr><expr><name>n</name>++</expr></incr>) <block>{
+	<if>if <condition>(<expr><name><name>table</name><index>[<expr><name>n</name></expr>]</index></name>.<name>code</name> == <name>code</name> &amp;&amp;
+	    <name><name>table</name><index>[<expr><name>n</name></expr>]</index></name>.<name>param</name> == <name>param</name></expr>)</condition><then> <block>{
+	    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("-&gt;lookupTcapByCode %d:%s\n", <name>n</name>, <name><name>table</name><index>[<expr><name>n</name></expr>]</index></name>.<name>ti</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><name>result</name> = <name>n</name></expr>;</expr_stmt>
+	    <break>break;</break>
+	}</block></then></if>
+    }</block></for>
+    <return>return <expr><name>result</name></expr>;</return>
+}</block></function>
+
+<function><type><name>static</name> <name>int</name></type>
+<name>firstTcapByCode</name><parameter_list>(<param><decl><type><name>int</name></type> <name>code</name></decl></param>, <param><decl><type><name>unsigned</name></type> <name>param</name></decl></param>)</parameter_list>
+<block>{
+    <return>return <expr><call><name>nextTcapByCode</name><argument_list>(<argument><expr><name>code</name></expr></argument>, <argument><expr><name>param</name></expr></argument>, <argument><expr>-1</expr></argument>)</argument_list></call></expr>;</return>
+}</block></function>
+
+<function><type><name>int</name></type>
+<name>xtermcapString</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>, <param><decl><type><name>int</name></type> <name>keycode</name></decl></param>, <param><decl><type><name>unsigned</name></type> <name>mask</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>int</name></type> <name>result</name> =<init> <expr>0</expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>unsigned</name></type> <name>param</name> =<init> <expr><call><name>xtermStateToParam</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>mask</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>int</name></type> <name>which</name></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr>(<name>which</name> = <call><name>firstTcapByCode</name><argument_list>(<argument><expr><name>keycode</name></expr></argument>, <argument><expr><name>param</name></expr></argument>)</argument_list></call>) &gt;= 0</expr>)</condition><then> <block>{
+	<decl_stmt><decl><type><name>TScreen</name> *</type><name>screen</name> =<init> <expr><call><name>TScreenOf</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+	<decl_stmt><decl><type><name>char</name> *</type><name>fkey</name></decl>;</decl_stmt>
+
+	<expr_stmt><expr><call><name>loadTermcapStrings</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<if>if <condition>(<expr><name>screen</name>-&gt;<name>tcap_fkeys</name> != 0</expr>)</condition><then> <block>{
+	    <do>do <block>{
+		<if>if <condition>(<expr>(<name>fkey</name> = <name>screen</name>-&gt;<name><name>tcap_fkeys</name><index>[<expr><name>which</name></expr>]</index></name>) != <name>NO_STRING</name></expr>)</condition><then> <block>{
+		    <expr_stmt><expr><call><name>StringInput</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr>(<name>Char</name> *) <name>fkey</name></expr></argument>, <argument><expr><call><name>strlen</name><argument_list>(<argument><expr><name>fkey</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		    <expr_stmt><expr><name>result</name> = 1</expr>;</expr_stmt>
+		    <break>break;</break>
+		}</block></then></if>
+	    }</block> while <condition>(<expr>(<name>which</name> = <call><name>nextTcapByCode</name><argument_list>(<argument><expr><name>keycode</name></expr></argument>, <argument><expr><name>param</name></expr></argument>, <argument><expr><name>which</name></expr></argument>)</argument_list></call>) &gt;= 0</expr>)</condition>;</do>
+	}</block></then></if>
+    }</block></then></if>
+
+    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("xtermcapString(keycode=%#x, mask=%#x) -&gt;%d\n",
+	   <name>keycode</name>, <name>mask</name>, <name>result</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+    <return>return <expr><name>result</name></expr>;</return>
+}</block></function>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif> <comment type="block">/* OPT_TCAP_FKEYS */</comment>
+
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif> <comment type="block">/* OPT_TCAP_QUERY || OPT_TCAP_FKEYS */</comment>
+
+<comment type="block">/*
+ * If we're linked to terminfo, tgetent() will return an empty buffer.  We
+ * cannot use that to adjust the $TERMCAP variable.
+ */</comment>
+<function><type><name>Bool</name></type>
+<name>get_termcap</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>, <param><decl><type><name>char</name> *</type><name>name</name></decl></param>)</parameter_list>
+<block>{
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>USE_TERMINFO</name></expr></cpp:if>
+    <decl_stmt><decl><type><name>int</name></type> <name>ignored</name> =<init> <expr>0</expr></init></decl>;</decl_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+    <decl_stmt><decl><type><name>char</name> *</type><name>buffer</name> =<init> <expr><call><name>get_tcap_buffer</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+    <expr_stmt><expr>*<name>buffer</name> = 0</expr>;</expr_stmt>		<comment type="block">/* initialize, in case we're using terminfo's tgetent */</comment>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>USE_EXTENDED_NAMES</name></expr></cpp:if>
+    <expr_stmt><expr><call><name>use_extended_names</name><argument_list>(<argument><expr><name>TRUE</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+    <if>if <condition>(<expr>!<call><name>IsEmpty</name><argument_list>(<argument><expr><name>name</name></expr></argument>)</argument_list></call></expr>)</condition><then> <block>{
+	<if>if <condition>(<expr><call><name>TcapInit</name><argument_list>(<argument><expr><name>buffer</name></expr></argument>, <argument><expr><name>name</name></expr></argument>)</argument_list></call></expr>)</condition><then> <block>{
+	    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("get_termcap(%s) succeeded (%s)\n", <name>name</name>,
+		   (*<name>buffer</name>
+		    ? "ok:termcap, we can update $TERMCAP"
+		    : "assuming this is terminfo"))</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <return>return <expr><name>True</name></expr>;</return>
+	}</block></then> <else>else <block>{
+	    <expr_stmt><expr>*<name>buffer</name> = 0</expr>;</expr_stmt>	<comment type="block">/* just in case */</comment>
+	}</block></else></if>
+    }</block></then></if>
+    <return>return <expr><name>False</name></expr>;</return>
+}</block></function>
+
+<comment type="block">/*
+ * Retrieve the termcap-buffer.
+ */</comment>
+<function><type><name>char</name> *</type>
+<name>get_tcap_buffer</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>TScreen</name> *</type><name>screen</name> =<init> <expr><call><name>TScreenOf</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>char</name> *</type><name>buffer</name></decl>;</decl_stmt>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_TEK4014</name></expr></cpp:if>
+    <if>if <condition>(<expr><call><name>TEK4014_ACTIVE</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr>)</condition><then> <block>{
+	<expr_stmt><expr><name>buffer</name> = <call><name>TekScreenOf</name><argument_list>(<argument><expr><name>tekWidget</name></expr></argument>)</argument_list></call>-&gt;<name>tcapbuf</name></expr>;</expr_stmt>
+    }</block></then> <else>else
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+    <block>{
+	<expr_stmt><expr><name>buffer</name> = <name>screen</name>-&gt;<name>tcapbuf</name></expr>;</expr_stmt>
+    }</block></else></if>
+    <return>return <expr><name>buffer</name></expr>;</return>
+}</block></function>
+
+<comment type="block">/*
+ * Retrieve the erase-key, for initialization in main program.
+ */</comment>
+<function><type><name>char</name> *</type>
+<name>get_tcap_erase</name><parameter_list>(<param><decl><type><name>XtermWidget</name> <name>xw</name></type> <name>GCC_UNUSED</name></decl></param>)</parameter_list>
+<block>{
+<cpp:ifdef>#<cpp:directive>ifdef</cpp:directive> <name>USE_TERMCAP</name></cpp:ifdef>
+    <decl_stmt><decl><type><name>char</name> *</type><name>area</name> =<init> <expr><call><name>TScreenOf</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call>-&gt;<name>tcap_area</name></expr></init></decl>;</decl_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+    <decl_stmt><decl><type><name>char</name> *</type><name>fkey</name></decl>;</decl_stmt>
+
+<cpp:ifndef>#<cpp:directive>ifndef</cpp:directive> <name>USE_TERMCAP</name></cpp:ifndef>
+    <expr_stmt><expr><name>fkey</name> = <call><name>tigetstr</name><argument_list>(<argument><expr>"kbs"</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+    <expr_stmt><expr><name>fkey</name> = <call><name>tgetstr</name><argument_list>(<argument><expr>"kb"</expr></argument>, <argument><expr>&amp;<name>area</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+    <if>if <condition>(<expr><name>fkey</name> == <name>NO_STRING</name></expr>)</condition><then>
+	<expr_stmt><expr><name>fkey</name> = 0</expr>;</expr_stmt></then></if>
+    <if>if <condition>(<expr><name>fkey</name> != 0</expr>)</condition><then>
+	<expr_stmt><expr><name>fkey</name> = <call><name>x_strdup</name><argument_list>(<argument><expr><name>fkey</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+    <return>return <expr><name>fkey</name></expr>;</return>
+}</block></function>
+
+<comment type="block">/*
+ * A legal termcap (or terminfo) name consists solely of graphic characters,
+ * excluding the punctuation used to delimit fields of the source description.
+ */</comment>
+<function><type><name>static</name> <name>Bool</name></type>
+<name>isLegalTcapName</name><parameter_list>(<param><decl><type><name>const</name> <name>char</name> *</type><name>name</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>Bool</name></type> <name>result</name> =<init> <expr><name>False</name></expr></init></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr>*<name>name</name> != '\0'</expr>)</condition><then> <block>{
+	<expr_stmt><expr><name>result</name> = <name>True</name></expr>;</expr_stmt>
+	<while>while <condition>(<expr>*<name>name</name> != '\0'</expr>)</condition> <block>{
+	    <if>if <condition>(<expr><call><name>isgraph</name><argument_list>(<argument><expr><call><name>CharOf</name><argument_list>(<argument><expr>*<name>name</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>)</condition><then> <block>{
+		<if>if <condition>(<expr><call><name>strchr</name><argument_list>(<argument><expr>"\\|,:'\""</expr></argument>, <argument><expr>*<name>name</name></expr></argument>)</argument_list></call> != 0</expr>)</condition><then> <block>{
+		    <expr_stmt><expr><name>result</name> = <name>False</name></expr>;</expr_stmt>
+		    <break>break;</break>
+		}</block></then></if>
+	    }</block></then> <else>else <block>{
+		<expr_stmt><expr><name>result</name> = <name>False</name></expr>;</expr_stmt>
+		<break>break;</break>
+	    }</block></else></if>
+	    <expr_stmt><expr>++<name>name</name></expr>;</expr_stmt>
+	}</block></while>
+    }</block></then></if>
+
+    <return>return <expr><name>result</name></expr>;</return>
+}</block></function>
+
+<function><type><name>void</name></type>
+<name>set_termcap</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>, <param><decl><type><name>const</name> <name>char</name> *</type><name>name</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>Boolean</name></type> <name>success</name> =<init> <expr><name>False</name></expr></init></decl>;</decl_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>USE_TERMINFO</name></expr></cpp:if>
+    <decl_stmt><decl><type><name>int</name></type> <name>ignored</name> =<init> <expr>0</expr></init></decl>;</decl_stmt>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+    <decl_stmt><decl><type><name>TScreen</name> *</type><name>screen</name> =<init> <expr><call><name>TScreenOf</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>char</name></type> <name><name>buffer</name><index>[<expr><call><name>sizeof</name><argument_list>(<argument><expr><name>screen</name>-&gt;<name>tcapbuf</name></expr></argument>)</argument_list></call></expr>]</index></name></decl>;</decl_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("set_termcap(%s)\n", <call><name>NonNull</name><argument_list>(<argument><expr><name>name</name></expr></argument>)</argument_list></call>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <if>if <condition>(<expr><call><name>IsEmpty</name><argument_list>(<argument><expr><name>name</name></expr></argument>)</argument_list></call></expr>)</condition><then> <block>{
+	<expr_stmt><expr><call><name>Bell</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>XkbBI_MinorError</name></expr></argument>, <argument><expr>0</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></then> <else>else <block>{
+	<decl_stmt><decl><type><name>const</name> <name>char</name> *</type><name>temp</name></decl>;</decl_stmt>
+	<decl_stmt><decl><type><name>char</name> *</type><name>value</name></decl>;</decl_stmt>
+
+	<if>if <condition>(<expr>(<name>value</name> = <call><name>x_decode_hex</name><argument_list>(<argument><expr><name>name</name></expr></argument>, <argument><expr>&amp;<name>temp</name></expr></argument>)</argument_list></call>) != 0</expr>)</condition><then> <block>{
+	    <if>if <condition>(<expr>*<name>temp</name> == '\0' &amp;&amp; <call><name>isLegalTcapName</name><argument_list>(<argument><expr><name>value</name></expr></argument>)</argument_list></call></expr>)</condition><then> <block>{
+		<if>if <condition>(<expr><call><name>TcapInit</name><argument_list>(<argument><expr><name>buffer</name></expr></argument>, <argument><expr><name>value</name></expr></argument>)</argument_list></call></expr>)</condition><then> <block>{
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr>!<name>USE_TERMINFO</name></expr></cpp:if>
+		    <expr_stmt><expr><call><name>memcpy</name><argument_list>(<argument><expr><name>screen</name>-&gt;<name>tcapbuf</name></expr></argument>, <argument><expr><name>buffer</name></expr></argument>, <argument><expr><call><name>sizeof</name><argument_list>(<argument><expr><name>buffer</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+		    <expr_stmt><expr><call><name>free_termcap</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		    <expr_stmt><expr><name>success</name> = <name>True</name></expr>;</expr_stmt>
+		}</block></then></if>
+	    }</block></then></if>
+	    <expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>value</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	}</block></then></if>
+    }</block></else></if>
+    <if>if <condition>(<expr>!<name>success</name></expr>)</condition><then>
+	<expr_stmt><expr><call><name>Bell</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>XkbBI_MinorError</name></expr></argument>, <argument><expr>0</expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+}</block></function>
+
+<function><type><name>void</name></type>
+<name>free_termcap</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>TScreen</name> *</type><name>screen</name> =<init> <expr><call><name>TScreenOf</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr><name>screen</name>-&gt;<name>tcap_fkeys</name> != 0</expr>)</condition><then> <block>{
+	<decl_stmt><decl><type><name>Cardinal</name></type> <name>want</name> =<init> <expr><call><name>XtNumber</name><argument_list>(<argument><expr><name>table</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+	<decl_stmt><decl><type><name>Cardinal</name></type> <name>have</name></decl>;</decl_stmt>
+	<decl_stmt><decl><type><name>char</name> *</type><name>fkey</name></decl>;</decl_stmt>
+
+	<for>for (<init><expr><name>have</name> = 0</expr>;</init> <condition><expr><name>have</name> &lt; <name>want</name></expr>;</condition> <incr><expr>++<name>have</name></expr></incr>) <block>{
+	    <expr_stmt><expr><name>fkey</name> = <name>screen</name>-&gt;<name><name>tcap_fkeys</name><index>[<expr><name>have</name></expr>]</index></name></expr>;</expr_stmt>
+	    <if>if <condition>(<expr><name>fkey</name> != 0 &amp;&amp; <name>fkey</name> != <name>NO_STRING</name></expr>)</condition><then> <block>{
+		<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>fkey</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    }</block></then></if>
+	}</block></for>
+	<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>screen</name>-&gt;<name>tcap_fkeys</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><name>screen</name>-&gt;<name>tcap_fkeys</name> = 0</expr>;</expr_stmt>
+    }</block></then></if>
+}</block></function>
+</unit>

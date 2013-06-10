@@ -1,0 +1,162 @@
+<unit xmlns="http://www.sdml.info/srcML/src" xmlns:cpp="http://www.sdml.info/srcML/cpp" language="C" dir="" filename="charclass.c"><comment type="block">/* $XTermId: charclass.c,v 1.22 2009/11/05 23:46:15 tom Exp $ */</comment>
+
+<comment type="block">/*
+ * Compact and efficient reimplementation of the
+ * xterm character class mechanism for large character sets
+ *
+ * Markus Kuhn -- mkuhn@acm.org -- 2000-07-03
+ *
+ * Xterm allows users to select entire words with a double-click on the left
+ * mouse button.  Opinions might differ on what type of characters are part of
+ * separate words, therefore xterm allows users to configure a class code for
+ * each 8-bit character.  Words are maximum length sequences of neighboring
+ * characters with identical class code.  Extending this mechanism to Unicode
+ * naively would create an at least 2^16 entries (128 kB) long class code
+ * table.
+ *
+ * Instead, we transform the character class table into a list of intervals,
+ * that will be accessed via a linear search.  Changes made to the table by the
+ * user will be appended.  A special class code IDENT (default) marks
+ * characters who have their code number as the class code.
+ *
+ * We could alternatively use a sorted table of non-overlapping intervals that
+ * can be accessed via binary search, but merging in new intervals is
+ * significantly more hassle and not worth the effort here.
+ */</comment>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;xterm.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;charclass.h&gt;</cpp:file></cpp:include>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_WIDE_CHARS</name></expr></cpp:if>
+
+<decl_stmt><decl><type><name>static</name> struct</type> <name>classentry</name> <block>{
+    <decl_stmt><decl><type><name>int</name></type> <name>cclass</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>int</name></type> <name>first</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>int</name></type> <name>last</name></decl>;</decl_stmt>
+}</block></decl></decl_stmt> <expr_stmt><expr>*<name>classtab</name></expr>;</expr_stmt>
+
+<comment type="block">/*
+ * Special convention for classtab[0]:
+ * - classtab[0].cclass is the allocated number of entries in classtab
+ * - classtab[0].first = 1 (first used entry in classtab)
+ * - classtab[0].last is the last used entry in classtab
+ */</comment>
+
+<function><type><name>int</name></type>
+<name>SetCharacterClassRange</name><parameter_list>(<param><decl><type><name>int</name></type> <name>low</name></decl></param>, <param><decl><type><name>int</name></type> <name>high</name></decl></param>, <param><decl><type><name>int</name></type> <name>value</name></decl></param>)</parameter_list>
+<block>{
+    <if>if <condition>(<expr><name>high</name> &lt; <name>low</name></expr>)</condition><then>
+	<return>return <expr>-1</expr>;</return></then></if>		<comment type="block">/* nothing to do */</comment>
+
+    <comment type="block">/* make sure we have at least one free entry left at table end */</comment>
+    <if>if <condition>(<expr><name><name>classtab</name><index>[<expr>0</expr>]</index></name>.<name>last</name> &gt; <name><name>classtab</name><index>[<expr>0</expr>]</index></name>.<name>cclass</name> - 2</expr>)</condition><then> <block>{
+	<expr_stmt><expr><name><name>classtab</name><index>[<expr>0</expr>]</index></name>.<name>cclass</name> += 5 + <name><name>classtab</name><index>[<expr>0</expr>]</index></name>.<name>cclass</name> / 4</expr>;</expr_stmt>
+	<expr_stmt><expr><name>classtab</name> = <call><name>TypeRealloc</name><argument_list>(<argument>struct <expr><name>classentry</name></expr></argument>,
+			         <argument><expr>(<name>unsigned</name>) <name><name>classtab</name><index>[<expr>0</expr>]</index></name>.<name>cclass</name></expr></argument>, <argument><expr><name>classtab</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<if>if <condition>(<expr>!<name>classtab</name></expr>)</condition><then>
+	    <expr_stmt><expr><call><name>abort</name><argument_list>()</argument_list></call></expr>;</expr_stmt></then></if>
+    }</block></then></if>
+
+    <comment type="block">/* simply append new interval to end of interval array */</comment>
+    <expr_stmt><expr><name><name>classtab</name><index>[<expr>0</expr>]</index></name>.<name>last</name>++</expr>;</expr_stmt>
+    <expr_stmt><expr><name><name>classtab</name><index>[<expr><name><name>classtab</name><index>[<expr>0</expr>]</index></name>.<name>last</name></expr>]</index></name>.<name>first</name> = <name>low</name></expr>;</expr_stmt>
+    <expr_stmt><expr><name><name>classtab</name><index>[<expr><name><name>classtab</name><index>[<expr>0</expr>]</index></name>.<name>last</name></expr>]</index></name>.<name>last</name> = <name>high</name></expr>;</expr_stmt>
+    <expr_stmt><expr><name><name>classtab</name><index>[<expr><name><name>classtab</name><index>[<expr>0</expr>]</index></name>.<name>last</name></expr>]</index></name>.<name>cclass</name> = <name>value</name></expr>;</expr_stmt>
+
+    <return>return <expr>0</expr>;</return>
+}</block></function>
+
+<typedef>typedef <type><enum>enum <block>{
+    <expr><name>IDENT</name> = -1</expr>,
+    <expr><name>ALNUM</name> = 48</expr>,
+    <expr><name>CNTRL</name> = 1</expr>,
+    <expr><name>BLANK</name> = 32</expr>
+}</block></enum></type> <name>Classes</name>;</typedef>
+
+<function><type><name>void</name></type>
+<name>init_classtab</name><parameter_list>(<param><decl><type><name>void</name></type></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>const</name> <name>int</name></type> <name>size</name> =<init> <expr>50</expr></init></decl>;</decl_stmt>
+
+    <expr_stmt><expr><name>classtab</name> = <call><name>TypeMallocN</name><argument_list>(<argument>struct <expr><name>classentry</name></expr></argument>, <argument><expr>(<name>unsigned</name>) <name>size</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <if>if <condition>(<expr>!<name>classtab</name></expr>)</condition><then>
+	<expr_stmt><expr><call><name>abort</name><argument_list>()</argument_list></call></expr>;</expr_stmt></then></if>
+    <expr_stmt><expr><name><name>classtab</name><index>[<expr>0</expr>]</index></name>.<name>cclass</name> = <name>size</name></expr>;</expr_stmt>
+    <expr_stmt><expr><name><name>classtab</name><index>[<expr>0</expr>]</index></name>.<name>first</name> = 1</expr>;</expr_stmt>
+    <expr_stmt><expr><name><name>classtab</name><index>[<expr>0</expr>]</index></name>.<name>last</name> = 0</expr>;</expr_stmt>
+
+    <comment type="block">/* old xterm default classes */</comment>
+    <expr_stmt><expr><call><name>SetCharacterClassRange</name><argument_list>(<argument><expr>0</expr></argument>, <argument><expr>0</expr></argument>, <argument><expr><name>BLANK</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>SetCharacterClassRange</name><argument_list>(<argument><expr>1</expr></argument>, <argument><expr>31</expr></argument>, <argument><expr><name>CNTRL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>SetCharacterClassRange</name><argument_list>(<argument><expr>'\t'</expr></argument>, <argument><expr>'\t'</expr></argument>, <argument><expr><name>BLANK</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>SetCharacterClassRange</name><argument_list>(<argument><expr>'0'</expr></argument>, <argument><expr>'9'</expr></argument>, <argument><expr><name>ALNUM</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>SetCharacterClassRange</name><argument_list>(<argument><expr>'A'</expr></argument>, <argument><expr>'Z'</expr></argument>, <argument><expr><name>ALNUM</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>SetCharacterClassRange</name><argument_list>(<argument><expr>'_'</expr></argument>, <argument><expr>'_'</expr></argument>, <argument><expr><name>ALNUM</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>SetCharacterClassRange</name><argument_list>(<argument><expr>'a'</expr></argument>, <argument><expr>'z'</expr></argument>, <argument><expr><name>ALNUM</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>SetCharacterClassRange</name><argument_list>(<argument><expr>127</expr></argument>, <argument><expr>159</expr></argument>, <argument><expr><name>CNTRL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>SetCharacterClassRange</name><argument_list>(<argument><expr>160</expr></argument>, <argument><expr>191</expr></argument>, <argument><expr><name>IDENT</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>SetCharacterClassRange</name><argument_list>(<argument><expr>192</expr></argument>, <argument><expr>255</expr></argument>, <argument><expr><name>ALNUM</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>SetCharacterClassRange</name><argument_list>(<argument><expr>215</expr></argument>, <argument><expr>215</expr></argument>, <argument><expr><name>IDENT</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>SetCharacterClassRange</name><argument_list>(<argument><expr>247</expr></argument>, <argument><expr>247</expr></argument>, <argument><expr><name>IDENT</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+    <comment type="block">/* added Unicode classes */</comment>
+    <expr_stmt><expr><call><name>SetCharacterClassRange</name><argument_list>(<argument><expr>0x0100</expr></argument>, <argument><expr>0xffdf</expr></argument>, <argument><expr><name>ALNUM</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>	<comment type="block">/* mostly characters */</comment>
+    <expr_stmt><expr><call><name>SetCharacterClassRange</name><argument_list>(<argument><expr>0x037e</expr></argument>, <argument><expr>0x037e</expr></argument>, <argument><expr><name>IDENT</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>	<comment type="block">/* Greek question mark */</comment>
+    <expr_stmt><expr><call><name>SetCharacterClassRange</name><argument_list>(<argument><expr>0x0387</expr></argument>, <argument><expr>0x0387</expr></argument>, <argument><expr><name>IDENT</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>	<comment type="block">/* Greek ano teleia */</comment>
+    <expr_stmt><expr><call><name>SetCharacterClassRange</name><argument_list>(<argument><expr>0x055a</expr></argument>, <argument><expr>0x055f</expr></argument>, <argument><expr><name>IDENT</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>	<comment type="block">/* Armenian punctuation */</comment>
+    <expr_stmt><expr><call><name>SetCharacterClassRange</name><argument_list>(<argument><expr>0x0589</expr></argument>, <argument><expr>0x0589</expr></argument>, <argument><expr><name>IDENT</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>	<comment type="block">/* Armenian full stop */</comment>
+    <expr_stmt><expr><call><name>SetCharacterClassRange</name><argument_list>(<argument><expr>0x0700</expr></argument>, <argument><expr>0x070d</expr></argument>, <argument><expr><name>IDENT</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>	<comment type="block">/* Syriac punctuation */</comment>
+    <expr_stmt><expr><call><name>SetCharacterClassRange</name><argument_list>(<argument><expr>0x104a</expr></argument>, <argument><expr>0x104f</expr></argument>, <argument><expr><name>IDENT</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>	<comment type="block">/* Myanmar punctuation */</comment>
+    <expr_stmt><expr><call><name>SetCharacterClassRange</name><argument_list>(<argument><expr>0x10fb</expr></argument>, <argument><expr>0x10fb</expr></argument>, <argument><expr><name>IDENT</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>	<comment type="block">/* Georgian punctuation */</comment>
+    <expr_stmt><expr><call><name>SetCharacterClassRange</name><argument_list>(<argument><expr>0x1361</expr></argument>, <argument><expr>0x1368</expr></argument>, <argument><expr><name>IDENT</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>	<comment type="block">/* Ethiopic punctuation */</comment>
+    <expr_stmt><expr><call><name>SetCharacterClassRange</name><argument_list>(<argument><expr>0x166d</expr></argument>, <argument><expr>0x166e</expr></argument>, <argument><expr><name>IDENT</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>	<comment type="block">/* Canadian Syl. punctuation */</comment>
+    <expr_stmt><expr><call><name>SetCharacterClassRange</name><argument_list>(<argument><expr>0x17d4</expr></argument>, <argument><expr>0x17dc</expr></argument>, <argument><expr><name>IDENT</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>	<comment type="block">/* Khmer punctuation */</comment>
+    <expr_stmt><expr><call><name>SetCharacterClassRange</name><argument_list>(<argument><expr>0x1800</expr></argument>, <argument><expr>0x180a</expr></argument>, <argument><expr><name>IDENT</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>	<comment type="block">/* Mongolian punctuation */</comment>
+    <expr_stmt><expr><call><name>SetCharacterClassRange</name><argument_list>(<argument><expr>0x2000</expr></argument>, <argument><expr>0x200a</expr></argument>, <argument><expr><name>BLANK</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>	<comment type="block">/* spaces */</comment>
+    <expr_stmt><expr><call><name>SetCharacterClassRange</name><argument_list>(<argument><expr>0x200b</expr></argument>, <argument><expr>0x27ff</expr></argument>, <argument><expr><name>IDENT</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>	<comment type="block">/* punctuation and symbols */</comment>
+    <expr_stmt><expr><call><name>SetCharacterClassRange</name><argument_list>(<argument><expr>0x2070</expr></argument>, <argument><expr>0x207f</expr></argument>, <argument><expr>0x2070</expr></argument>)</argument_list></call></expr>;</expr_stmt>	<comment type="block">/* superscript */</comment>
+    <expr_stmt><expr><call><name>SetCharacterClassRange</name><argument_list>(<argument><expr>0x2080</expr></argument>, <argument><expr>0x208f</expr></argument>, <argument><expr>0x2080</expr></argument>)</argument_list></call></expr>;</expr_stmt>	<comment type="block">/* subscript */</comment>
+    <expr_stmt><expr><call><name>SetCharacterClassRange</name><argument_list>(<argument><expr>0x3000</expr></argument>, <argument><expr>0x3000</expr></argument>, <argument><expr><name>BLANK</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>	<comment type="block">/* ideographic space */</comment>
+    <expr_stmt><expr><call><name>SetCharacterClassRange</name><argument_list>(<argument><expr>0x3001</expr></argument>, <argument><expr>0x3020</expr></argument>, <argument><expr><name>IDENT</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>	<comment type="block">/* ideographic punctuation */</comment>
+    <expr_stmt><expr><call><name>SetCharacterClassRange</name><argument_list>(<argument><expr>0x3040</expr></argument>, <argument><expr>0x309f</expr></argument>, <argument><expr>0x3040</expr></argument>)</argument_list></call></expr>;</expr_stmt>	<comment type="block">/* Hiragana */</comment>
+    <expr_stmt><expr><call><name>SetCharacterClassRange</name><argument_list>(<argument><expr>0x30a0</expr></argument>, <argument><expr>0x30ff</expr></argument>, <argument><expr>0x30a0</expr></argument>)</argument_list></call></expr>;</expr_stmt>	<comment type="block">/* Katakana */</comment>
+    <expr_stmt><expr><call><name>SetCharacterClassRange</name><argument_list>(<argument><expr>0x3300</expr></argument>, <argument><expr>0x9fff</expr></argument>, <argument><expr>0x4e00</expr></argument>)</argument_list></call></expr>;</expr_stmt>	<comment type="block">/* CJK Ideographs */</comment>
+    <expr_stmt><expr><call><name>SetCharacterClassRange</name><argument_list>(<argument><expr>0xac00</expr></argument>, <argument><expr>0xd7a3</expr></argument>, <argument><expr>0xac00</expr></argument>)</argument_list></call></expr>;</expr_stmt>	<comment type="block">/* Hangul Syllables */</comment>
+    <expr_stmt><expr><call><name>SetCharacterClassRange</name><argument_list>(<argument><expr>0xf900</expr></argument>, <argument><expr>0xfaff</expr></argument>, <argument><expr>0x4e00</expr></argument>)</argument_list></call></expr>;</expr_stmt>	<comment type="block">/* CJK Ideographs */</comment>
+    <expr_stmt><expr><call><name>SetCharacterClassRange</name><argument_list>(<argument><expr>0xfe30</expr></argument>, <argument><expr>0xfe6b</expr></argument>, <argument><expr><name>IDENT</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>	<comment type="block">/* punctuation forms */</comment>
+    <expr_stmt><expr><call><name>SetCharacterClassRange</name><argument_list>(<argument><expr>0xff00</expr></argument>, <argument><expr>0xff0f</expr></argument>, <argument><expr><name>IDENT</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>	<comment type="block">/* half/fullwidth ASCII */</comment>
+    <expr_stmt><expr><call><name>SetCharacterClassRange</name><argument_list>(<argument><expr>0xff1a</expr></argument>, <argument><expr>0xff20</expr></argument>, <argument><expr><name>IDENT</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>	<comment type="block">/* half/fullwidth ASCII */</comment>
+    <expr_stmt><expr><call><name>SetCharacterClassRange</name><argument_list>(<argument><expr>0xff3b</expr></argument>, <argument><expr>0xff40</expr></argument>, <argument><expr><name>IDENT</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>	<comment type="block">/* half/fullwidth ASCII */</comment>
+    <expr_stmt><expr><call><name>SetCharacterClassRange</name><argument_list>(<argument><expr>0xff5b</expr></argument>, <argument><expr>0xff64</expr></argument>, <argument><expr><name>IDENT</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>	<comment type="block">/* half/fullwidth ASCII */</comment>
+
+    <return>return;</return>
+}</block></function>
+
+<function><type><name>int</name></type>
+<name>CharacterClass</name><parameter_list>(<param><decl><type><name>int</name></type> <name>c</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>int</name></type> <name>i</name>, <name>cclass</name> =<init> <expr><name>IDENT</name></expr></init></decl>;</decl_stmt>
+
+    <for>for (<init><expr><name>i</name> = <name><name>classtab</name><index>[<expr>0</expr>]</index></name>.<name>first</name></expr>;</init> <condition><expr><name>i</name> &lt;= <name><name>classtab</name><index>[<expr>0</expr>]</index></name>.<name>last</name></expr>;</condition> <incr><expr><name>i</name>++</expr></incr>)
+	<if>if <condition>(<expr><name><name>classtab</name><index>[<expr><name>i</name></expr>]</index></name>.<name>first</name> &lt;= <name>c</name> &amp;&amp; <name><name>classtab</name><index>[<expr><name>i</name></expr>]</index></name>.<name>last</name> &gt;= <name>c</name></expr>)</condition><then>
+	    <expr_stmt><expr><name>cclass</name> = <name><name>classtab</name><index>[<expr><name>i</name></expr>]</index></name>.<name>cclass</name></expr>;</expr_stmt></then></if></for>
+
+    <if>if <condition>(<expr><name>cclass</name> &lt; 0</expr>)</condition><then>
+	<expr_stmt><expr><name>cclass</name> = <name>c</name></expr>;</expr_stmt></then></if>
+
+    <return>return <expr><name>cclass</name></expr>;</return>
+}</block></function>
+
+<cpp:ifdef>#<cpp:directive>ifdef</cpp:directive> <name>NO_LEAKS</name></cpp:ifdef>
+<function><type><name>void</name></type>
+<name>noleaks_CharacterClass</name><parameter_list>(<param><decl><type><name>void</name></type></decl></param>)</parameter_list>
+<block>{
+    <if>if <condition>(<expr><name>classtab</name> != 0</expr>)</condition><then> <block>{
+	<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>classtab</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><name>classtab</name> = 0</expr>;</expr_stmt>
+    }</block></then></if>
+}</block></function>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif> <comment type="block">/* OPT_WIDE_CHARS */</comment>
+</unit>

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit language="Java" dir="" filename="VelocityParser.java"><package>package <name>in980</name>.<name>velogen</name>.<name>parser</name>;</package>
+
+<import>import <name>in980</name>.<name>velogen</name>.<name>file</name>.<name>FileUtil</name>;</import>
+
+<import>import <name>java</name>.<name>io</name>.<name>IOException</name>;</import>
+<import>import <name>java</name>.<name>io</name>.<name>OutputStreamWriter</name>;</import>
+<import>import <name>java</name>.<name>util</name>.<name>Enumeration</name>;</import>
+<import>import <name>java</name>.<name>util</name>.<name>Properties</name>;</import>
+
+<import>import <name>org</name>.<name>apache</name>.<name>velocity</name>.<name>Template</name>;</import>
+<import>import <name>org</name>.<name>apache</name>.<name>velocity</name>.<name>VelocityContext</name>;</import>
+<import>import <name>org</name>.<name>apache</name>.<name>velocity</name>.<name>app</name>.<name>Velocity</name>;</import>
+
+<class><specifier>public</specifier> class <name>VelocityParser</name> <block>{
+
+	<decl_stmt><decl><type><specifier>private</specifier> <name>VelocityContext</name></type> <name>mainContext</name> =<init> <expr><name>null</name></expr></init></decl>;</decl_stmt>
+	<decl_stmt><decl><type><specifier>private</specifier> <name>Template</name></type> <name>mainTemplate</name> =<init> <expr><name>null</name></expr></init></decl>;</decl_stmt>	
+	<decl_stmt><decl><type><specifier>private</specifier> <specifier>final</specifier> <name>String</name></type> <name>TEMPLATE_ENCODING</name> =<init> <expr>"UTF-8"</expr></init></decl>;</decl_stmt>  <comment type="line">//ISO-8859-1, UTF-8</comment>
+<comment type="line">//	private final String VELOCITY_PROPERTIES = "app/velocity.properties";</comment>
+<comment type="line">//	private final String VELOCITY_PROPERTIES = "/home/salaniojr/workspace-eclipse-galileo/testeweb/WebContent/template/velocity.properties";</comment>
+	
+	
+	<constructor><specifier>public</specifier> <name>VelocityParser</name><parameter_list>(<param><decl><type><name>String</name></type> <name>templateFile</name></decl></param>)</parameter_list> <block>{
+		<try>try <block>{
+			<expr_stmt><expr><call><name><name>Velocity</name>.<name>init</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+			<expr_stmt><expr><name>mainTemplate</name> = <call><name><name>Velocity</name>.<name>getTemplate</name></name><argument_list>(<argument><expr><name>templateFile</name></expr></argument>, <argument><expr><name>TEMPLATE_ENCODING</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		}</block></try> <catch>catch (<param><decl><type><name>Exception</name></type> <name>ex</name></decl></param>) <block>{
+			<expr_stmt><expr><call><name><name>ex</name>.<name>printStackTrace</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+			<expr_stmt><expr><call><name><name>System</name>.<name>out</name>.<name>println</name></name><argument_list>(<argument><expr>"Error processing template file: "
+					+ <name>templateFile</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		}</block></catch>
+	}</block></constructor>
+
+	<function><type><specifier>public</specifier> <name>void</name></type> <name>addToContext</name><parameter_list>(<param><decl><type><name>String</name></type> <name>key</name></decl></param>, <param><decl><type><name>Object</name></type> <name>value</name></decl></param>)</parameter_list> <block>{
+		<if>if <condition>(<expr><name>mainContext</name> == <name>null</name></expr>)</condition><then> <block>{
+			<expr_stmt><expr><name>mainContext</name> = new <call><name>VelocityContext</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+		}</block></then></if>
+		<expr_stmt><expr><call><name><name>mainContext</name>.<name>put</name></name><argument_list>(<argument><expr><name>key</name></expr></argument>, <argument><expr><name>value</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	}</block></function>
+
+	<function><type><specifier>public</specifier> <name>void</name></type> <name>addToContext</name><parameter_list>(<param><decl><type><name>VelocityContext</name></type> <name>chainCtx</name></decl></param>)</parameter_list> <block>{
+		<expr_stmt><expr><name>mainContext</name> = new <call><name>VelocityContext</name><argument_list>(<argument><expr><name>chainCtx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	}</block></function>
+
+	<function><type><specifier>public</specifier> <name>VelocityContext</name></type> <name>getCurrentContext</name><parameter_list>()</parameter_list> <block>{
+		<return>return <expr><name>mainContext</name></expr>;</return>
+	}</block></function>
+
+	<function><type><specifier>public</specifier> <name>void</name></type> <name>processTemplate</name><parameter_list>(<param><decl><type><name>OutputStreamWriter</name></type> <name>osw</name></decl></param>)</parameter_list> <block>{
+		<try>try <block>{
+			<if>if <condition>(<expr><name>mainTemplate</name> != <name>null</name></expr>)</condition><then> <block>{
+				<expr_stmt><expr><call><name><name>mainTemplate</name>.<name>merge</name></name><argument_list>(<argument><expr><name>mainContext</name></expr></argument>, <argument><expr><name>osw</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+			}</block></then></if>
+			<expr_stmt><expr><call><name><name>osw</name>.<name>flush</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+			<expr_stmt><expr><call><name><name>osw</name>.<name>close</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+		}</block></try> <catch>catch (<param><decl><type><name>Exception</name></type> <name>ex</name></decl></param>) <block>{
+			<expr_stmt><expr><call><name><name>ex</name>.<name>printStackTrace</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+		}</block></catch>
+	}</block></function>
+
+	<function><type><specifier>public</specifier> <name>static</name> <name>void</name></type> <name>main</name><parameter_list>(<param><decl><type><name>String</name><index>[]</index></type> <name>args</name></decl></param>)</parameter_list> <throws>throws</throws> IOException <block>{
+		<decl_stmt><decl><type><name>Properties</name></type> <name>mainProps</name> =<init> <expr><call><name><name>FileUtil</name>.<name>getMainPropertiesFile</name></name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+		<expr_stmt><expr><name>Enumeration</name>&lt;<name>Object</name>&gt; <name>keys</name> = <call><name><name>mainProps</name>.<name>keys</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+		<while>while <condition>(<expr><call><name><name>keys</name>.<name>hasMoreElements</name></name><argument_list>()</argument_list></call></expr>)</condition> <block>{
+			<decl_stmt><decl><type><name>String</name></type> <name>key</name> =<init> <expr>(<name>String</name>) <call><name><name>keys</name>.<name>nextElement</name></name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt>
+<comment type="line">//			String auxKey = key + ".vm";</comment>
+<comment type="line">//			System.out.println(key);</comment>
+			<decl_stmt><decl><type><name>Properties</name></type> <name>p</name> =<init> <expr><call><name><name>FileUtil</name>.<name>getPropertiesFile</name></name><argument_list>(<argument><expr>(<name>String</name>) <call><name><name>mainProps</name>.<name>get</name></name><argument_list>(<argument><expr><name>key</name></expr></argument>)</argument_list></call></expr></argument>, <argument><expr><name><name>args</name><index>[<expr>1</expr>]</index></name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt> 
+			<expr_stmt><expr><call><name><name>FileUtil</name>.<name>prepareFile</name></name><argument_list>(<argument><expr><name>key</name></expr></argument>, <argument><expr><name>p</name></expr></argument>, <argument><expr><name><name>args</name><index>[<expr>0</expr>]</index></name></expr></argument>, <argument><expr><name><name>args</name><index>[<expr>1</expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		}</block></while>				
+	}</block></function>
+}</block></class></unit>

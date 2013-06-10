@@ -1,0 +1,584 @@
+<unit xmlns="http://www.sdml.info/srcML/src" xmlns:cpp="http://www.sdml.info/srcML/cpp" language="C" dir="" filename="resize.c"><comment type="block">/* $XTermId: resize.c,v 1.114 2010/05/23 16:04:32 tom Exp $ */</comment>
+
+<comment type="block">/*
+ * Copyright 2003-2009,2010 by Thomas E. Dickey
+ *
+ *                         All Rights Reserved
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE ABOVE LISTED COPYRIGHT HOLDER(S) BE LIABLE FOR ANY
+ * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * Except as contained in this notice, the name(s) of the above copyright
+ * holders shall not be used in advertising or otherwise to promote the
+ * sale, use or other dealings in this Software without prior written
+ * authorization.
+ *
+ *
+ * Copyright 1987 by Digital Equipment Corporation, Maynard, Massachusetts.
+ *
+ *                         All Rights Reserved
+ *
+ * Permission to use, copy, modify, and distribute this software and its
+ * documentation for any purpose and without fee is hereby granted,
+ * provided that the above copyright notice appear in all copies and that
+ * both that copyright notice and this permission notice appear in
+ * supporting documentation, and that the name of Digital Equipment
+ * Corporation not be used in advertising or publicity pertaining to
+ * distribution of the software without specific, written prior permission.
+ *
+ *
+ * DIGITAL DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
+ * ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
+ * DIGITAL BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR
+ * ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+ * WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+ * ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+ * SOFTWARE.
+ */</comment>
+
+<comment type="block">/* resize.c */</comment>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;xterm.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;stdio.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;ctype.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;xstrings.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;xtermcap.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;xterm_io.h&gt;</cpp:file></cpp:include>
+
+<cpp:ifdef>#<cpp:directive>ifdef</cpp:directive> <name>APOLLO_SR9</name></cpp:ifdef>
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>CANT_OPEN_DEV_TTY</name></cpp:define>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<cpp:ifndef>#<cpp:directive>ifndef</cpp:directive> <name>USE_TERMINFO</name></cpp:ifndef>		<comment type="block">/* avoid conflict with configure script */</comment>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>__QNX__</name></expr></argument>)</argument_list></call> || <call><name>defined</name><argument_list>(<argument><expr><name>__SCO__</name></expr></argument>)</argument_list></call> || <call><name>defined</name><argument_list>(<argument><expr><name>linux</name></expr></argument>)</argument_list></call> || <call><name>defined</name><argument_list>(<argument><expr><name>__OpenBSD__</name></expr></argument>)</argument_list></call> || <call><name>defined</name><argument_list>(<argument><expr><name>__UNIXWARE__</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>USE_TERMINFO</name></cpp:define>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>__QNX__</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;unix.h&gt;</cpp:file></cpp:include>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<comment type="block">/*
+ * Some OS's may want to use both, like SCO for example.  We catch here anyone
+ * who hasn't decided what they want.
+ */</comment>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr>!<call><name>defined</name><argument_list>(<argument><expr><name>USE_TERMCAP</name></expr></argument>)</argument_list></call> &amp;&amp; !<call><name>defined</name><argument_list>(<argument><expr><name>USE_TERMINFO</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>USE_TERMINFO</name></cpp:define>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;signal.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;pwd.h&gt;</cpp:file></cpp:include>
+
+<cpp:ifdef>#<cpp:directive>ifdef</cpp:directive> <name>USE_IGNORE_RC</name></cpp:ifdef>
+<decl_stmt><decl><type><name>int</name></type> <name>ignore_unused</name></decl>;</decl_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<cpp:ifdef>#<cpp:directive>ifdef</cpp:directive> <name>X_NOT_POSIX</name></cpp:ifdef>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr>!<call><name>defined</name><argument_list>(<argument><expr><name>SYSV</name></expr></argument>)</argument_list></call> &amp;&amp; !<call><name>defined</name><argument_list>(<argument><expr><name>i386</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<function_decl><type><name>extern</name> struct <name>passwd</name> *</type><name>getpwuid</name><parameter_list>()</parameter_list>;</function_decl>	<comment type="block">/* does ANYBODY need this? */</comment>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif> <comment type="block">/* SYSV &amp;&amp; i386 */</comment>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif> <comment type="block">/* X_NOT_POSIX */</comment>
+
+<cpp:ifdef>#<cpp:directive>ifdef</cpp:directive> <name>__MVS__</name></cpp:ifdef>
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>ESCAPE</name>(string) "\047" string</cpp:define>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>ESCAPE</name>(string) "\033" string</cpp:define>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+<cpp:define>#<cpp:directive>define</cpp:directive>	<name>EMULATIONS</name>	2</cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive>	<name>SUN</name>		1</cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive>	<name>VT100</name>		0</cpp:define>
+
+<cpp:define>#<cpp:directive>define</cpp:directive>	<name>TIMEOUT</name>		10</cpp:define>
+
+<cpp:define>#<cpp:directive>define</cpp:directive>	<name>SHELL_UNKNOWN</name>	0</cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive>	<name>SHELL_C</name>		1</cpp:define>
+<cpp:define>#<cpp:directive>define</cpp:directive>	<name>SHELL_BOURNE</name>	2</cpp:define>
+<comment type="block">/* *INDENT-OFF* */</comment>
+<decl_stmt><decl><type><name>static</name></type> struct <block>{
+    <decl_stmt><decl><type><name>const</name> <name>char</name> *</type><name>name</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>int</name></type> <name>type</name></decl>;</decl_stmt>
+}</block></decl></decl_stmt> <expr_stmt><expr><name><name>shell_list</name><index>[]</index></name> = <block>{
+    <expr><block>{ <expr>"csh"</expr>,	<expr><name>SHELL_C</name></expr> }</block></expr>,	<comment type="block">/* vanilla cshell */</comment>
+    <expr><block>{ <expr>"tcsh"</expr>,   <expr><name>SHELL_C</name></expr> }</block></expr>,
+    <expr><block>{ <expr>"jcsh"</expr>,   <expr><name>SHELL_C</name></expr> }</block></expr>,
+    <expr><block>{ <expr>"sh"</expr>,	<expr><name>SHELL_BOURNE</name></expr> }</block></expr>, <comment type="block">/* vanilla Bourne shell */</comment>
+    <expr><block>{ <expr>"ksh"</expr>,	<expr><name>SHELL_BOURNE</name></expr> }</block></expr>, <comment type="block">/* Korn shell (from AT&amp;T toolchest) */</comment>
+    <expr><block>{ <expr>"ksh-i"</expr>,	<expr><name>SHELL_BOURNE</name></expr> }</block></expr>, <comment type="block">/* other name for latest Korn shell */</comment>
+    <expr><block>{ <expr>"bash"</expr>,	<expr><name>SHELL_BOURNE</name></expr> }</block></expr>, <comment type="block">/* GNU Bourne again shell */</comment>
+    <expr><block>{ <expr>"jsh"</expr>,    <expr><name>SHELL_BOURNE</name></expr> }</block></expr>,
+    <expr><block>{ <expr><name>NULL</name></expr>,	<expr><name>SHELL_BOURNE</name></expr> }</block></expr>	<comment type="block">/* default (same as xterm's) */</comment>
+}</block></expr>;</expr_stmt>
+<comment type="block">/* *INDENT-ON* */</comment>
+
+<decl_stmt><decl><type><name>static</name> <name>const</name> <name>char</name> *</type><name><name>emuname</name><index>[<expr><name>EMULATIONS</name></expr>]</index></name> =<init>
+<expr><block>{
+    <expr>"VT100"</expr>,
+    <expr>"Sun"</expr>,
+}</block></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>static</name> <name>char</name> *</type><name>myname</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>static</name> <name>int</name></type> <name>shell_type</name> =<init> <expr><name>SHELL_UNKNOWN</name></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>static</name> <name>const</name> <name>char</name> *</type><name><name>getsize</name><index>[<expr><name>EMULATIONS</name></expr>]</index></name> =<init>
+<expr><block>{
+    <macro><name>ESCAPE</name><argument_list>(<argument>"7"</argument>)</argument_list></macro> <macro><name>ESCAPE</name><argument_list>(<argument>"[r"</argument>)</argument_list></macro> <macro><name>ESCAPE</name><argument_list>(<argument>"[999;999H"</argument>)</argument_list></macro> <expr><call><name>ESCAPE</name><argument_list>(<argument><expr>"[6n"</expr></argument>)</argument_list></call></expr>,
+    <expr><call><name>ESCAPE</name><argument_list>(<argument><expr>"[18t"</expr></argument>)</argument_list></call></expr>,
+}</block></expr></init></decl>;</decl_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>USE_STRUCT_TTYSIZE</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>USE_STRUCT_WINSIZE</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+<decl_stmt><decl><type><name>static</name> <name>const</name> <name>char</name> *</type><name><name>getwsize</name><index>[<expr><name>EMULATIONS</name></expr>]</index></name> =<init>
+<expr><block>{				<comment type="block">/* size in pixels */</comment>
+    <expr>0</expr>,
+    <expr><call><name>ESCAPE</name><argument_list>(<argument><expr>"[14t"</expr></argument>)</argument_list></call></expr>,
+}</block></expr></init></decl>;</decl_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif> <comment type="block">/* USE_STRUCT_{TTYSIZE|WINSIZE} */</comment>
+<decl_stmt><decl><type><name>static</name> <name>const</name> <name>char</name> *</type><name><name>restore</name><index>[<expr><name>EMULATIONS</name></expr>]</index></name> =<init>
+<expr><block>{
+    <expr><call><name>ESCAPE</name><argument_list>(<argument><expr>"8"</expr></argument>)</argument_list></call></expr>,
+    <expr>0</expr>,
+}</block></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>static</name> <name>const</name> <name>char</name> *</type><name>setname</name> =<init> <expr>""</expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>static</name> <name>const</name> <name>char</name> *</type><name><name>setsize</name><index>[<expr><name>EMULATIONS</name></expr>]</index></name> =<init>
+<expr><block>{
+    <expr>0</expr>,
+    <expr><call><name>ESCAPE</name><argument_list>(<argument><expr>"[8;%s;%st"</expr></argument>)</argument_list></call></expr>,
+}</block></expr></init></decl>;</decl_stmt>
+
+<cpp:ifdef>#<cpp:directive>ifdef</cpp:directive> <name>USE_ANY_SYSV_TERMIO</name></cpp:ifdef>
+<decl_stmt><decl><type><name>static</name> struct <name>termio</name></type> <name>tioorig</name></decl>;</decl_stmt>
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>USE_TERMIOS</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+<decl_stmt><decl><type><name>static</name> struct <name>termios</name></type> <name>tioorig</name></decl>;</decl_stmt>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+<decl_stmt><decl><type><name>static</name> struct <name>sgttyb</name></type> <name>sgorig</name></decl>;</decl_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif> <comment type="block">/* USE_ANY_SYSV_TERMIO/USE_TERMIOS */</comment>
+
+<decl_stmt><decl><type><name>static</name> <name>const</name> <name>char</name> *</type><name><name>size</name><index>[<expr><name>EMULATIONS</name></expr>]</index></name> =<init>
+<expr><block>{
+    <expr><call><name>ESCAPE</name><argument_list>(<argument><expr>"[%d;%dR"</expr></argument>)</argument_list></call></expr>,
+    <expr><call><name>ESCAPE</name><argument_list>(<argument><expr>"[8;%d;%dt"</expr></argument>)</argument_list></call></expr>,
+}</block></expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>static</name> <name>char</name></type> <name><name>sunname</name><index>[]</index></name> =<init> <expr>"sunsize"</expr></init></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>static</name> <name>int</name></type> <name>tty</name></decl>;</decl_stmt>
+<decl_stmt><decl><type><name>static</name> <name>FILE</name> *</type><name>ttyfp</name></decl>;</decl_stmt>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>USE_STRUCT_TTYSIZE</name></expr></argument>)</argument_list></call></expr></cpp:if>
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>USE_STRUCT_WINSIZE</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+<decl_stmt><decl><type><name>static</name> <name>const</name> <name>char</name> *</type><name><name>wsize</name><index>[<expr><name>EMULATIONS</name></expr>]</index></name> =<init>
+<expr><block>{
+    <expr>0</expr>,
+    <expr><call><name>ESCAPE</name><argument_list>(<argument><expr>"[4;%hd;%hdt"</expr></argument>)</argument_list></call></expr>,
+}</block></expr></init></decl>;</decl_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif> <comment type="block">/* USE_STRUCT_{TTYSIZE|WINSIZE} */</comment>
+
+<function_decl><type><name>static</name> <name>SIGNAL_T</name></type> <name>onintr</name><parameter_list>(<param><decl><type><name>int</name></type> <name>sig</name></decl></param>)</parameter_list>;</function_decl>
+<function_decl><type><name>static</name> <name>SIGNAL_T</name></type> <name>resize_timeout</name><parameter_list>(<param><decl><type><name>int</name></type> <name>sig</name></decl></param>)</parameter_list>;</function_decl>
+<function_decl><type><name>static</name> <name>int</name></type> <name>checkdigits</name><parameter_list>(<param><decl><type><name>char</name> *</type><name>str</name></decl></param>)</parameter_list>;</function_decl>
+<function_decl><type><name>static</name> <name>void</name></type> <name>Usage</name><parameter_list>(<param><decl><type><name>void</name></type></decl></param>)</parameter_list>;</function_decl>
+<function_decl><type><name>static</name> <name>void</name></type> <name>readstring</name><parameter_list>(<param><decl><type><name>FILE</name> *</type><name>fp</name></decl></param>, <param><decl><type><name>char</name> *</type><name>buf</name></decl></param>, <param><decl><type><name>const</name> <name>char</name> *</type><name>str</name></decl></param>)</parameter_list>;</function_decl>
+
+<cpp:ifdef>#<cpp:directive>ifdef</cpp:directive> <name>USE_TERMCAP</name></cpp:ifdef>
+<function><type><name>static</name> <name>void</name></type>
+<name>print_termcap</name><parameter_list>(<param><decl><type><name>const</name> <name>char</name> *</type><name>termcap</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>int</name></type> <name>ch</name></decl>;</decl_stmt>
+
+    <expr_stmt><expr><call><name>putchar</name><argument_list>(<argument><expr>'\''</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <while>while <condition>(<expr>(<name>ch</name> = *<name>termcap</name>++) != '\0'</expr>)</condition> <block>{
+	<switch>switch <condition>(<expr><name>ch</name> &amp; 0xff</expr>)</condition> <block>{
+	<case>case <expr>127</expr>:		<comment type="block">/* undo bug in GNU termcap */</comment>
+	    <expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr>"^?"</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <break>break;</break>
+	</case><case>case <expr>'\''</expr>:		<comment type="block">/* must escape anyway (unlikely) */</comment>
+	    <comment type="block">/* FALLTHRU */</comment>
+	</case><case>case <expr>'!'</expr>:		<comment type="block">/* must escape for SunOS csh */</comment>
+	    <expr_stmt><expr><call><name>putchar</name><argument_list>(<argument><expr>'\\'</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <comment type="block">/* FALLTHRU */</comment>
+	</case><default>default:
+	    <expr_stmt><expr><call><name>putchar</name><argument_list>(<argument><expr><name>ch</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <break>break;</break>
+	</default>}</block></switch>
+    }</block></while>
+    <expr_stmt><expr><call><name>putchar</name><argument_list>(<argument><expr>'\''</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+}</block></function>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif> <comment type="block">/* USE_TERMCAP */</comment>
+
+<comment type="block">/*
+   resets termcap string to reflect current screen size
+ */</comment>
+<function><type><name>int</name></type>
+<name>main</name><parameter_list>(<param><decl><type><name>int</name></type> <name>argc</name></decl></param>, <param><decl><type><name>char</name> **<name>argv</name></type> <name>ENVP_ARG</name></decl></param>)</parameter_list>
+<block>{
+<cpp:ifdef>#<cpp:directive>ifdef</cpp:directive> <name>USE_TERMCAP</name></cpp:ifdef>
+    <decl_stmt><decl><type><name>char</name> *</type><name>env</name></decl>;</decl_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+    <decl_stmt><decl><type><name>char</name> *</type><name>ptr</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>int</name></type> <name>emu</name> =<init> <expr><name>VT100</name></expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>char</name> *</type><name>shell</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type>struct <name>passwd</name> *</type><name>pw</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>int</name></type> <name>i</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>int</name></type> <name>rows</name>, <name>cols</name></decl>;</decl_stmt>
+<cpp:ifdef>#<cpp:directive>ifdef</cpp:directive> <name>USE_ANY_SYSV_TERMIO</name></cpp:ifdef>
+    <decl_stmt><decl><type>struct <name>termio</name></type> <name>tio</name></decl>;</decl_stmt>
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>USE_TERMIOS</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+    <decl_stmt><decl><type>struct <name>termios</name></type> <name>tio</name></decl>;</decl_stmt>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+    <decl_stmt><decl><type>struct <name>sgttyb</name></type> <name>sg</name></decl>;</decl_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif> <comment type="block">/* USE_ANY_SYSV_TERMIO/USE_TERMIOS */</comment>
+<cpp:ifdef>#<cpp:directive>ifdef</cpp:directive> <name>USE_TERMCAP</name></cpp:ifdef>
+    <decl_stmt><decl><type><name>int</name></type> <name>ok_tcap</name> =<init> <expr>1</expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>char</name></type> <name><name>termcap</name><index>[<expr><name>TERMCAP_SIZE</name></expr>]</index></name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>char</name></type> <name><name>newtc</name><index>[<expr><name>TERMCAP_SIZE</name></expr>]</index></name></decl>;</decl_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif> <comment type="block">/* USE_TERMCAP */</comment>
+    <decl_stmt><decl><type><name>char</name></type> <name><name>buf</name><index>[<expr><name>BUFSIZ</name></expr>]</index></name></decl>;</decl_stmt>
+<cpp:ifdef>#<cpp:directive>ifdef</cpp:directive> <name>TTYSIZE_STRUCT</name></cpp:ifdef>
+    <decl_stmt><decl><type><name>TTYSIZE_STRUCT</name></type> <name>ts</name></decl>;</decl_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+    <decl_stmt><decl><type><name>char</name> *</type><name>name_of_tty</name></decl>;</decl_stmt>
+<cpp:ifdef>#<cpp:directive>ifdef</cpp:directive> <name>CANT_OPEN_DEV_TTY</name></cpp:ifdef>
+    <function_decl><type><name>extern</name> <name>char</name> *</type><name>ttyname</name><parameter_list>()</parameter_list>;</function_decl>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+    <expr_stmt><expr><name>myname</name> = <call><name>x_basename</name><argument_list>(<argument><expr><name><name>argv</name><index>[<expr>0</expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <if>if <condition>(<expr><call><name>strcmp</name><argument_list>(<argument><expr><name>myname</name></expr></argument>, <argument><expr><name>sunname</name></expr></argument>)</argument_list></call> == 0</expr>)</condition><then>
+	<expr_stmt><expr><name>emu</name> = <name>SUN</name></expr>;</expr_stmt></then></if>
+    <for>for (<init><expr><name>argv</name>++</expr>, <expr><name>argc</name>--</expr>;</init> <condition><expr><name>argc</name> &gt; 0 &amp;&amp; **<name>argv</name> == '-'</expr>;</condition> <incr><expr><name>argv</name>++</expr>, <expr><name>argc</name>--</expr></incr>) <block>{
+	<switch>switch <condition>(<expr>(*<name>argv</name>)<index>[<expr>1</expr>]</index></expr>)</condition> <block>{
+	<case>case <expr>'s'</expr>:		<comment type="block">/* Sun emulation */</comment>
+	    <if>if <condition>(<expr><name>emu</name> == <name>SUN</name></expr>)</condition><then>
+		<expr_stmt><expr><call><name>Usage</name><argument_list>()</argument_list></call></expr>;</expr_stmt></then></if>	<comment type="block">/* Never returns */</comment>
+	    <expr_stmt><expr><name>emu</name> = <name>SUN</name></expr>;</expr_stmt>
+	    <break>break;</break>
+	</case><case>case <expr>'u'</expr>:		<comment type="block">/* Bourne (Unix) shell */</comment>
+	    <expr_stmt><expr><name>shell_type</name> = <name>SHELL_BOURNE</name></expr>;</expr_stmt>
+	    <break>break;</break>
+	</case><case>case <expr>'c'</expr>:		<comment type="block">/* C shell */</comment>
+	    <expr_stmt><expr><name>shell_type</name> = <name>SHELL_C</name></expr>;</expr_stmt>
+	    <break>break;</break>
+	</case><default>default:
+	    <expr_stmt><expr><call><name>Usage</name><argument_list>()</argument_list></call></expr>;</expr_stmt>		<comment type="block">/* Never returns */</comment>
+	</default>}</block></switch>
+    }</block></for>
+
+    <if>if <condition>(<expr><name>SHELL_UNKNOWN</name> == <name>shell_type</name></expr>)</condition><then> <block>{
+	<comment type="block">/* Find out what kind of shell this user is running.
+	 * This is the same algorithm that xterm uses.
+	 */</comment>
+	<if>if <condition>(<expr>((<name>ptr</name> = <call><name>x_getenv</name><argument_list>(<argument><expr>"SHELL"</expr></argument>)</argument_list></call>) == <name>NULL</name>) &amp;&amp;
+	    (((<name>pw</name> = <call><name>getpwuid</name><argument_list>(<argument><expr><call><name>getuid</name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call>) == <name>NULL</name>) ||
+	     *(<name>ptr</name> = <name>pw</name>-&gt;<name>pw_shell</name>) == 0)</expr>)</condition><then>
+	    <comment type="block">/* this is the same default that xterm uses */</comment>
+	    <expr_stmt><expr><name>ptr</name> = <call><name>x_strdup</name><argument_list>(<argument><expr>"/bin/sh"</expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+
+	<expr_stmt><expr><name>shell</name> = <call><name>x_basename</name><argument_list>(<argument><expr><name>ptr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+	<comment type="block">/* now that we know, what kind is it? */</comment>
+	<for>for (<init><expr><name>i</name> = 0</expr>;</init> <condition><expr><name><name>shell_list</name><index>[<expr><name>i</name></expr>]</index></name>.<name>name</name></expr>;</condition> <incr><expr><name>i</name>++</expr></incr>)
+	    <if>if <condition>(<expr>!<call><name>strcmp</name><argument_list>(<argument><expr><name><name>shell_list</name><index>[<expr><name>i</name></expr>]</index></name>.<name>name</name></expr></argument>, <argument><expr><name>shell</name></expr></argument>)</argument_list></call></expr>)</condition><then>
+		<break>break;</break></then></if></for>
+	<expr_stmt><expr><name>shell_type</name> = <name><name>shell_list</name><index>[<expr><name>i</name></expr>]</index></name>.<name>type</name></expr>;</expr_stmt>
+    }</block></then></if>
+
+    <if>if <condition>(<expr><name>argc</name> == 2</expr>)</condition><then> <block>{
+	<if>if <condition>(<expr>!<name><name>setsize</name><index>[<expr><name>emu</name></expr>]</index></name></expr>)</condition><then> <block>{
+	    <expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stderr</name></expr></argument>,
+		    <argument><expr>"%s: Can't set window size under %s emulation\n"</expr></argument>,
+		    <argument><expr><name>myname</name></expr></argument>, <argument><expr><name><name>emuname</name><index>[<expr><name>emu</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><call><name>exit</name><argument_list>(<argument><expr>1</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	}</block></then></if>
+	<if>if <condition>(<expr>!<call><name>checkdigits</name><argument_list>(<argument><expr><name><name>argv</name><index>[<expr>0</expr>]</index></name></expr></argument>)</argument_list></call> || !<call><name>checkdigits</name><argument_list>(<argument><expr><name><name>argv</name><index>[<expr>1</expr>]</index></name></expr></argument>)</argument_list></call></expr>)</condition><then>
+	    <expr_stmt><expr><call><name>Usage</name><argument_list>()</argument_list></call></expr>;</expr_stmt></then></if>		<comment type="block">/* Never returns */</comment>
+    }</block></then> <else>else <if>if <condition>(<expr><name>argc</name> != 0</expr>)</condition><then>
+	<expr_stmt><expr><call><name>Usage</name><argument_list>()</argument_list></call></expr>;</expr_stmt></then></if></else></if>		<comment type="block">/* Never returns */</comment>
+
+<cpp:ifdef>#<cpp:directive>ifdef</cpp:directive> <name>CANT_OPEN_DEV_TTY</name></cpp:ifdef>
+    <if>if <condition>(<expr>(<name>name_of_tty</name> = <call><name>ttyname</name><argument_list>(<argument><expr><call><name>fileno</name><argument_list>(<argument><expr><name>stderr</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call>) == <name>NULL</name></expr>)</condition><then>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+	<expr_stmt><expr><name>name_of_tty</name> = <call><name>x_strdup</name><argument_list>(<argument><expr>"/dev/tty"</expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+
+    <if>if <condition>(<expr>(<name>ttyfp</name> = <call><name>fopen</name><argument_list>(<argument><expr><name>name_of_tty</name></expr></argument>, <argument><expr>"r+"</expr></argument>)</argument_list></call>) == <name>NULL</name></expr>)</condition><then> <block>{
+	<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stderr</name></expr></argument>, <argument><expr>"%s:  can't open terminal %s\n"</expr></argument>,
+		<argument><expr><name>myname</name></expr></argument>, <argument><expr><name>name_of_tty</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>exit</name><argument_list>(<argument><expr>1</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></then></if>
+    <expr_stmt><expr><name>tty</name> = <call><name>fileno</name><argument_list>(<argument><expr><name>ttyfp</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:ifdef>#<cpp:directive>ifdef</cpp:directive> <name>USE_TERMCAP</name></cpp:ifdef>
+    <if>if <condition>(<expr>(<name>env</name> = <call><name>x_getenv</name><argument_list>(<argument><expr>"TERM"</expr></argument>)</argument_list></call>) == 0</expr>)</condition><then> <block>{
+	<expr_stmt><expr><name>env</name> = <name>DFT_TERMTYPE</name></expr>;</expr_stmt>
+	<if>if <condition>(<expr><name>SHELL_BOURNE</name> == <name>shell_type</name></expr>)</condition><then>
+	    <expr_stmt><expr><name>setname</name> = "TERM=" <name>DFT_TERMTYPE</name> ";\nexport TERM;\n"</expr>;</expr_stmt></then>
+	<else>else
+	    <expr_stmt><expr><name>setname</name> = "setenv TERM " <name>DFT_TERMTYPE</name> ";\n"</expr>;</expr_stmt></else></if>
+    }</block></then></if>
+    <expr_stmt><expr><name><name>termcap</name><index>[<expr>0</expr>]</index></name> = 0</expr>;</expr_stmt>		<comment type="block">/* ...just in case we've accidentally gotten terminfo */</comment>
+    <if>if <condition>(<expr><call><name>tgetent</name><argument_list>(<argument><expr><name>termcap</name></expr></argument>, <argument><expr><name>env</name></expr></argument>)</argument_list></call> &lt;= 0 || <name><name>termcap</name><index>[<expr>0</expr>]</index></name> == 0</expr>)</condition><then>
+	<expr_stmt><expr><name>ok_tcap</name> = 0</expr>;</expr_stmt></then></if>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif> <comment type="block">/* USE_TERMCAP */</comment>
+<cpp:ifdef>#<cpp:directive>ifdef</cpp:directive> <name>USE_TERMINFO</name></cpp:ifdef>
+    <if>if <condition>(<expr><call><name>x_getenv</name><argument_list>(<argument><expr>"TERM"</expr></argument>)</argument_list></call> == 0</expr>)</condition><then> <block>{
+	<if>if <condition>(<expr><name>SHELL_BOURNE</name> == <name>shell_type</name></expr>)</condition><then>
+	    <expr_stmt><expr><name>setname</name> = "TERM=" <name>DFT_TERMTYPE</name> ";\nexport TERM;\n"</expr>;</expr_stmt></then>
+	<else>else
+	    <expr_stmt><expr><name>setname</name> = "setenv TERM " <name>DFT_TERMTYPE</name> ";\n"</expr>;</expr_stmt></else></if>
+    }</block></then></if>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif> <comment type="block">/* USE_TERMINFO */</comment>
+
+<cpp:ifdef>#<cpp:directive>ifdef</cpp:directive> <name>USE_ANY_SYSV_TERMIO</name></cpp:ifdef>
+    <expr_stmt><expr><call><name>ioctl</name><argument_list>(<argument><expr><name>tty</name></expr></argument>, <argument><expr><name>TCGETA</name></expr></argument>, <argument><expr>&amp;<name>tioorig</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><name>tio</name> = <name>tioorig</name></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>UIntClr</name><argument_list>(<argument><expr><name>tio</name>.<name>c_iflag</name></expr></argument>, <argument><expr>(<name>ICRNL</name> | <name>IUCLC</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>UIntClr</name><argument_list>(<argument><expr><name>tio</name>.<name>c_lflag</name></expr></argument>, <argument><expr>(<name>ICANON</name> | <name>ECHO</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><name>tio</name>.<name>c_cflag</name> |= <name>CS8</name></expr>;</expr_stmt>
+    <expr_stmt><expr><name>tio</name>.<name><name>c_cc</name><index>[<expr><name>VMIN</name></expr>]</index></name> = 6</expr>;</expr_stmt>
+    <expr_stmt><expr><name>tio</name>.<name><name>c_cc</name><index>[<expr><name>VTIME</name></expr>]</index></name> = 1</expr>;</expr_stmt>
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>USE_TERMIOS</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+    <expr_stmt><expr><call><name>tcgetattr</name><argument_list>(<argument><expr><name>tty</name></expr></argument>, <argument><expr>&amp;<name>tioorig</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><name>tio</name> = <name>tioorig</name></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>UIntClr</name><argument_list>(<argument><expr><name>tio</name>.<name>c_iflag</name></expr></argument>, <argument><expr><name>ICRNL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>UIntClr</name><argument_list>(<argument><expr><name>tio</name>.<name>c_lflag</name></expr></argument>, <argument><expr>(<name>ICANON</name> | <name>ECHO</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><name>tio</name>.<name>c_cflag</name> |= <name>CS8</name></expr>;</expr_stmt>
+    <expr_stmt><expr><name>tio</name>.<name><name>c_cc</name><index>[<expr><name>VMIN</name></expr>]</index></name> = 6</expr>;</expr_stmt>
+    <expr_stmt><expr><name>tio</name>.<name><name>c_cc</name><index>[<expr><name>VTIME</name></expr>]</index></name> = 1</expr>;</expr_stmt>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else> <comment type="block">/* not USE_TERMIOS */</comment>
+    <expr_stmt><expr><call><name>ioctl</name><argument_list>(<argument><expr><name>tty</name></expr></argument>, <argument><expr><name>TIOCGETP</name></expr></argument>, <argument><expr>&amp;<name>sgorig</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><name>sg</name> = <name>sgorig</name></expr>;</expr_stmt>
+    <expr_stmt><expr><name>sg</name>.<name>sg_flags</name> |= <name>RAW</name></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>UIntClr</name><argument_list>(<argument><expr><name>sg</name>.<name>sg_flags</name></expr></argument>, <argument><expr><name>ECHO</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif> <comment type="block">/* USE_ANY_SYSV_TERMIO/USE_TERMIOS */</comment>
+    <expr_stmt><expr><call><name>signal</name><argument_list>(<argument><expr><name>SIGINT</name></expr></argument>, <argument><expr><name>onintr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>signal</name><argument_list>(<argument><expr><name>SIGQUIT</name></expr></argument>, <argument><expr><name>onintr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>signal</name><argument_list>(<argument><expr><name>SIGTERM</name></expr></argument>, <argument><expr><name>onintr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:ifdef>#<cpp:directive>ifdef</cpp:directive> <name>USE_ANY_SYSV_TERMIO</name></cpp:ifdef>
+    <expr_stmt><expr><call><name>ioctl</name><argument_list>(<argument><expr><name>tty</name></expr></argument>, <argument><expr><name>TCSETAW</name></expr></argument>, <argument><expr>&amp;<name>tio</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>USE_TERMIOS</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+    <expr_stmt><expr><call><name>tcsetattr</name><argument_list>(<argument><expr><name>tty</name></expr></argument>, <argument><expr><name>TCSADRAIN</name></expr></argument>, <argument><expr>&amp;<name>tio</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else> <comment type="block">/* not USE_TERMIOS */</comment>
+    <expr_stmt><expr><call><name>ioctl</name><argument_list>(<argument><expr><name>tty</name></expr></argument>, <argument><expr><name>TIOCSETP</name></expr></argument>, <argument><expr>&amp;<name>sg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif> <comment type="block">/* USE_ANY_SYSV_TERMIO/USE_TERMIOS */</comment>
+
+    <if>if <condition>(<expr><name>argc</name> == 2</expr>)</condition><then> <block>{
+	<decl_stmt><decl><type><name>char</name> *</type><name>tmpbuf</name> =<init> <expr><call><name>TypeMallocN</name><argument_list>(<argument><expr><name>char</name></expr></argument>,
+				   <argument><expr><call><name>strlen</name><argument_list>(<argument><expr><name><name>setsize</name><index>[<expr><name>emu</name></expr>]</index></name></expr></argument>)</argument_list></call> +
+				   <call><name>strlen</name><argument_list>(<argument><expr><name><name>argv</name><index>[<expr>0</expr>]</index></name></expr></argument>)</argument_list></call> +
+				   <call><name>strlen</name><argument_list>(<argument><expr><name><name>argv</name><index>[<expr>1</expr>]</index></name></expr></argument>)</argument_list></call> +
+				   1</expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+	<if>if <condition>(<expr><name>tmpbuf</name> == 0</expr>)</condition><then> <block>{
+	    <expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stderr</name></expr></argument>, <argument><expr>"%s: Cannot query size\n"</expr></argument>, <argument><expr><name>myname</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><call><name>onintr</name><argument_list>(<argument><expr>0</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	}</block></then> <else>else <block>{
+	    <expr_stmt><expr><call><name>sprintf</name><argument_list>(<argument><expr><name>tmpbuf</name></expr></argument>, <argument><expr><name><name>setsize</name><index>[<expr><name>emu</name></expr>]</index></name></expr></argument>, <argument><expr><name><name>argv</name><index>[<expr>0</expr>]</index></name></expr></argument>, <argument><expr><name><name>argv</name><index>[<expr>1</expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><call><name>IGNORE_RC</name><argument_list>(<argument><expr><call><name>write</name><argument_list>(<argument><expr><name>tty</name></expr></argument>, <argument><expr><name>tmpbuf</name></expr></argument>, <argument><expr><call><name>strlen</name><argument_list>(<argument><expr><name>tmpbuf</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>tmpbuf</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	}</block></else></if>
+    }</block></then></if>
+    <expr_stmt><expr><call><name>IGNORE_RC</name><argument_list>(<argument><expr><call><name>write</name><argument_list>(<argument><expr><name>tty</name></expr></argument>, <argument><expr><name><name>getsize</name><index>[<expr><name>emu</name></expr>]</index></name></expr></argument>, <argument><expr><call><name>strlen</name><argument_list>(<argument><expr><name><name>getsize</name><index>[<expr><name>emu</name></expr>]</index></name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>readstring</name><argument_list>(<argument><expr><name>ttyfp</name></expr></argument>, <argument><expr><name>buf</name></expr></argument>, <argument><expr><name><name>size</name><index>[<expr><name>emu</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <if>if <condition>(<expr><call><name>sscanf</name><argument_list>(<argument><expr><name>buf</name></expr></argument>, <argument><expr><name><name>size</name><index>[<expr><name>emu</name></expr>]</index></name></expr></argument>, <argument><expr>&amp;<name>rows</name></expr></argument>, <argument><expr>&amp;<name>cols</name></expr></argument>)</argument_list></call> != 2</expr>)</condition><then> <block>{
+	<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stderr</name></expr></argument>, <argument><expr>"%s: Can't get rows and columns\r\n"</expr></argument>, <argument><expr><name>myname</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>onintr</name><argument_list>(<argument><expr>0</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></then></if>
+    <if>if <condition>(<expr><name><name>restore</name><index>[<expr><name>emu</name></expr>]</index></name></expr>)</condition><then>
+	<expr_stmt><expr><call><name>IGNORE_RC</name><argument_list>(<argument><expr><call><name>write</name><argument_list>(<argument><expr><name>tty</name></expr></argument>, <argument><expr><name><name>restore</name><index>[<expr><name>emu</name></expr>]</index></name></expr></argument>, <argument><expr><call><name>strlen</name><argument_list>(<argument><expr><name><name>restore</name><index>[<expr><name>emu</name></expr>]</index></name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>USE_STRUCT_TTYSIZE</name></expr></argument>)</argument_list></call></expr></cpp:if>
+    <comment type="block">/* finally, set the tty's window size */</comment>
+    <if>if <condition>(<expr><call><name>ioctl</name><argument_list>(<argument><expr><name>tty</name></expr></argument>, <argument><expr><name>TIOCGSIZE</name></expr></argument>, <argument><expr>&amp;<name>ts</name></expr></argument>)</argument_list></call> != -1</expr>)</condition><then> <block>{
+	<expr_stmt><expr><call><name>TTYSIZE_ROWS</name><argument_list>(<argument><expr><name>ts</name></expr></argument>)</argument_list></call> = <name>rows</name></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>TTYSIZE_COLS</name><argument_list>(<argument><expr><name>ts</name></expr></argument>)</argument_list></call> = <name>cols</name></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>SET_TTYSIZE</name><argument_list>(<argument><expr><name>tty</name></expr></argument>, <argument><expr><name>ts</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></then></if>
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>USE_STRUCT_WINSIZE</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+    <comment type="block">/* finally, set the tty's window size */</comment>
+    <if>if <condition>(<expr><name><name>getwsize</name><index>[<expr><name>emu</name></expr>]</index></name></expr>)</condition><then> <block>{
+	<comment type="block">/* get the window size in pixels */</comment>
+	<expr_stmt><expr><call><name>IGNORE_RC</name><argument_list>(<argument><expr><call><name>write</name><argument_list>(<argument><expr><name>tty</name></expr></argument>, <argument><expr><name><name>getwsize</name><index>[<expr><name>emu</name></expr>]</index></name></expr></argument>, <argument><expr><call><name>strlen</name><argument_list>(<argument><expr><name><name>getwsize</name><index>[<expr><name>emu</name></expr>]</index></name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>readstring</name><argument_list>(<argument><expr><name>ttyfp</name></expr></argument>, <argument><expr><name>buf</name></expr></argument>, <argument><expr><name><name>wsize</name><index>[<expr><name>emu</name></expr>]</index></name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<if>if <condition>(<expr><call><name>sscanf</name><argument_list>(<argument><expr><name>buf</name></expr></argument>, <argument><expr><name><name>wsize</name><index>[<expr><name>emu</name></expr>]</index></name></expr></argument>, <argument><expr>&amp;<name>ts</name>.<name>ws_xpixel</name></expr></argument>, <argument><expr>&amp;<name>ts</name>.<name>ws_ypixel</name></expr></argument>)</argument_list></call> != 2</expr>)</condition><then> <block>{
+	    <expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stderr</name></expr></argument>, <argument><expr>"%s: Can't get window size\r\n"</expr></argument>, <argument><expr><name>myname</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><call><name>onintr</name><argument_list>(<argument><expr>0</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	}</block></then></if>
+	<expr_stmt><expr><call><name>TTYSIZE_ROWS</name><argument_list>(<argument><expr><name>ts</name></expr></argument>)</argument_list></call> = (<name>ttySize_t</name>) <name>rows</name></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>TTYSIZE_COLS</name><argument_list>(<argument><expr><name>ts</name></expr></argument>)</argument_list></call> = (<name>ttySize_t</name>) <name>cols</name></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>SET_TTYSIZE</name><argument_list>(<argument><expr><name>tty</name></expr></argument>, <argument><expr><name>ts</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></then> <else>else <if>if <condition>(<expr><call><name>ioctl</name><argument_list>(<argument><expr><name>tty</name></expr></argument>, <argument><expr><name>TIOCGWINSZ</name></expr></argument>, <argument><expr>&amp;<name>ts</name></expr></argument>)</argument_list></call> != -1</expr>)</condition><then> <block>{
+	<comment type="block">/* we don't have any way of directly finding out
+	   the current height &amp; width of the window in pixels.  We try
+	   our best by computing the font height and width from the "old"
+	   window-size values, and multiplying by these ratios... */</comment>
+	<if>if <condition>(<expr><call><name>TTYSIZE_COLS</name><argument_list>(<argument><expr><name>ts</name></expr></argument>)</argument_list></call> != 0</expr>)</condition><then>
+	    <expr_stmt><expr><name>ts</name>.<name>ws_xpixel</name> = <call>(<name>ttySize_t</name>) <argument_list>(<argument><expr><name>cols</name> * (<name>ts</name>.<name>ws_xpixel</name> / <call><name>TTYSIZE_COLS</name><argument_list>(<argument><expr><name>ts</name></expr></argument>)</argument_list></call>)</expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+	<if>if <condition>(<expr><call><name>TTYSIZE_ROWS</name><argument_list>(<argument><expr><name>ts</name></expr></argument>)</argument_list></call> != 0</expr>)</condition><then>
+	    <expr_stmt><expr><name>ts</name>.<name>ws_ypixel</name> = <call>(<name>ttySize_t</name>) <argument_list>(<argument><expr><name>rows</name> * (<name>ts</name>.<name>ws_ypixel</name> / <call><name>TTYSIZE_ROWS</name><argument_list>(<argument><expr><name>ts</name></expr></argument>)</argument_list></call>)</expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+	<expr_stmt><expr><call><name>TTYSIZE_ROWS</name><argument_list>(<argument><expr><name>ts</name></expr></argument>)</argument_list></call> = (<name>ttySize_t</name>) <name>rows</name></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>TTYSIZE_COLS</name><argument_list>(<argument><expr><name>ts</name></expr></argument>)</argument_list></call> = (<name>ttySize_t</name>) <name>cols</name></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>SET_TTYSIZE</name><argument_list>(<argument><expr><name>tty</name></expr></argument>, <argument><expr><name>ts</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></then></if></else></if>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif> <comment type="block">/* USE_STRUCT_{TTYSIZE|WINSIZE} */</comment>
+
+<cpp:ifdef>#<cpp:directive>ifdef</cpp:directive> <name>USE_ANY_SYSV_TERMIO</name></cpp:ifdef>
+    <expr_stmt><expr><call><name>ioctl</name><argument_list>(<argument><expr><name>tty</name></expr></argument>, <argument><expr><name>TCSETAW</name></expr></argument>, <argument><expr>&amp;<name>tioorig</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>USE_TERMIOS</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+    <expr_stmt><expr><call><name>tcsetattr</name><argument_list>(<argument><expr><name>tty</name></expr></argument>, <argument><expr><name>TCSADRAIN</name></expr></argument>, <argument><expr>&amp;<name>tioorig</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else> <comment type="block">/* not USE_TERMIOS */</comment>
+    <expr_stmt><expr><call><name>ioctl</name><argument_list>(<argument><expr><name>tty</name></expr></argument>, <argument><expr><name>TIOCSETP</name></expr></argument>, <argument><expr>&amp;<name>sgorig</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif> <comment type="block">/* USE_ANY_SYSV_TERMIO/USE_TERMIOS */</comment>
+    <expr_stmt><expr><call><name>signal</name><argument_list>(<argument><expr><name>SIGINT</name></expr></argument>, <argument><expr><name>SIG_DFL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>signal</name><argument_list>(<argument><expr><name>SIGQUIT</name></expr></argument>, <argument><expr><name>SIG_DFL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>signal</name><argument_list>(<argument><expr><name>SIGTERM</name></expr></argument>, <argument><expr><name>SIG_DFL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<cpp:ifdef>#<cpp:directive>ifdef</cpp:directive> <name>USE_TERMCAP</name></cpp:ifdef>
+    <if>if <condition>(<expr><name>ok_tcap</name></expr>)</condition><then> <block>{
+	<comment type="block">/* update termcap string */</comment>
+	<comment type="block">/* first do columns */</comment>
+	<if>if <condition>(<expr>(<name>ptr</name> = <call><name>x_strindex</name><argument_list>(<argument><expr><name>termcap</name></expr></argument>, <argument><expr>"co#"</expr></argument>)</argument_list></call>) == <name>NULL</name></expr>)</condition><then> <block>{
+	    <expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stderr</name></expr></argument>, <argument><expr>"%s: No `co#'\n"</expr></argument>, <argument><expr><name>myname</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><call><name>exit</name><argument_list>(<argument><expr>1</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	}</block></then></if>
+
+	<expr_stmt><expr><name>i</name> = <name>ptr</name> - <name>termcap</name> + 3</expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>strncpy</name><argument_list>(<argument><expr><name>newtc</name></expr></argument>, <argument><expr><name>termcap</name></expr></argument>, <argument><expr>(<name>size_t</name>) <name>i</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>sprintf</name><argument_list>(<argument><expr><name>newtc</name> + <name>i</name></expr></argument>, <argument><expr>"%d"</expr></argument>, <argument><expr><name>cols</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><name>ptr</name> = <call><name>strchr</name><argument_list>(<argument><expr><name>ptr</name></expr></argument>, <argument><expr>':'</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>strcat</name><argument_list>(<argument><expr><name>newtc</name></expr></argument>, <argument><expr><name>ptr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+	<comment type="block">/* now do lines */</comment>
+	<if>if <condition>(<expr>(<name>ptr</name> = <call><name>x_strindex</name><argument_list>(<argument><expr><name>newtc</name></expr></argument>, <argument><expr>"li#"</expr></argument>)</argument_list></call>) == <name>NULL</name></expr>)</condition><then> <block>{
+	    <expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stderr</name></expr></argument>, <argument><expr>"%s: No `li#'\n"</expr></argument>, <argument><expr><name>myname</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><call><name>exit</name><argument_list>(<argument><expr>1</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	}</block></then></if>
+
+	<expr_stmt><expr><name>i</name> = <name>ptr</name> - <name>newtc</name> + 3</expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>strncpy</name><argument_list>(<argument><expr><name>termcap</name></expr></argument>, <argument><expr><name>newtc</name></expr></argument>, <argument><expr>(<name>size_t</name>) <name>i</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>sprintf</name><argument_list>(<argument><expr><name>termcap</name> + <name>i</name></expr></argument>, <argument><expr>"%d"</expr></argument>, <argument><expr><name>rows</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><name>ptr</name> = <call><name>strchr</name><argument_list>(<argument><expr><name>ptr</name></expr></argument>, <argument><expr>':'</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>strcat</name><argument_list>(<argument><expr><name>termcap</name></expr></argument>, <argument><expr><name>ptr</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></then></if>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif> <comment type="block">/* USE_TERMCAP */</comment>
+
+    <if>if <condition>(<expr><name>SHELL_BOURNE</name> == <name>shell_type</name></expr>)</condition><then> <block>{
+
+<cpp:ifdef>#<cpp:directive>ifdef</cpp:directive> <name>USE_TERMCAP</name></cpp:ifdef>
+	<if>if <condition>(<expr><name>ok_tcap</name></expr>)</condition><then> <block>{
+	    <expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr>"%sTERMCAP="</expr></argument>, <argument><expr><name>setname</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><call><name>print_termcap</name><argument_list>(<argument><expr><name>termcap</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr>";\nexport TERMCAP;\n"</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	}</block></then></if>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif> <comment type="block">/* USE_TERMCAP */</comment>
+<cpp:ifdef>#<cpp:directive>ifdef</cpp:directive> <name>USE_TERMINFO</name></cpp:ifdef>
+	<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr>"%sCOLUMNS=%d;\nLINES=%d;\nexport COLUMNS LINES;\n"</expr></argument>,
+	       <argument><expr><name>setname</name></expr></argument>, <argument><expr><name>cols</name></expr></argument>, <argument><expr><name>rows</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif> <comment type="block">/* USE_TERMINFO */</comment>
+
+    }</block></then> <else>else <block>{			<comment type="block">/* not Bourne shell */</comment>
+
+<cpp:ifdef>#<cpp:directive>ifdef</cpp:directive> <name>USE_TERMCAP</name></cpp:ifdef>
+	<if>if <condition>(<expr><name>ok_tcap</name></expr>)</condition><then> <block>{
+	    <expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr>"set noglob;\n%ssetenv TERMCAP "</expr></argument>, <argument><expr><name>setname</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><call><name>print_termcap</name><argument_list>(<argument><expr><name>termcap</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr>";\nunset noglob;\n"</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	}</block></then></if>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif> <comment type="block">/* USE_TERMCAP */</comment>
+<cpp:ifdef>#<cpp:directive>ifdef</cpp:directive> <name>USE_TERMINFO</name></cpp:ifdef>
+	<expr_stmt><expr><call><name>printf</name><argument_list>(<argument><expr>"set noglob;\n%ssetenv COLUMNS '%d';\nsetenv LINES '%d';\nunset noglob;\n"</expr></argument>,
+	       <argument><expr><name>setname</name></expr></argument>, <argument><expr><name>cols</name></expr></argument>, <argument><expr><name>rows</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif> <comment type="block">/* USE_TERMINFO */</comment>
+    }</block></else></if>
+    <expr_stmt><expr><call><name>exit</name><argument_list>(<argument><expr>0</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+}</block></function>
+
+<function><type><name>static</name> <name>int</name></type>
+<name>checkdigits</name><parameter_list>(<param><decl><type><name>char</name> *</type><name>str</name></decl></param>)</parameter_list>
+<block>{
+    <while>while <condition>(<expr>*<name>str</name></expr>)</condition> <block>{
+	<if>if <condition>(<expr>!<call><name>isdigit</name><argument_list>(<argument><expr><call><name>CharOf</name><argument_list>(<argument><expr>*<name>str</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>)</condition><then>
+	    <return>return <expr>(0)</expr>;</return></then></if>
+	<expr_stmt><expr><name>str</name>++</expr>;</expr_stmt>
+    }</block></while>
+    <return>return <expr>(1)</expr>;</return>
+}</block></function>
+
+<function><type><name>static</name> <name>void</name></type>
+<name>readstring</name><parameter_list>(<param><decl><type><name>FILE</name> *</type><name>fp</name></decl></param>, <param><decl><type><name>char</name> *</type><name>buf</name></decl></param>, <param><decl><type><name>const</name> <name>char</name> *</type><name>str</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>int</name></type> <name>last</name>, <name>c</name></decl>;</decl_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr>!<call><name>defined</name><argument_list>(<argument><expr><name>USG</name></expr></argument>)</argument_list></call> &amp;&amp; !<call><name>defined</name><argument_list>(<argument><expr><name>__UNIXOS2__</name></expr></argument>)</argument_list></call></expr></cpp:if>
+    <comment type="block">/* What is the advantage of setitimer() over alarm()? */</comment>
+    <decl_stmt><decl><type>struct <name>itimerval</name></type> <name>it</name></decl>;</decl_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+
+    <expr_stmt><expr><call><name>signal</name><argument_list>(<argument><expr><name>SIGALRM</name></expr></argument>, <argument><expr><name>resize_timeout</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>USG</name></expr></argument>)</argument_list></call> || <call><name>defined</name><argument_list>(<argument><expr><name>__UNIXOS2__</name></expr></argument>)</argument_list></call></expr></cpp:if>
+    <expr_stmt><expr><call><name>alarm</name><argument_list>(<argument><expr><name>TIMEOUT</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+    <expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr>(<name>char</name> *) &amp;<name>it</name></expr></argument>, <argument><expr>0</expr></argument>, <argument><expr><call><name>sizeof</name><argument_list>(<argument>struct <expr><name>itimerval</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><name>it</name>.<name>it_value</name>.<name>tv_sec</name> = <name>TIMEOUT</name></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>setitimer</name><argument_list>(<argument><expr><name>ITIMER_REAL</name></expr></argument>, <argument><expr>&amp;<name>it</name></expr></argument>, <argument><expr>(struct <name>itimerval</name> *) <name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+    <if>if <condition>(<expr>(<name>c</name> = <call><name>getc</name><argument_list>(<argument><expr><name>fp</name></expr></argument>)</argument_list></call>) == 0233</expr>)</condition><then> <block>{	<comment type="block">/* meta-escape, CSI */</comment>
+	<expr_stmt><expr><name>c</name> = <call><name>ESCAPE</name><argument_list>(<argument><expr>""</expr></argument>)</argument_list></call><index>[<expr>0</expr>]</index></expr>;</expr_stmt>
+	<expr_stmt><expr>*<name>buf</name>++ = (<name>char</name>) <name>c</name></expr>;</expr_stmt>
+	<expr_stmt><expr>*<name>buf</name>++ = '['</expr>;</expr_stmt>
+    }</block></then> <else>else <block>{
+	<expr_stmt><expr>*<name>buf</name>++ = (<name>char</name>) <name>c</name></expr>;</expr_stmt>
+    }</block></else></if>
+    <if>if <condition>(<expr><name>c</name> != *<name>str</name></expr>)</condition><then> <block>{
+	<expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stderr</name></expr></argument>, <argument><expr>"%s: unknown character, exiting.\r\n"</expr></argument>, <argument><expr><name>myname</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><call><name>onintr</name><argument_list>(<argument><expr>0</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></then></if>
+    <expr_stmt><expr><name>last</name> = <name><name>str</name><index>[<expr><call><name>strlen</name><argument_list>(<argument><expr><name>str</name></expr></argument>)</argument_list></call> - 1</expr>]</index></name></expr>;</expr_stmt>
+    <while>while <condition>(<expr>(*<name>buf</name>++ = (<name>char</name>) <call><name>getc</name><argument_list>(<argument><expr><name>fp</name></expr></argument>)</argument_list></call>) != <name>last</name></expr>)</condition> <block>{
+	<empty_stmt>;</empty_stmt>
+    }</block></while>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>USG</name></expr></argument>)</argument_list></call> || <call><name>defined</name><argument_list>(<argument><expr><name>__UNIXOS2__</name></expr></argument>)</argument_list></call></expr></cpp:if>
+    <expr_stmt><expr><call><name>alarm</name><argument_list>(<argument><expr>0</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else>
+    <expr_stmt><expr><call><name>memset</name><argument_list>(<argument><expr>(<name>char</name> *) &amp;<name>it</name></expr></argument>, <argument><expr>0</expr></argument>, <argument><expr><call><name>sizeof</name><argument_list>(<argument>struct <expr><name>itimerval</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>setitimer</name><argument_list>(<argument><expr><name>ITIMER_REAL</name></expr></argument>, <argument><expr>&amp;<name>it</name></expr></argument>, <argument><expr>(struct <name>itimerval</name> *) <name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+    <expr_stmt><expr>*<name>buf</name> = 0</expr>;</expr_stmt>
+}</block></function>
+
+<function><type><name>static</name> <name>void</name></type>
+<name>Usage</name><parameter_list>(<param><decl><type><name>void</name></type></decl></param>)</parameter_list>
+<block>{
+    <expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stderr</name></expr></argument>, <argument><expr><call><name>strcmp</name><argument_list>(<argument><expr><name>myname</name></expr></argument>, <argument><expr><name>sunname</name></expr></argument>)</argument_list></call> == 0 ?
+	    "Usage: %s [rows cols]\n" :
+	    "Usage: %s [-u] [-c] [-s [rows cols]]\n"</expr></argument>, <argument><expr><name>myname</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>exit</name><argument_list>(<argument><expr>1</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+}</block></function>
+
+<function><type><name>static</name> <name>SIGNAL_T</name></type>
+<name>resize_timeout</name><parameter_list>(<param><decl><type><name>int</name></type> <name>sig</name></decl></param>)</parameter_list>
+<block>{
+    <expr_stmt><expr><call><name>fprintf</name><argument_list>(<argument><expr><name>stderr</name></expr></argument>, <argument><expr>"\n%s: Time out occurred\r\n"</expr></argument>, <argument><expr><name>myname</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>onintr</name><argument_list>(<argument><expr><name>sig</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+}</block></function>
+
+<comment type="block">/* ARGSUSED */</comment>
+<function><type><name>static</name> <name>SIGNAL_T</name></type>
+<name>onintr</name><parameter_list>(<param><decl><type><name>int</name> <name>sig</name></type> <name>GCC_UNUSED</name></decl></param>)</parameter_list>
+<block>{
+<cpp:ifdef>#<cpp:directive>ifdef</cpp:directive> <name>USE_ANY_SYSV_TERMIO</name></cpp:ifdef>
+    <expr_stmt><expr><call><name>ioctl</name><argument_list>(<argument><expr><name>tty</name></expr></argument>, <argument><expr><name>TCSETAW</name></expr></argument>, <argument><expr>&amp;<name>tioorig</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:elif>#<cpp:directive>elif</cpp:directive> <expr><call><name>defined</name><argument_list>(<argument><expr><name>USE_TERMIOS</name></expr></argument>)</argument_list></call></expr></cpp:elif>
+    <expr_stmt><expr><call><name>tcsetattr</name><argument_list>(<argument><expr><name>tty</name></expr></argument>, <argument><expr><name>TCSADRAIN</name></expr></argument>, <argument><expr>&amp;<name>tioorig</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else> <comment type="block">/* not USE_TERMIOS */</comment>
+    <expr_stmt><expr><call><name>ioctl</name><argument_list>(<argument><expr><name>tty</name></expr></argument>, <argument><expr><name>TIOCSETP</name></expr></argument>, <argument><expr>&amp;<name>sgorig</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif> <comment type="block">/* USE_ANY_SYSV_TERMIO/USE_TERMIOS */</comment>
+    <expr_stmt><expr><call><name>exit</name><argument_list>(<argument><expr>1</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+}</block></function>
+</unit>

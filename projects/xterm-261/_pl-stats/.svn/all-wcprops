@@ -1,0 +1,215 @@
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/spg/!svn/ver/1570/tools/pl-stats/branches/lxml-version/projects/xterm-261/_pl-stats
+END
+precompose.c
+K 25
+svn:wc:ra_dav:version-url
+V 101
+/svn/spg/!svn/ver/1570/tools/pl-stats/branches/lxml-version/projects/xterm-261/_pl-stats/precompose.c
+END
+Tekproc.c
+K 25
+svn:wc:ra_dav:version-url
+V 98
+/svn/spg/!svn/ver/1570/tools/pl-stats/branches/lxml-version/projects/xterm-261/_pl-stats/Tekproc.c
+END
+cursor.c
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/svn/spg/!svn/ver/1570/tools/pl-stats/branches/lxml-version/projects/xterm-261/_pl-stats/cursor.c
+END
+vms.c
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/svn/spg/!svn/ver/1570/tools/pl-stats/branches/lxml-version/projects/xterm-261/_pl-stats/vms.c
+END
+linedata.c
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/svn/spg/!svn/ver/1570/tools/pl-stats/branches/lxml-version/projects/xterm-261/_pl-stats/linedata.c
+END
+menu.c
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/svn/spg/!svn/ver/1570/tools/pl-stats/branches/lxml-version/projects/xterm-261/_pl-stats/menu.c
+END
+ptydata.c
+K 25
+svn:wc:ra_dav:version-url
+V 98
+/svn/spg/!svn/ver/1570/tools/pl-stats/branches/lxml-version/projects/xterm-261/_pl-stats/ptydata.c
+END
+charclass.c
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/svn/spg/!svn/ver/1570/tools/pl-stats/branches/lxml-version/projects/xterm-261/_pl-stats/charclass.c
+END
+scrollbar.c
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/svn/spg/!svn/ver/1570/tools/pl-stats/branches/lxml-version/projects/xterm-261/_pl-stats/scrollbar.c
+END
+TekPrsTbl.c
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/svn/spg/!svn/ver/1570/tools/pl-stats/branches/lxml-version/projects/xterm-261/_pl-stats/TekPrsTbl.c
+END
+charsets.c
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/svn/spg/!svn/ver/1570/tools/pl-stats/branches/lxml-version/projects/xterm-261/_pl-stats/charsets.c
+END
+xutf8.c
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svn/spg/!svn/ver/1570/tools/pl-stats/branches/lxml-version/projects/xterm-261/_pl-stats/xutf8.c
+END
+data.c
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/svn/spg/!svn/ver/1570/tools/pl-stats/branches/lxml-version/projects/xterm-261/_pl-stats/data.c
+END
+VTPrsTbl.c
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/svn/spg/!svn/ver/1570/tools/pl-stats/branches/lxml-version/projects/xterm-261/_pl-stats/VTPrsTbl.c
+END
+charproc.c
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/svn/spg/!svn/ver/1570/tools/pl-stats/branches/lxml-version/projects/xterm-261/_pl-stats/charproc.c
+END
+misc.c
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/svn/spg/!svn/ver/1570/tools/pl-stats/branches/lxml-version/projects/xterm-261/_pl-stats/misc.c
+END
+screen.c
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/svn/spg/!svn/ver/1570/tools/pl-stats/branches/lxml-version/projects/xterm-261/_pl-stats/screen.c
+END
+print.c
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svn/spg/!svn/ver/1570/tools/pl-stats/branches/lxml-version/projects/xterm-261/_pl-stats/print.c
+END
+xtermcap.c
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/svn/spg/!svn/ver/1570/tools/pl-stats/branches/lxml-version/projects/xterm-261/_pl-stats/xtermcap.c
+END
+button.c
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/svn/spg/!svn/ver/1570/tools/pl-stats/branches/lxml-version/projects/xterm-261/_pl-stats/button.c
+END
+resize.c
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/svn/spg/!svn/ver/1570/tools/pl-stats/branches/lxml-version/projects/xterm-261/_pl-stats/resize.c
+END
+scrollback.c
+K 25
+svn:wc:ra_dav:version-url
+V 101
+/svn/spg/!svn/ver/1570/tools/pl-stats/branches/lxml-version/projects/xterm-261/_pl-stats/scrollback.c
+END
+cachedGCs.c
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/svn/spg/!svn/ver/1570/tools/pl-stats/branches/lxml-version/projects/xterm-261/_pl-stats/cachedGCs.c
+END
+main.c
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/svn/spg/!svn/ver/1570/tools/pl-stats/branches/lxml-version/projects/xterm-261/_pl-stats/main.c
+END
+wcwidth.c
+K 25
+svn:wc:ra_dav:version-url
+V 98
+/svn/spg/!svn/ver/1570/tools/pl-stats/branches/lxml-version/projects/xterm-261/_pl-stats/wcwidth.c
+END
+keysym2ucs.c
+K 25
+svn:wc:ra_dav:version-url
+V 101
+/svn/spg/!svn/ver/1570/tools/pl-stats/branches/lxml-version/projects/xterm-261/_pl-stats/keysym2ucs.c
+END
+doublechr.c
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/svn/spg/!svn/ver/1570/tools/pl-stats/branches/lxml-version/projects/xterm-261/_pl-stats/doublechr.c
+END
+testxmc.c
+K 25
+svn:wc:ra_dav:version-url
+V 98
+/svn/spg/!svn/ver/1570/tools/pl-stats/branches/lxml-version/projects/xterm-261/_pl-stats/testxmc.c
+END
+tabs.c
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/svn/spg/!svn/ver/1570/tools/pl-stats/branches/lxml-version/projects/xterm-261/_pl-stats/tabs.c
+END
+fontutils.c
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/svn/spg/!svn/ver/1570/tools/pl-stats/branches/lxml-version/projects/xterm-261/_pl-stats/fontutils.c
+END
+util.c
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/svn/spg/!svn/ver/1570/tools/pl-stats/branches/lxml-version/projects/xterm-261/_pl-stats/util.c
+END
+trace.c
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svn/spg/!svn/ver/1570/tools/pl-stats/branches/lxml-version/projects/xterm-261/_pl-stats/trace.c
+END
+os2main.c
+K 25
+svn:wc:ra_dav:version-url
+V 98
+/svn/spg/!svn/ver/1570/tools/pl-stats/branches/lxml-version/projects/xterm-261/_pl-stats/os2main.c
+END
+input.c
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svn/spg/!svn/ver/1570/tools/pl-stats/branches/lxml-version/projects/xterm-261/_pl-stats/input.c
+END
+xstrings.c
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/svn/spg/!svn/ver/1570/tools/pl-stats/branches/lxml-version/projects/xterm-261/_pl-stats/xstrings.c
+END

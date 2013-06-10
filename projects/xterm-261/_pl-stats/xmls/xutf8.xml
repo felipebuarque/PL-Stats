@@ -1,0 +1,379 @@
+<unit xmlns="http://www.sdml.info/srcML/src" xmlns:cpp="http://www.sdml.info/srcML/cpp" language="C" dir="" filename="xutf8.c"><comment type="block">/* $XTermId: xutf8.c,v 1.9 2009/11/05 23:30:05 tom Exp $ */</comment>
+
+<comment type="block">/*
+Copyright (c) 2001 by Juliusz Chroboczek
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/</comment>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;xterm.h&gt;</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;X11/Xlib.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;X11/Xatom.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;X11/Xutil.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;X11/Xmu/Xmu.h&gt;</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;xutf8.h&gt;</cpp:file></cpp:include>
+
+<cpp:ifndef>#<cpp:directive>ifndef</cpp:directive> <name>X_HAVE_UTF8_STRING</name></cpp:ifndef>
+
+<cpp:undef>#<cpp:directive>undef</cpp:directive> <name>XA_UTF8_STRING</name></cpp:undef>
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>KEYSYM2UCS_INCLUDED</name></cpp:define>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"keysym2ucs.c"</cpp:file></cpp:include>
+
+<function><type><name>Atom</name></type>
+<name>_xa_utf8_string</name><parameter_list>(<param><decl><type><name>Display</name> *</type> <name>dpy</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>static</name> <name>AtomPtr</name></type> <name>p</name> =<init> <expr><name>NULL</name></expr></init></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr><name>p</name> == <name>NULL</name></expr>)</condition><then>
+	<expr_stmt><expr><name>p</name> = <call><name>XmuMakeAtom</name><argument_list>(<argument><expr>"UTF8_STRING"</expr></argument>)</argument_list></call></expr>;</expr_stmt></then></if>
+
+    <return>return <expr><call><name>XmuInternAtom</name><argument_list>(<argument><expr><name>dpy</name></expr></argument>, <argument><expr><name>p</name></expr></argument>)</argument_list></call></expr>;</return>
+}</block></function>
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>XA_UTF8_STRING</name>(dpy) _xa_utf8_string(dpy)</cpp:define>
+
+<function><type><name>static</name> <name>int</name></type>
+<name>utf8countBytes</name><parameter_list>(<param><decl><type><name>int</name></type> <name>c</name></decl></param>)</parameter_list>
+<block>{
+    <if>if <condition>(<expr><name>c</name> &lt; 0</expr>)</condition><then>
+	<return>return <expr>0</expr>;</return></then></if>
+
+    <if>if <condition>(<expr><name>c</name> &lt;= 0x7F</expr>)</condition><then> <block>{
+	<return>return <expr>1</expr>;</return>
+    }</block></then> <else>else <if>if <condition>(<expr><name>c</name> &lt;= 0x7FF</expr>)</condition><then> <block>{
+	<return>return <expr>2</expr>;</return>
+    }</block></then> <else>else <if>if <condition>(<expr><name>c</name> &lt;= 0xFFFF</expr>)</condition><then> <block>{
+	<return>return <expr>3</expr>;</return>
+    }</block></then> <else>else
+	<return>return <expr>4</expr>;</return></else></if></else></if></else></if>
+}</block></function>
+
+<function><type><name>static</name> <name>void</name></type>
+<name>utf8insert</name><parameter_list>(<param><decl><type><name>char</name> *</type><name>dest</name></decl></param>, <param><decl><type><name>int</name></type> <name>c</name></decl></param>, <param><decl><type><name>int</name> *</type><name>len_return</name></decl></param>)</parameter_list>
+<block>{
+    <if>if <condition>(<expr><name>c</name> &lt; 0</expr>)</condition><then>
+	<return>return;</return></then></if>
+
+    <if>if <condition>(<expr><name>c</name> &lt;= 0x7F</expr>)</condition><then> <block>{
+	<expr_stmt><expr><name><name>dest</name><index>[<expr>0</expr>]</index></name> = <name>c</name></expr>;</expr_stmt>
+	<expr_stmt><expr>*<name>len_return</name> = 1</expr>;</expr_stmt>
+    }</block></then> <else>else <if>if <condition>(<expr><name>c</name> &lt;= 0x7FF</expr>)</condition><then> <block>{
+	<expr_stmt><expr><name><name>dest</name><index>[<expr>0</expr>]</index></name> = 0xC0 | ((<name>c</name> &gt;&gt; 6) &amp; 0x1F)</expr>;</expr_stmt>
+	<expr_stmt><expr><name><name>dest</name><index>[<expr>1</expr>]</index></name> = 0x80 | (<name>c</name> &amp; 0x3F)</expr>;</expr_stmt>
+	<expr_stmt><expr>*<name>len_return</name> = 2</expr>;</expr_stmt>
+    }</block></then> <else>else <if>if <condition>(<expr><name>c</name> &lt;= 0xFFFF</expr>)</condition><then> <block>{
+	<expr_stmt><expr><name><name>dest</name><index>[<expr>0</expr>]</index></name> = 0xE0 | ((<name>c</name> &gt;&gt; 12) &amp; 0x0F)</expr>;</expr_stmt>
+	<expr_stmt><expr><name><name>dest</name><index>[<expr>1</expr>]</index></name> = 0x80 | ((<name>c</name> &gt;&gt; 6) &amp; 0x3F)</expr>;</expr_stmt>
+	<expr_stmt><expr><name><name>dest</name><index>[<expr>2</expr>]</index></name> = 0x80 | (<name>c</name> &amp; 0x3F)</expr>;</expr_stmt>
+	<expr_stmt><expr>*<name>len_return</name> = 3</expr>;</expr_stmt>
+    }</block></then> <else>else <block>{
+	<expr_stmt><expr><name><name>dest</name><index>[<expr>0</expr>]</index></name> = 0xF0 | ((<name>c</name> &gt;&gt; 18) &amp; 0x07)</expr>;</expr_stmt>
+	<expr_stmt><expr><name><name>dest</name><index>[<expr>1</expr>]</index></name> = 0x80 | ((<name>c</name> &gt;&gt; 12) &amp; 0x3f)</expr>;</expr_stmt>
+	<expr_stmt><expr><name><name>dest</name><index>[<expr>2</expr>]</index></name> = 0x80 | ((<name>c</name> &gt;&gt; 6) &amp; 0x3f)</expr>;</expr_stmt>
+	<expr_stmt><expr><name><name>dest</name><index>[<expr>3</expr>]</index></name> = 0x80 | (<name>c</name> &amp; 0x3f)</expr>;</expr_stmt>
+	<expr_stmt><expr>*<name>len_return</name> = 4</expr>;</expr_stmt>
+    }</block></else></if></else></if></else></if>
+}</block></function>
+
+<function><type><name>static</name> <name>int</name></type>
+<name>l1countUtf8Bytes</name><parameter_list>(<param><decl><type><name>char</name> *</type><name>s</name></decl></param>, <param><decl><type><name>int</name></type> <name>len</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>int</name></type> <name>l</name> =<init> <expr>0</expr></init></decl>;</decl_stmt>
+    <while>while <condition>(<expr><name>len</name> &gt; 0</expr>)</condition> <block>{
+	<if>if <condition>(<expr>(*<name>s</name> &amp; 0x80) == 0</expr>)</condition><then>
+	    <expr_stmt><expr><name>l</name>++</expr>;</expr_stmt></then>
+	<else>else
+	    <expr_stmt><expr><name>l</name> += 2</expr>;</expr_stmt></else></if>
+	<expr_stmt><expr><name>s</name>++</expr>;</expr_stmt>
+	<expr_stmt><expr><name>len</name>--</expr>;</expr_stmt>
+    }</block></while>
+    <return>return <expr><name>l</name></expr>;</return>
+}</block></function>
+
+<function><type><name>static</name> <name>void</name></type>
+<name>l1utf8copy</name><parameter_list>(<param><decl><type><name>char</name> *</type><name>d</name></decl></param>, <param><decl><type><name>char</name> *</type><name>s</name></decl></param>, <param><decl><type><name>int</name></type> <name>len</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>int</name></type> <name>l</name></decl>;</decl_stmt>
+    <while>while <condition>(<expr><name>len</name> &gt; 0</expr>)</condition> <block>{
+	<expr_stmt><expr><call><name>utf8insert</name><argument_list>(<argument><expr><name>d</name></expr></argument>, <argument><expr>(*<name>s</name>) &amp; 0xFF</expr></argument>, <argument><expr>&amp;<name>l</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><name>d</name> += <name>l</name></expr>;</expr_stmt>
+	<expr_stmt><expr><name>s</name>++</expr>;</expr_stmt>
+	<expr_stmt><expr><name>len</name>--</expr>;</expr_stmt>
+    }</block></while>
+}</block></function>
+
+<function><type><name>static</name> <name>void</name></type>
+<name>utf8l1strcpy</name><parameter_list>(<param><decl><type><name>char</name> *</type><name>d</name></decl></param>, <param><decl><type><name>char</name> *</type><name>s</name></decl></param>)</parameter_list>
+<block>{
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>SKIP</name> do { s++; } while(((*s &amp; 0x80) != 0) &amp;&amp; (*s &amp; 0xC0) != 0xC0)</cpp:define>
+    <while>while <condition>(<expr>*<name>s</name></expr>)</condition> <block>{
+	<if>if <condition>(<expr>(*<name>s</name> &amp; 0x80) == 0</expr>)</condition><then>
+	    <expr_stmt><expr>*<name>d</name>++ = *<name>s</name>++</expr>;</expr_stmt></then>
+	<else>else <if>if <condition>(<expr>(*<name>s</name> &amp; 0x7C) == 0x40</expr>)</condition><then> <block>{
+	    <if>if <condition>(<expr>(<name><name>s</name><index>[<expr>1</expr>]</index></name> &amp; 0x80) == 0</expr>)</condition><then> <block>{
+		<expr_stmt><expr><name>s</name>++</expr>;</expr_stmt>		<comment type="block">/* incorrect UTF-8 */</comment>
+		<continue>continue;</continue>
+	    }</block></then> <else>else <if>if <condition>(<expr>(*<name>s</name> &amp; 0x7C) == 0x40</expr>)</condition><then> <block>{
+		<expr_stmt><expr>*<name>d</name>++ = ((*<name>s</name> &amp; 0x03) &lt;&lt; 6) | (<name><name>s</name><index>[<expr>1</expr>]</index></name> &amp; 0x3F)</expr>;</expr_stmt>
+		<expr_stmt><expr><name>s</name> += 2</expr>;</expr_stmt>
+	    }</block></then> <else>else <block>{
+		<expr_stmt><expr>*<name>d</name>++ = '?'</expr>;</expr_stmt>
+		<expr_stmt><expr><name>SKIP</name></expr>;</expr_stmt>
+	    }</block></else></if></else></if>
+	}</block></then> <else>else <block>{
+	    <expr_stmt><expr>*<name>d</name>++ = '?'</expr>;</expr_stmt>
+	    <expr_stmt><expr><name>SKIP</name></expr>;</expr_stmt>
+	}</block></else></if></else></if>
+    }</block></while>
+    <expr_stmt><expr>*<name>d</name> = 0</expr>;</expr_stmt>
+<cpp:undef>#<cpp:directive>undef</cpp:directive> <name>SKIP</name></cpp:undef>
+}</block></function>
+
+<comment type="block">/* Keep this in sync with utf8l1strcpy! */</comment>
+<function><type><name>static</name> <name>int</name></type>
+<name>utf8l1strlen</name><parameter_list>(<param><decl><type><name>char</name> *</type><name>s</name></decl></param>)</parameter_list>
+<block>{
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>SKIP</name> do { s++; } while(((*s &amp; 0x80) != 0) &amp;&amp; (*s &amp; 0xC0) != 0xC0)</cpp:define>
+    <decl_stmt><decl><type><name>int</name></type> <name>len</name> =<init> <expr>0</expr></init></decl>;</decl_stmt>
+    <while>while <condition>(<expr>*<name>s</name></expr>)</condition> <block>{
+	<if>if <condition>(<expr>(*<name>s</name> &amp; 0x80) == 0</expr>)</condition><then> <block>{
+	    <expr_stmt><expr><name>s</name>++</expr>;</expr_stmt>
+	    <expr_stmt><expr><name>len</name>++</expr>;</expr_stmt>
+	}</block></then> <else>else <if>if <condition>(<expr>(*<name>s</name> &amp; 0x7C) == 0x40</expr>)</condition><then> <block>{
+	    <if>if <condition>(<expr>(<name><name>s</name><index>[<expr>1</expr>]</index></name> &amp; 0x80) == 0</expr>)</condition><then> <block>{
+		<expr_stmt><expr><name>s</name>++</expr>;</expr_stmt>
+		<continue>continue;</continue>
+	    }</block></then> <else>else <if>if <condition>(<expr>(*<name>s</name> &amp; 0x7C) == 0x40</expr>)</condition><then> <block>{
+		<expr_stmt><expr><name>len</name>++</expr>;</expr_stmt>
+		<expr_stmt><expr><name>s</name> += 2</expr>;</expr_stmt>
+	    }</block></then> <else>else <block>{
+		<expr_stmt><expr><name>len</name>++</expr>;</expr_stmt>
+		<expr_stmt><expr><name>SKIP</name></expr>;</expr_stmt>
+	    }</block></else></if></else></if>
+	}</block></then> <else>else <block>{
+	    <expr_stmt><expr><name>len</name>++</expr>;</expr_stmt>
+	    <expr_stmt><expr><name>SKIP</name></expr>;</expr_stmt>
+	}</block></else></if></else></if>
+    }</block></while>
+<cpp:undef>#<cpp:directive>undef</cpp:directive> <name>SKIP</name></cpp:undef>
+    <return>return <expr><name>len</name></expr>;</return>
+}</block></function>
+
+<function><type><name>int</name></type>
+<name>Xutf8TextPropertyToTextList</name><parameter_list>(<param><decl><type><name>Display</name> *</type> <name>dpy</name></decl></param>,
+			    <param><decl><type><name>const</name> <name>XTextProperty</name> *</type> <name>tp</name></decl></param>,
+			    <param><decl><type><name>char</name> ***</type><name>list_return</name></decl></param>,
+			    <param><decl><type><name>int</name> *</type><name>count_return</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>int</name></type> <name>utf8</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>char</name> **</type><name>list</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>int</name></type> <name>nelements</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>char</name> *</type><name>cp</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>char</name> *</type><name>start</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>size_t</name></type> <name>i</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>int</name></type> <name>j</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>size_t</name></type> <name>datalen</name> =<init> <expr><name>tp</name>-&gt;<name>nitems</name></expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>size_t</name></type> <name>len</name></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr><name>tp</name>-&gt;<name>format</name> != 8</expr>)</condition><then>
+	<return>return <expr><name>XConverterNotFound</name></expr>;</return></then></if>
+
+    <if>if <condition>(<expr><name>tp</name>-&gt;<name>encoding</name> == <name>XA_STRING</name></expr>)</condition><then>
+	<expr_stmt><expr><name>utf8</name> = 0</expr>;</expr_stmt></then>
+    <else>else <if>if <condition>(<expr><name>tp</name>-&gt;<name>encoding</name> == <call><name>XA_UTF8_STRING</name><argument_list>(<argument><expr><name>dpy</name></expr></argument>)</argument_list></call></expr>)</condition><then>
+	<expr_stmt><expr><name>utf8</name> = 1</expr>;</expr_stmt></then>
+    <else>else
+	<return>return <expr><name>XConverterNotFound</name></expr>;</return></else></if></else></if>
+
+    <if>if <condition>(<expr><name>datalen</name> == 0</expr>)</condition><then> <block>{
+	<expr_stmt><expr>*<name>list_return</name> = <name>NULL</name></expr>;</expr_stmt>
+	<expr_stmt><expr>*<name>count_return</name> = 0</expr>;</expr_stmt>
+	<return>return <expr>0</expr>;</return>
+    }</block></then></if>
+
+    <expr_stmt><expr><name>nelements</name> = 1</expr>;</expr_stmt>
+    <for>for (<init><expr><name>cp</name> = (<name>char</name> *) <name>tp</name>-&gt;<name>value</name></expr>, <expr><name>i</name> = <name>datalen</name></expr>;</init> <condition><expr><name>i</name> != 0</expr>;</condition> <incr><expr><name>cp</name>++</expr>, <expr><name>i</name>--</expr></incr>) <block>{
+	<if>if <condition>(<expr>*<name>cp</name> == '\0'</expr>)</condition><then>
+	    <expr_stmt><expr><name>nelements</name>++</expr>;</expr_stmt></then></if>
+    }</block></for>
+
+    <expr_stmt><expr><name>list</name> = <call><name>TypeMallocN</name><argument_list>(<argument><expr><name>char</name> *</expr></argument>, <argument><expr>(<name>unsigned</name>) <name>nelements</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <if>if <condition>(<expr>!<name>list</name></expr>)</condition><then>
+	<return>return <expr><name>XNoMemory</name></expr>;</return></then></if>
+
+    <if>if <condition>(<expr><name>utf8</name></expr>)</condition><then>
+	<expr_stmt><expr><name>len</name> = <name>datalen</name></expr>;</expr_stmt></then>
+    <else>else
+	<expr_stmt><expr><name>len</name> = <call><name>l1countUtf8Bytes</name><argument_list>(<argument><expr>(<name>char</name> *) <name>tp</name>-&gt;<name>value</name></expr></argument>, <argument><expr><name>datalen</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></else></if>
+
+    <expr_stmt><expr><name>start</name> = <call><name>CastMallocN</name><argument_list>(<argument><expr><name>char</name></expr></argument>, <argument><expr><name>len</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <if>if <condition>(<expr>!<name>start</name></expr>)</condition><then> <block>{
+	<expr_stmt><expr><call><name>free</name><argument_list>(<argument><expr><name>list</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<return>return <expr><name>XNoMemory</name></expr>;</return>
+    }</block></then></if>
+
+    <if>if <condition>(<expr><name>utf8</name></expr>)</condition><then>
+	<expr_stmt><expr><call><name>memcpy</name><argument_list>(<argument><expr><name>start</name></expr></argument>, <argument><expr>(<name>char</name> *) <name>tp</name>-&gt;<name>value</name></expr></argument>, <argument><expr><name>datalen</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></then>
+    <else>else
+	<expr_stmt><expr><call><name>l1utf8copy</name><argument_list>(<argument><expr><name>start</name></expr></argument>, <argument><expr>(<name>char</name> *) <name>tp</name>-&gt;<name>value</name></expr></argument>, <argument><expr><name>datalen</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></else></if>
+    <expr_stmt><expr><name><name>start</name><index>[<expr><name>len</name></expr>]</index></name> = '\0'</expr>;</expr_stmt>
+
+    <for>for (<init><expr><name>cp</name> = <name>start</name></expr>, <expr><name>i</name> = <name>len</name> + 1</expr>, <expr><name>j</name> = 0</expr>;</init> <condition><expr><name>i</name> != 0</expr>;</condition> <incr><expr><name>cp</name>++</expr>, <expr><name>i</name>--</expr></incr>) <block>{
+	<if>if <condition>(<expr>*<name>cp</name> == '\0'</expr>)</condition><then> <block>{
+	    <expr_stmt><expr><name><name>list</name><index>[<expr><name>j</name></expr>]</index></name> = <name>start</name></expr>;</expr_stmt>
+	    <expr_stmt><expr><name>start</name> = (<name>cp</name> + 1)</expr>;</expr_stmt>
+	    <expr_stmt><expr><name>j</name>++</expr>;</expr_stmt>
+	}</block></then></if>
+    }</block></for>
+
+    <expr_stmt><expr><name><name>list</name><index>[<expr><name>j</name></expr>]</index></name> = <name>NULL</name></expr>;</expr_stmt>
+    <expr_stmt><expr>*<name>list_return</name> = <name>list</name></expr>;</expr_stmt>
+    <expr_stmt><expr>*<name>count_return</name> = <name>nelements</name></expr>;</expr_stmt>
+    <return>return <expr>0</expr>;</return>
+}</block></function>
+
+<function><type><name>int</name></type>
+<name>Xutf8TextListToTextProperty</name><parameter_list>(<param><decl><type><name>Display</name> *</type> <name>dpy</name></decl></param>,
+			    <param><decl><type><name>char</name> **</type><name>list</name></decl></param>,
+			    <param><decl><type><name>int</name></type> <name>count</name></decl></param>,
+			    <param><decl><type><name>XICCEncodingStyle</name></type> <name>style</name></decl></param>,
+			    <param><decl><type><name>XTextProperty</name> *</type> <name>text_prop</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>XTextProperty</name></type> <name>proto</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>unsigned</name> <name>int</name></type> <name>nbytes</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>int</name></type> <name>i</name></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr><name>style</name> != <name>XStringStyle</name> &amp;&amp;
+	<name>style</name> != <name>XCompoundTextStyle</name> &amp;&amp;
+	<name>style</name> != <name>XStdICCTextStyle</name> &amp;&amp;
+	<name>style</name> != <name>XUTF8StringStyle</name></expr>)</condition><then>
+	<return>return <expr><name>XConverterNotFound</name></expr>;</return></then></if>
+
+    <if>if <condition>(<expr><name>style</name> == <name>XUTF8StringStyle</name></expr>)</condition><then> <block>{
+	<for>for (<init><expr><name>i</name> = 0</expr>, <expr><name>nbytes</name> = 0</expr>;</init> <condition><expr><name>i</name> &lt; <name>count</name></expr>;</condition> <incr><expr><name>i</name>++</expr></incr>) <block>{
+	    <expr_stmt><expr><name>nbytes</name> += <call>(<name>unsigned</name>) <argument_list>(<argument><expr>(<name><name>list</name><index>[<expr><name>i</name></expr>]</index></name> ? <call><name>strlen</name><argument_list>(<argument><expr><name><name>list</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>)</argument_list></call> : 0) + 1</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	}</block></for>
+    }</block></then> <else>else <block>{
+	<for>for (<init><expr><name>i</name> = 0</expr>, <expr><name>nbytes</name> = 0</expr>;</init> <condition><expr><name>i</name> &lt; <name>count</name></expr>;</condition> <incr><expr><name>i</name>++</expr></incr>) <block>{
+	    <expr_stmt><expr><name>nbytes</name> += <call>(<name>unsigned</name>) <argument_list>(<argument><expr>(<name><name>list</name><index>[<expr><name>i</name></expr>]</index></name> ? <call><name>utf8l1strlen</name><argument_list>(<argument><expr><name><name>list</name><index>[<expr><name>i</name></expr>]</index></name></expr></argument>)</argument_list></call> : 0) + 1</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	}</block></for>
+    }</block></else></if>
+
+    <if>if <condition>(<expr><name>style</name> == <name>XCompoundTextStyle</name></expr>)</condition><then>
+	<expr_stmt><expr><name>proto</name>.<name>encoding</name> = <call><name>XA_COMPOUND_TEXT</name><argument_list>(<argument><expr><name>dpy</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></then>
+    <else>else <if>if <condition>(<expr><name>style</name> == <name>XUTF8StringStyle</name></expr>)</condition><then>
+	<expr_stmt><expr><name>proto</name>.<name>encoding</name> = <call><name>XA_UTF8_STRING</name><argument_list>(<argument><expr><name>dpy</name></expr></argument>)</argument_list></call></expr>;</expr_stmt></then>
+    <else>else
+	<expr_stmt><expr><name>proto</name>.<name>encoding</name> = <name>XA_STRING</name></expr>;</expr_stmt></else></if></else></if>
+    <expr_stmt><expr><name>proto</name>.<name>format</name> = 8</expr>;</expr_stmt>
+    <if>if <condition>(<expr><name>nbytes</name></expr>)</condition><then>
+	<expr_stmt><expr><name>proto</name>.<name>nitems</name> = <name>nbytes</name> - 1</expr>;</expr_stmt></then>
+    <else>else
+	<expr_stmt><expr><name>proto</name>.<name>nitems</name> = 0</expr>;</expr_stmt></else></if>
+    <expr_stmt><expr><name>proto</name>.<name>value</name> = <name>NULL</name></expr>;</expr_stmt>
+
+    <if>if <condition>(<expr><name>nbytes</name> &gt; 0</expr>)</condition><then> <block>{
+	<decl_stmt><decl><type><name>char</name> *</type><name>buf</name> =<init> <expr><call><name>TypeMallocN</name><argument_list>(<argument><expr><name>char</name></expr></argument>, <argument><expr><name>nbytes</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+	<if>if <condition>(<expr>!<name>buf</name></expr>)</condition><then>
+	    <return>return <expr><name>XNoMemory</name></expr>;</return></then></if>
+
+	<expr_stmt><expr><name>proto</name>.<name>value</name> = (<name>unsigned</name> <name>char</name> *) <name>buf</name></expr>;</expr_stmt>
+	<for>for (<init><expr><name>i</name> = 0</expr>;</init> <condition><expr><name>i</name> &lt; <name>count</name></expr>;</condition> <incr><expr><name>i</name>++</expr></incr>) <block>{
+	    <decl_stmt><decl><type><name>char</name> *</type><name>arg</name> =<init> <expr><name><name>list</name><index>[<expr><name>i</name></expr>]</index></name></expr></init></decl>;</decl_stmt>
+
+	    <if>if <condition>(<expr><name>arg</name></expr>)</condition><then> <block>{
+		<if>if <condition>(<expr><name>style</name> == <name>XUTF8StringStyle</name></expr>)</condition><then> <block>{
+		    <expr_stmt><expr><call><name>strcpy</name><argument_list>(<argument><expr><name>buf</name></expr></argument>, <argument><expr><name>arg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		}</block></then> <else>else <block>{
+		    <expr_stmt><expr><call><name>utf8l1strcpy</name><argument_list>(<argument><expr><name>buf</name></expr></argument>, <argument><expr><name>arg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		}</block></else></if>
+		<expr_stmt><expr><name>buf</name> += (<call><name>strlen</name><argument_list>(<argument><expr><name>buf</name></expr></argument>)</argument_list></call> + 1)</expr>;</expr_stmt>
+	    }</block></then> <else>else <block>{
+		<expr_stmt><expr>*<name>buf</name>++ = '\0'</expr>;</expr_stmt>
+	    }</block></else></if>
+	}</block></for>
+    }</block></then> <else>else <block>{
+	<expr_stmt><expr><name>proto</name>.<name>value</name> = <macro><name>CastMalloc</name><argument_list>(<argument>unsigned char</argument>)</argument_list></macro></expr>;</expr_stmt>	<comment type="block">/* easier for client */</comment>
+	<if>if <condition>(<expr>!<name>proto</name>.<name>value</name></expr>)</condition><then>
+	    <return>return <expr><name>XNoMemory</name></expr>;</return></then></if>
+
+	<expr_stmt><expr><name>proto</name>.<name><name>value</name><index>[<expr>0</expr>]</index></name> = '\0'</expr>;</expr_stmt>
+    }</block></else></if>
+
+    <expr_stmt><expr>*<name>text_prop</name> = <name>proto</name></expr>;</expr_stmt>
+    <return>return <expr>0</expr>;</return>
+}</block></function>
+
+<function><type><name>int</name></type>
+<name>Xutf8LookupString</name><parameter_list>(<param><decl><type><name>XIC</name> <name>ic</name></type> <name>GCC_UNUSED</name></decl></param>,
+		  <param><decl><type><name>XKeyEvent</name> *</type> <name>ev</name></decl></param>,
+		  <param><decl><type><name>char</name> *</type><name>buffer</name></decl></param>,
+		  <param><decl><type><name>int</name></type> <name>nbytes</name></decl></param>,
+		  <param><decl><type><name>KeySym</name> *</type> <name>keysym_return</name></decl></param>,
+		  <param><decl><type><name>Status</name> *</type> <name>status_return</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>int</name></type> <name>rc</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>KeySym</name></type> <name>keysym</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>int</name></type> <name>codepoint</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>int</name></type> <name>len</name></decl>;</decl_stmt>
+
+    <expr_stmt><expr><name>rc</name> = <call><name>XLookupString</name><argument_list>(<argument><expr><name>ev</name></expr></argument>, <argument><expr><name>buffer</name></expr></argument>, <argument><expr><name>nbytes</name></expr></argument>, <argument><expr>&amp;<name>keysym</name></expr></argument>, <argument><expr><name>NULL</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+    <if>if <condition>(<expr><name>rc</name> &gt; 0</expr>)</condition><then> <block>{
+	<expr_stmt><expr><name>codepoint</name> = <name><name>buffer</name><index>[<expr>0</expr>]</index></name> &amp; 0xFF</expr>;</expr_stmt>
+    }</block></then> <else>else <block>{
+	<expr_stmt><expr><name>codepoint</name> = <call><name>keysym2ucs</name><argument_list>(<argument><expr><name>keysym</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></else></if>
+
+    <if>if <condition>(<expr><name>codepoint</name> &lt; 0</expr>)</condition><then> <block>{
+	<if>if <condition>(<expr><name>keysym</name> == <name>None</name></expr>)</condition><then> <block>{
+	    <expr_stmt><expr>*<name>status_return</name> = <name>XLookupNone</name></expr>;</expr_stmt>
+	}</block></then> <else>else <block>{
+	    <expr_stmt><expr>*<name>status_return</name> = <name>XLookupKeySym</name></expr>;</expr_stmt>
+	    <expr_stmt><expr>*<name>keysym_return</name> = <name>keysym</name></expr>;</expr_stmt>
+	}</block></else></if>
+	<return>return <expr>0</expr>;</return>
+    }</block></then></if>
+
+    <if>if <condition>(<expr><name>nbytes</name> &lt; <call><name>utf8countBytes</name><argument_list>(<argument><expr><name>codepoint</name></expr></argument>)</argument_list></call></expr>)</condition><then> <block>{
+	<expr_stmt><expr>*<name>status_return</name> = <name>XBufferOverflow</name></expr>;</expr_stmt>
+	<return>return <expr><call><name>utf8countBytes</name><argument_list>(<argument><expr><name>codepoint</name></expr></argument>)</argument_list></call></expr>;</return>
+    }</block></then></if>
+
+    <expr_stmt><expr><call><name>utf8insert</name><argument_list>(<argument><expr><name>buffer</name></expr></argument>, <argument><expr><name>codepoint</name></expr></argument>, <argument><expr>&amp;<name>len</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+    <if>if <condition>(<expr><name>keysym</name> != <name>None</name></expr>)</condition><then> <block>{
+	<expr_stmt><expr>*<name>keysym_return</name> = <name>keysym</name></expr>;</expr_stmt>
+	<expr_stmt><expr>*<name>status_return</name> = <name>XLookupBoth</name></expr>;</expr_stmt>
+    }</block></then> <else>else <block>{
+	<expr_stmt><expr>*<name>status_return</name> = <name>XLookupChars</name></expr>;</expr_stmt>
+    }</block></else></if>
+    <return>return <expr><name>len</name></expr>;</return>
+}</block></function>
+<cpp:else>#<cpp:directive>else</cpp:directive></cpp:else> <comment type="block">/* X_HAVE_UTF8_STRING */</comment>
+<comment type="block">/* Silence the compiler */</comment>
+<function><type><name>void</name></type>
+<name>xutf8_dummy</name><parameter_list>(<param><decl><type><name>void</name></type></decl></param>)</parameter_list>
+<block>{
+    <return>return;</return>
+}</block></function>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+</unit>

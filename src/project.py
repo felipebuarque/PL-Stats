@@ -87,7 +87,7 @@ class ProjectC(Project):
         '''
         Return an instance of StatisticsC
         '''
-        return StatisticsC(self.project_dir)
+        return StatisticsC(self.project_dir, self.work_dir, self.xml_dir, self.project_results_dir)
 
 
 class ProjectJava(Project):
@@ -128,4 +128,4 @@ class ProjectJava(Project):
         '''
         Return an instance of StatisticsJava
         '''
-        return StatisticsJava(self.project_dir)
+        return StatisticsJava(self.project_dir, self.work_dir, self.xml_dir, self.project_results_dir)

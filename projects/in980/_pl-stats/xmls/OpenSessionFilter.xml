@@ -1,0 +1,72 @@
+<unit language="Java" dir="" filename="OpenSessionFilter.java"><package>package <name>in980</name>.<name>rgms</name>.<name>presentation</name>;</package><import>import <name>in980</name>.<name>rgms</name>.<name>utils</name>.<name>HibernateUtils</name>;</import><import>import <name>java</name>.<name>io</name>.<name>IOException</name>;</import><import>import <name>javax</name>.<name>servlet</name>.<name>Filter</name>;</import><import>import <name>javax</name>.<name>servlet</name>.<name>FilterChain</name>;</import><import>import <name>javax</name>.<name>servlet</name>.<name>FilterConfig</name>;</import><import>import <name>javax</name>.<name>servlet</name>.<name>ServletException</name>;</import><import>import <name>javax</name>.<name>servlet</name>.<name>ServletRequest</name>;</import><import>import <name>javax</name>.<name>servlet</name>.<name>ServletResponse</name>;</import><import>import <name>org</name>.<name>apache</name>.<name>commons</name>.<name>logging</name>.<name>Log</name>;</import><import>import <name>org</name>.<name>apache</name>.<name>commons</name>.<name>logging</name>.<name>LogFactory</name>;</import><import>import <name>org</name>.<name>hibernate</name>.<name>SessionFactory</name>;</import><import>import <name>org</name>.<name>hibernate</name>.<name>StaleObjectStateException</name>;</import><comment type="block">/**
+ * Servlet Filter implementation class OpenSessionFilter
+ */</comment><class><specifier>public</specifier> class <name>OpenSessionFilter</name> <super><implements>implements <name>Filter</name></implements></super> <block>{
+
+	<decl_stmt><decl><type><specifier>private</specifier><name>static</name><name>Log</name></type><name>log</name> =<init><expr><call><name><name>LogFactory</name>.<name>getLog</name></name><argument_list>(<argument><expr><name>OpenSessionFilter</name>.class</expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+	<decl_stmt><decl><type><specifier>private</specifier><name>SessionFactory</name></type><name>sf</name></decl>;</decl_stmt>
+
+	<comment type="block">/**
+	 * Default constructor.
+	 */</comment>
+	<constructor><specifier>public</specifier><name>OpenSessionFilter</name><parameter_list>()</parameter_list><block>{
+		<comment type="line">// TODO Auto-generated constructor stub</comment>
+	}</block></constructor>
+
+	<comment type="block">/**
+	 * @see Filter#destroy()
+	 */</comment>
+	<function><type><specifier>public</specifier><name>void</name></type><name>destroy</name><parameter_list>()</parameter_list><block>{
+		<comment type="line">// TODO Auto-generated method stub</comment>
+	}</block></function>
+
+	<comment type="block">/**
+	 * @see Filter#doFilter(ServletRequest, ServletResponse, FilterChain)
+	 */</comment>
+	<function><type><specifier>public</specifier><name>void</name></type><name>doFilter</name><parameter_list>(<param><decl><type><name>ServletRequest</name></type><name>request</name></decl></param>, <param><decl><type><name>ServletResponse</name></type><name>response</name></decl></param>,
+			<param><decl><type><name>FilterChain</name></type><name>chain</name></decl></param>)</parameter_list><throws>throws</throws> IOException, ServletException <block>{
+		<try>try <block>{
+			<comment type="line">// place your code here</comment>
+			<expr_stmt><expr><call><name><name>log</name>.<name>debug</name></name><argument_list>(<argument><expr>"Starting a database transaction"</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+			<expr_stmt><expr><call><name><name>sf</name>.<name>getCurrentSession</name></name><argument_list>()</argument_list></call>.<call><name>beginTransaction</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+			<comment type="line">// pass the request along the filter chain</comment>
+			<expr_stmt><expr><call><name><name>chain</name>.<name>doFilter</name></name><argument_list>(<argument><expr><name>request</name></expr></argument>, <argument><expr><name>response</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+			<comment type="line">// After</comment>
+			<expr_stmt><expr><call><name><name>log</name>.<name>debug</name></name><argument_list>(<argument><expr>"Committing the database transaction"</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+			<expr_stmt><expr><call><name><name>sf</name>.<name>getCurrentSession</name></name><argument_list>()</argument_list></call>.<call><name>getTransaction</name><argument_list>()</argument_list></call>.<call><name>commit</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+		}</block></try> <catch>catch (<param><decl><type><name>StaleObjectStateException</name></type><name>staleEx</name></decl></param>) <block>{
+			<expr_stmt><expr><call><name><name>log</name>.<name>error</name></name><argument_list>(<argument><expr>"This interceptor does not implement optimistic concurrency control!"</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+			<expr_stmt><expr><call><name><name>log</name>.<name>error</name></name><argument_list>(<argument><expr>"Your application will not work until you add compensation actions!"</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+			<comment type="line">// Rollback, close everything, possibly compensate for any permanent</comment>
+			<comment type="line">// changes  during the conversation, and finally restart business</comment>
+			<comment type="line">// conversation. Maybe give the user of the application a chance to merge some of his</comment>
+			<comment type="line">// work with fresh data... what you do here depends on your applications</comment>
+			<comment type="line">// design.</comment>
+			<throw>throw <expr><name>staleEx</name></expr>;</throw>
+		}</block></catch> <catch>catch (<param><decl><type><name>Throwable</name></type><name>ex</name></decl></param>) <block>{
+			<comment type="line">// Rollback only</comment>
+			<expr_stmt><expr><call><name><name>ex</name>.<name>printStackTrace</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+			<try>try <block>{
+				<if>if <condition>(<expr><call><name><name>sf</name>.<name>getCurrentSession</name></name><argument_list>()</argument_list></call>.<call><name>getTransaction</name><argument_list>()</argument_list></call>.<call><name>isActive</name><argument_list>()</argument_list></call></expr>)</condition><then><block>{
+					<expr_stmt><expr><call><name><name>log</name>.<name>debug</name></name><argument_list>(<argument><expr>"Trying to rollback database transaction after exception"</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+					<expr_stmt><expr><call><name><name>sf</name>.<name>getCurrentSession</name></name><argument_list>()</argument_list></call>.<call><name>getTransaction</name><argument_list>()</argument_list></call>.<call><name>rollback</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+				}</block></then></if>
+			}</block></try> <catch>catch (<param><decl><type><name>Throwable</name></type><name>rbEx</name></decl></param>) <block>{
+				<expr_stmt><expr><call><name><name>log</name>.<name>error</name></name><argument_list>(<argument><expr>"Could not rollback transaction after exception!"</expr></argument>,
+						<argument><expr><name>rbEx</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+			}</block></catch>
+
+			<comment type="line">// Let others handle it... maybe another interceptor for exceptions?</comment>
+			<throw>throw <expr>new <call><name>ServletException</name><argument_list>(<argument><expr><name>ex</name></expr></argument>)</argument_list></call></expr>;</throw>
+		}</block></catch>
+	}</block></function>
+
+	<comment type="block">/**
+	 * @see Filter#init(FilterConfig)
+	 */</comment>
+	<function><type><specifier>public</specifier><name>void</name></type><name>init</name><parameter_list>(<param><decl><type><name>FilterConfig</name></type><name>fConfig</name></decl></param>)</parameter_list><throws>throws</throws> ServletException <block>{
+		<expr_stmt><expr><call><name><name>log</name>.<name>debug</name></name><argument_list>(<argument><expr>"Initializing filter..."</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><call><name><name>log</name>.<name>debug</name></name><argument_list>(<argument><expr>"Obtaining SessionFactory from static HibernateUtil singleton"</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><name>sf</name> = <call><name><name>HibernateUtils</name>.<name>getSessionFactory</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+	}</block></function>
+
+}</block></class></unit>

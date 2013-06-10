@@ -1,0 +1,376 @@
+<unit xmlns="http://www.sdml.info/srcML/src" xmlns:cpp="http://www.sdml.info/srcML/cpp" language="C" dir="" filename="cursor.c"><comment type="block">/* $XTermId: cursor.c,v 1.55 2010/04/17 17:12:01 tom Exp $ */</comment>
+
+<comment type="block">/*
+ * Copyright 2002-2009,2010 by Thomas E. Dickey
+ * 
+ *                         All Rights Reserved
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE ABOVE LISTED COPYRIGHT HOLDER(S) BE LIABLE FOR ANY
+ * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * 
+ * Except as contained in this notice, the name(s) of the above copyright
+ * holders shall not be used in advertising or otherwise to promote the
+ * sale, use or other dealings in this Software without prior written
+ * authorization.
+ * 
+ * Copyright 1987 by Digital Equipment Corporation, Maynard, Massachusetts.
+ *
+ *                         All Rights Reserved
+ *
+ * Permission to use, copy, modify, and distribute this software and its
+ * documentation for any purpose and without fee is hereby granted,
+ * provided that the above copyright notice appear in all copies and that
+ * both that copyright notice and this permission notice appear in
+ * supporting documentation, and that the name of Digital Equipment
+ * Corporation not be used in advertising or publicity pertaining to
+ * distribution of the software without specific, written prior permission.
+ *
+ *
+ * DIGITAL DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
+ * ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
+ * DIGITAL BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR
+ * ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+ * WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+ * ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+ * SOFTWARE.
+ */</comment>
+
+<comment type="block">/* cursor.c */</comment>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;xterm.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;data.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;menu.h&gt;</cpp:file></cpp:include>
+
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;assert.h&gt;</cpp:file></cpp:include>
+
+<comment type="block">/*
+ * Moves the cursor to the specified position, checking for bounds.
+ * (this includes scrolling regions)
+ * The origin is considered to be 0, 0 for this procedure.
+ */</comment>
+<function><type><name>void</name></type>
+<name>CursorSet</name><parameter_list>(<param><decl><type><name>TScreen</name> *</type> <name>screen</name></decl></param>, <param><decl><type><name>int</name></type> <name>row</name></decl></param>, <param><decl><type><name>int</name></type> <name>col</name></decl></param>, <param><decl><type><name>unsigned</name></type> <name>flags</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>int</name></type> <name>use_row</name> =<init> <expr><name>row</name></expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>int</name></type> <name>max_row</name></decl>;</decl_stmt>
+
+    <expr_stmt><expr><name>col</name> = (<name>col</name> &lt; 0 ? 0 : <name>col</name>)</expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>set_cur_col</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr>(<name>col</name> &lt;= <name>screen</name>-&gt;<name>max_col</name> ? <name>col</name> : <name>screen</name>-&gt;<name>max_col</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><name>max_row</name> = <name>screen</name>-&gt;<name>max_row</name></expr>;</expr_stmt>
+    <if>if <condition>(<expr><name>flags</name> &amp; <name>ORIGIN</name></expr>)</condition><then> <block>{
+	<expr_stmt><expr><name>use_row</name> += <name>screen</name>-&gt;<name>top_marg</name></expr>;</expr_stmt>
+	<expr_stmt><expr><name>max_row</name> = <name>screen</name>-&gt;<name>bot_marg</name></expr>;</expr_stmt>
+    }</block></then></if>
+    <expr_stmt><expr><name>use_row</name> = (<name>use_row</name> &lt; 0 ? 0 : <name>use_row</name>)</expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>set_cur_row</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr>(<name>use_row</name> &lt;= <name>max_row</name> ? <name>use_row</name> : <name>max_row</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><name>screen</name>-&gt;<name>do_wrap</name> = <name>False</name></expr>;</expr_stmt>
+
+    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("CursorSet(%d,%d) margins [%d..%d] -&gt; %d,%d %s\n",
+	   <name>row</name>, <name>col</name>,
+	   <name>screen</name>-&gt;<name>top_marg</name>,
+	   <name>screen</name>-&gt;<name>bot_marg</name>,
+	   <name>screen</name>-&gt;<name>cur_row</name>,
+	   <name>screen</name>-&gt;<name>cur_col</name>,
+	   (<name>flags</name> &amp; <name>ORIGIN</name> ? "origin" : "normal"))</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+}</block></function>
+
+<comment type="block">/*
+ * moves the cursor left n, no wrap around
+ */</comment>
+<function><type><name>void</name></type>
+<name>CursorBack</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>, <param><decl><type><name>int</name></type> <name>n</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>TScreen</name> *</type><name>screen</name> =<init> <expr><call><name>TScreenOf</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>int</name></type> <name>i</name>, <name>j</name>, <name>k</name>, <name>rev</name></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr>(<name>rev</name> = (<name>xw</name>-&gt;<name>flags</name> &amp; (<name>REVERSEWRAP</name> | <name>WRAPAROUND</name>)) ==
+	 (<name>REVERSEWRAP</name> | <name>WRAPAROUND</name>)) != 0
+	&amp;&amp; <name>screen</name>-&gt;<name>do_wrap</name></expr>)</condition><then>
+	<expr_stmt><expr><name>n</name>--</expr>;</expr_stmt></then></if>
+    <if>if <condition>(<expr>(<name>screen</name>-&gt;<name>cur_col</name> -= <name>n</name>) &lt; 0</expr>)</condition><then> <block>{
+	<if>if <condition>(<expr><name>rev</name></expr>)</condition><then> <block>{
+	    <if>if <condition>(<expr>(<name>i</name> = ((<name>j</name> = <call><name>MaxCols</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call>)
+		      * <name>screen</name>-&gt;<name>cur_row</name>) + <name>screen</name>-&gt;<name>cur_col</name>) &lt; 0</expr>)</condition><then> <block>{
+		<expr_stmt><expr><name>k</name> = <name>j</name> * <call><name>MaxRows</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		<expr_stmt><expr><name>i</name> += ((-<name>i</name>) / <name>k</name> + 1) * <name>k</name></expr>;</expr_stmt>
+	    }</block></then></if>
+	    <expr_stmt><expr><call><name>set_cur_row</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr><name>i</name> / <name>j</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><call><name>set_cur_col</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr><name>i</name> % <name>j</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><call><name>do_xevents</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+	}</block></then> <else>else <block>{
+	    <expr_stmt><expr><call><name>set_cur_col</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr>0</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	}</block></else></if>
+    }</block></then></if>
+    <expr_stmt><expr><name>screen</name>-&gt;<name>do_wrap</name> = <name>False</name></expr>;</expr_stmt>
+}</block></function>
+
+<comment type="block">/*
+ * moves the cursor forward n, no wraparound
+ */</comment>
+<function><type><name>void</name></type>
+<name>CursorForward</name><parameter_list>(<param><decl><type><name>TScreen</name> *</type> <name>screen</name></decl></param>, <param><decl><type><name>int</name></type> <name>n</name></decl></param>)</parameter_list>
+<block>{
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_DEC_CHRSET</name></expr></cpp:if>
+    <decl_stmt><decl><type><name>LineData</name> *</type><name>ld</name> =<init> <expr><call><name>getLineData</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr><name>screen</name>-&gt;<name>cur_row</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+    <decl_stmt><decl><type><name>int</name></type> <name>next</name> =<init> <expr><name>screen</name>-&gt;<name>cur_col</name> + <name>n</name></expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>int</name></type> <name>max</name> =<init> <expr><call><name>LineMaxCol</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr><name>ld</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr><name>next</name> &gt; <name>max</name></expr>)</condition><then>
+	<expr_stmt><expr><name>next</name> = <name>max</name></expr>;</expr_stmt></then></if>
+
+    <expr_stmt><expr><call><name>set_cur_col</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr><name>next</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><name>screen</name>-&gt;<name>do_wrap</name> = <name>False</name></expr>;</expr_stmt>
+}</block></function>
+
+<comment type="block">/*
+ * moves the cursor down n, no scrolling.
+ * Won't pass bottom margin or bottom of screen.
+ */</comment>
+<function><type><name>void</name></type>
+<name>CursorDown</name><parameter_list>(<param><decl><type><name>TScreen</name> *</type> <name>screen</name></decl></param>, <param><decl><type><name>int</name></type> <name>n</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>int</name></type> <name>max</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>int</name></type> <name>next</name> =<init> <expr><name>screen</name>-&gt;<name>cur_row</name> + <name>n</name></expr></init></decl>;</decl_stmt>
+
+    <expr_stmt><expr><name>max</name> = (<name>screen</name>-&gt;<name>cur_row</name> &gt; <name>screen</name>-&gt;<name>bot_marg</name> ?
+	   <name>screen</name>-&gt;<name>max_row</name> : <name>screen</name>-&gt;<name>bot_marg</name>)</expr>;</expr_stmt>
+    <if>if <condition>(<expr><name>next</name> &gt; <name>max</name></expr>)</condition><then>
+	<expr_stmt><expr><name>next</name> = <name>max</name></expr>;</expr_stmt></then></if>
+    <if>if <condition>(<expr><name>next</name> &gt; <name>screen</name>-&gt;<name>max_row</name></expr>)</condition><then>
+	<expr_stmt><expr><name>next</name> = <name>screen</name>-&gt;<name>max_row</name></expr>;</expr_stmt></then></if>
+
+    <expr_stmt><expr><call><name>set_cur_row</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr><name>next</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><name>screen</name>-&gt;<name>do_wrap</name> = <name>False</name></expr>;</expr_stmt>
+}</block></function>
+
+<comment type="block">/*
+ * moves the cursor up n, no linestarving.
+ * Won't pass top margin or top of screen.
+ */</comment>
+<function><type><name>void</name></type>
+<name>CursorUp</name><parameter_list>(<param><decl><type><name>TScreen</name> *</type> <name>screen</name></decl></param>, <param><decl><type><name>int</name></type> <name>n</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>int</name></type> <name>min</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>int</name></type> <name>next</name> =<init> <expr><name>screen</name>-&gt;<name>cur_row</name> - <name>n</name></expr></init></decl>;</decl_stmt>
+
+    <expr_stmt><expr><name>min</name> = ((<name>screen</name>-&gt;<name>cur_row</name> &lt; <name>screen</name>-&gt;<name>top_marg</name>)
+	   ? 0
+	   : <name>screen</name>-&gt;<name>top_marg</name>)</expr>;</expr_stmt>
+    <if>if <condition>(<expr><name>next</name> &lt; <name>min</name></expr>)</condition><then>
+	<expr_stmt><expr><name>next</name> = <name>min</name></expr>;</expr_stmt></then></if>
+    <if>if <condition>(<expr><name>next</name> &lt; 0</expr>)</condition><then>
+	<expr_stmt><expr><name>next</name> = 0</expr>;</expr_stmt></then></if>
+
+    <expr_stmt><expr><call><name>set_cur_row</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr><name>next</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><name>screen</name>-&gt;<name>do_wrap</name> = <name>False</name></expr>;</expr_stmt>
+}</block></function>
+
+<comment type="block">/*
+ * Moves cursor down amount lines, scrolls if necessary.
+ * Won't leave scrolling region. No carriage return.
+ */</comment>
+<function><type><name>void</name></type>
+<name>xtermIndex</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>, <param><decl><type><name>int</name></type> <name>amount</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>TScreen</name> *</type><name>screen</name> =<init> <expr><call><name>TScreenOf</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>int</name></type> <name>j</name></decl>;</decl_stmt>
+
+    <comment type="block">/*
+     * indexing when below scrolling region is cursor down.
+     * if cursor high enough, no scrolling necessary.
+     */</comment>
+    <if>if <condition>(<expr><name>screen</name>-&gt;<name>cur_row</name> &gt; <name>screen</name>-&gt;<name>bot_marg</name>
+	|| <name>screen</name>-&gt;<name>cur_row</name> + <name>amount</name> &lt;= <name>screen</name>-&gt;<name>bot_marg</name></expr>)</condition><then> <block>{
+	<expr_stmt><expr><call><name>CursorDown</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr><name>amount</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<return>return;</return>
+    }</block></then></if>
+
+    <expr_stmt><expr><call><name>CursorDown</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr><name>j</name> = <name>screen</name>-&gt;<name>bot_marg</name> - <name>screen</name>-&gt;<name>cur_row</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>xtermScroll</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>amount</name> - <name>j</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+}</block></function>
+
+<comment type="block">/*
+ * Moves cursor up amount lines, reverse scrolls if necessary.
+ * Won't leave scrolling region. No carriage return.
+ */</comment>
+<function><type><name>void</name></type>
+<name>RevIndex</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>, <param><decl><type><name>int</name></type> <name>amount</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>TScreen</name> *</type><name>screen</name> =<init> <expr><call><name>TScreenOf</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+    <comment type="block">/*
+     * reverse indexing when above scrolling region is cursor up.
+     * if cursor low enough, no reverse indexing needed
+     */</comment>
+    <if>if <condition>(<expr><name>screen</name>-&gt;<name>cur_row</name> &lt; <name>screen</name>-&gt;<name>top_marg</name>
+	|| <name>screen</name>-&gt;<name>cur_row</name> - <name>amount</name> &gt;= <name>screen</name>-&gt;<name>top_marg</name></expr>)</condition><then> <block>{
+	<expr_stmt><expr><call><name>CursorUp</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr><name>amount</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<return>return;</return>
+    }</block></then></if>
+
+    <expr_stmt><expr><call><name>RevScroll</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>amount</name> - (<name>screen</name>-&gt;<name>cur_row</name> - <name>screen</name>-&gt;<name>top_marg</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>CursorUp</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr><name>screen</name>-&gt;<name>cur_row</name> - <name>screen</name>-&gt;<name>top_marg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+}</block></function>
+
+<comment type="block">/*
+ * Moves Cursor To First Column In Line
+ * (Note: xterm doesn't implement SLH, SLL which would affect use of this)
+ */</comment>
+<function><type><name>void</name></type>
+<name>CarriageReturn</name><parameter_list>(<param><decl><type><name>TScreen</name> *</type> <name>screen</name></decl></param>)</parameter_list>
+<block>{
+    <expr_stmt><expr><call><name>set_cur_col</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr>0</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><name>screen</name>-&gt;<name>do_wrap</name> = <name>False</name></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>do_xevents</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+}</block></function>
+
+<comment type="block">/*
+ * When resizing the window, if we're showing the alternate screen, we still
+ * have to adjust the saved cursor from the normal screen to account for
+ * shifting of the saved-line region in/out of the viewable window.
+ */</comment>
+<function><type><name>void</name></type>
+<name>AdjustSavedCursor</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>, <param><decl><type><name>int</name></type> <name>adjust</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>TScreen</name> *</type><name>screen</name> =<init> <expr><call><name>TScreenOf</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+
+    <if>if <condition>(<expr><name>screen</name>-&gt;<name>whichBuf</name></expr>)</condition><then> <block>{
+	<decl_stmt><decl><type><name>SavedCursor</name> *</type><name>sc</name> =<init> <expr>&amp;<name>screen</name>-&gt;<name><name>sc</name><index>[<expr>0</expr>]</index></name></expr></init></decl>;</decl_stmt>
+
+	<if>if <condition>(<expr><name>adjust</name> &gt; 0</expr>)</condition><then> <block>{
+	    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("AdjustSavedCursor %d -&gt; %d\n", <name>sc</name>-&gt;<name>row</name>, <name>sc</name>-&gt;<name>row</name> - <name>adjust</name>)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	    <expr_stmt><expr><name>sc</name>-&gt;<name>row</name> += <name>adjust</name></expr>;</expr_stmt>
+	}</block></then></if>
+    }</block></then></if>
+}</block></function>
+
+<comment type="block">/*
+ * Save Cursor and Attributes
+ */</comment>
+<function><type><name>void</name></type>
+<name>CursorSave</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>TScreen</name> *</type><name>screen</name> =<init> <expr><call><name>TScreenOf</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>SavedCursor</name> *</type><name>sc</name> =<init> <expr>&amp;<name>screen</name>-&gt;<name><name>sc</name><index>[<expr><name>screen</name>-&gt;<name>whichBuf</name></expr>]</index></name></expr></init></decl>;</decl_stmt>
+
+    <expr_stmt><expr><name>sc</name>-&gt;<name>saved</name> = <name>True</name></expr>;</expr_stmt>
+    <expr_stmt><expr><name>sc</name>-&gt;<name>row</name> = <name>screen</name>-&gt;<name>cur_row</name></expr>;</expr_stmt>
+    <expr_stmt><expr><name>sc</name>-&gt;<name>col</name> = <name>screen</name>-&gt;<name>cur_col</name></expr>;</expr_stmt>
+    <expr_stmt><expr><name>sc</name>-&gt;<name>flags</name> = <name>xw</name>-&gt;<name>flags</name></expr>;</expr_stmt>
+    <expr_stmt><expr><name>sc</name>-&gt;<name>curgl</name> = <name>screen</name>-&gt;<name>curgl</name></expr>;</expr_stmt>
+    <expr_stmt><expr><name>sc</name>-&gt;<name>curgr</name> = <name>screen</name>-&gt;<name>curgr</name></expr>;</expr_stmt>
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_ISO_COLORS</name></expr></cpp:if>
+    <expr_stmt><expr><name>sc</name>-&gt;<name>cur_foreground</name> = <name>xw</name>-&gt;<name>cur_foreground</name></expr>;</expr_stmt>
+    <expr_stmt><expr><name>sc</name>-&gt;<name>cur_background</name> = <name>xw</name>-&gt;<name>cur_background</name></expr>;</expr_stmt>
+    <expr_stmt><expr><name>sc</name>-&gt;<name>sgr_foreground</name> = <name>xw</name>-&gt;<name>sgr_foreground</name></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+    <expr_stmt><expr><call><name>memmove</name><argument_list>(<argument><expr><name>sc</name>-&gt;<name>gsets</name></expr></argument>, <argument><expr><name>screen</name>-&gt;<name>gsets</name></expr></argument>, <argument><expr><call><name>sizeof</name><argument_list>(<argument><expr><name>screen</name>-&gt;<name>gsets</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+}</block></function>
+
+<comment type="block">/*
+ * We save/restore all visible attributes, plus wrapping, origin mode, and the
+ * selective erase attribute.
+ */</comment>
+<cpp:define>#<cpp:directive>define</cpp:directive> <name>DECSC_FLAGS</name> (ATTRIBUTES|ORIGIN|WRAPAROUND|PROTECTED)</cpp:define>
+
+<comment type="block">/*
+ * Restore Cursor and Attributes
+ */</comment>
+<function><type><name>void</name></type>
+<name>CursorRestore</name><parameter_list>(<param><decl><type><name>XtermWidget</name></type> <name>xw</name></decl></param>)</parameter_list>
+<block>{
+    <decl_stmt><decl><type><name>TScreen</name> *</type><name>screen</name> =<init> <expr><call><name>TScreenOf</name><argument_list>(<argument><expr><name>xw</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>SavedCursor</name> *</type><name>sc</name> =<init> <expr>&amp;<name>screen</name>-&gt;<name><name>sc</name><index>[<expr><name>screen</name>-&gt;<name>whichBuf</name></expr>]</index></name></expr></init></decl>;</decl_stmt>
+
+    <comment type="block">/* Restore the character sets, unless we never did a save-cursor op.
+     * In that case, we'll reset the character sets.
+     */</comment>
+    <if>if <condition>(<expr><name>sc</name>-&gt;<name>saved</name></expr>)</condition><then> <block>{
+	<expr_stmt><expr><call><name>memmove</name><argument_list>(<argument><expr><name>screen</name>-&gt;<name>gsets</name></expr></argument>, <argument><expr><name>sc</name>-&gt;<name>gsets</name></expr></argument>, <argument><expr><call><name>sizeof</name><argument_list>(<argument><expr><name>screen</name>-&gt;<name>gsets</name></expr></argument>)</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	<expr_stmt><expr><name>screen</name>-&gt;<name>curgl</name> = <name>sc</name>-&gt;<name>curgl</name></expr>;</expr_stmt>
+	<expr_stmt><expr><name>screen</name>-&gt;<name>curgr</name> = <name>sc</name>-&gt;<name>curgr</name></expr>;</expr_stmt>
+    }</block></then> <else>else <block>{
+	<expr_stmt><expr><call><name>resetCharsets</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    }</block></else></if>
+
+    <expr_stmt><expr><call><name>UIntClr</name><argument_list>(<argument><expr><name>xw</name>-&gt;<name>flags</name></expr></argument>, <argument><expr><name>DECSC_FLAGS</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>UIntSet</name><argument_list>(<argument><expr><name>xw</name>-&gt;<name>flags</name></expr></argument>, <argument><expr><name>sc</name>-&gt;<name>flags</name> &amp; <name>DECSC_FLAGS</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>CursorSet</name><argument_list>(<argument><expr><name>screen</name></expr></argument>,
+	      <argument><expr>((<name>xw</name>-&gt;<name>flags</name> &amp; <name>ORIGIN</name>)
+	       ? <name>sc</name>-&gt;<name>row</name> - <name>screen</name>-&gt;<name>top_marg</name>
+	       : <name>sc</name>-&gt;<name>row</name>)</expr></argument>,
+	      <argument><expr><name>sc</name>-&gt;<name>col</name></expr></argument>, <argument><expr><name>xw</name>-&gt;<name>flags</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_ISO_COLORS</name></expr></cpp:if>
+    <expr_stmt><expr><name>xw</name>-&gt;<name>sgr_foreground</name> = <name>sc</name>-&gt;<name>sgr_foreground</name></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>SGR_Foreground</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>xw</name>-&gt;<name>flags</name> &amp; <name>FG_COLOR</name> ? <name>sc</name>-&gt;<name>cur_foreground</name> : -1</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>SGR_Background</name><argument_list>(<argument><expr><name>xw</name></expr></argument>, <argument><expr><name>xw</name>-&gt;<name>flags</name> &amp; <name>BG_COLOR</name> ? <name>sc</name>-&gt;<name>cur_background</name> : -1</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif>
+    <expr_stmt><expr><call><name>update_autowrap</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+}</block></function>
+
+<comment type="block">/*
+ * Move the cursor to the first column of the n-th next line.
+ */</comment>
+<function><type><name>void</name></type>
+<name>CursorNextLine</name><parameter_list>(<param><decl><type><name>TScreen</name> *</type> <name>screen</name></decl></param>, <param><decl><type><name>int</name></type> <name>count</name></decl></param>)</parameter_list>
+<block>{
+    <expr_stmt><expr><call><name>CursorDown</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr><name>count</name> &lt; 1 ? 1 : <name>count</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>CarriageReturn</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>do_xevents</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+}</block></function>
+
+<comment type="block">/*
+ * Move the cursor to the first column of the n-th previous line.
+ */</comment>
+<function><type><name>void</name></type>
+<name>CursorPrevLine</name><parameter_list>(<param><decl><type><name>TScreen</name> *</type> <name>screen</name></decl></param>, <param><decl><type><name>int</name></type> <name>count</name></decl></param>)</parameter_list>
+<block>{
+    <expr_stmt><expr><call><name>CursorUp</name><argument_list>(<argument><expr><name>screen</name></expr></argument>, <argument><expr><name>count</name> &lt; 1 ? 1 : <name>count</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>CarriageReturn</name><argument_list>(<argument><expr><name>screen</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>do_xevents</name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+}</block></function>
+
+<cpp:if>#<cpp:directive>if</cpp:directive> <expr><name>OPT_TRACE</name></expr></cpp:if>
+<function><type><name>int</name></type>
+<name>set_cur_row</name><parameter_list>(<param><decl><type><name>TScreen</name> *</type> <name>screen</name></decl></param>, <param><decl><type><name>int</name></type> <name>value</name></decl></param>)</parameter_list>
+<block>{
+    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("set_cur_row %d vs %d\n", <name>value</name>, <name>screen</name> ? <name>screen</name>-&gt;<name>max_row</name> : -1)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+    <expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>screen</name> != 0</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>value</name> &gt;= 0</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>value</name> &lt;= <name>screen</name>-&gt;<name>max_row</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><name>screen</name>-&gt;<name>cur_row</name> = <name>value</name></expr>;</expr_stmt>
+    <return>return <expr><name>value</name></expr>;</return>
+}</block></function>
+
+<function><type><name>int</name></type>
+<name>set_cur_col</name><parameter_list>(<param><decl><type><name>TScreen</name> *</type> <name>screen</name></decl></param>, <param><decl><type><name>int</name></type> <name>value</name></decl></param>)</parameter_list>
+<block>{
+    <expr_stmt><expr><call><name>TRACE</name><argument_list>(<argument><expr>("set_cur_col %d vs %d\n", <name>value</name>, <name>screen</name> ? <name>screen</name>-&gt;<name>max_col</name> : -1)</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+
+    <expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>screen</name> != 0</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>value</name> &gt;= 0</expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><call><name>assert</name><argument_list>(<argument><expr><name>value</name> &lt;= <name>screen</name>-&gt;<name>max_col</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+    <expr_stmt><expr><name>screen</name>-&gt;<name>cur_col</name> = <name>value</name></expr>;</expr_stmt>
+    <return>return <expr><name>value</name></expr>;</return>
+}</block></function>
+<cpp:endif>#<cpp:directive>endif</cpp:directive></cpp:endif> <comment type="block">/* OPT_TRACE */</comment>
+</unit>

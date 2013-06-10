@@ -6,171 +6,110 @@ Created on 17/06/2010
 '''
 
 import os
+import xlwt
 import csv
+import numpy
 import datetime 
-
-#RESULTS_HEADER = 
 
 class Statistics(object):
     '''
     Super class to handle project statistics
     '''
     list_directives = [
-                       'ifdef',
-                       'ifndef',
-                       'elifdef',
-                       'elifndef',
-                       'if',
-                       'elif',
-                       'else',
-                       'endif',
-#                      'condition',
-                       'debug',
-                       'mdebug',
-                       'enddebug',
+                       '#ifdef ',
+                       '#ifndef ',
+                       '#elifdef ',
+                       '#elifndef ',
+                       '#if ',
+                       '#elif ',
+                       '#else',
+                       '#endif',
+#                      '#condition ',
+                       '#debug ',
+                       '#mdebug ',
+                       '#enddebug',
 #                      '#define ',
 #                      '#undefine',
 #                      '#expand',
                         ]
     
+    list_extra_metrics = [
+                          'Coupling',
+                          ]
     
-    header = ['NoM',
-              'MwDi',
-              'MwoDi',
-              'NoDi',
-              'NoFE',
-              'NoDiAVGAll',
-              'NoDiAVG',
-              'NoDiSDAll',
-              'NoDiSD',
-              'M1',
-              'M>1',
-              'M>2',
-              'M>3',
-              'M>4',
-              'M>5',
-              'M>10',
-              'M>20',
-              'MwDe',
-              'MwoDe',
-              'NoDe',
-              'NoDeAVGAll',
-              'NoDeAVG',
-              'NoDeSDAll',
-              'NoDeSD',
-              ]
-    for value in sorted(list_directives):
-        if not value.__contains__('#endif') and not value.__contains__('#enddebug'):
-            header.append(value.split(' ')[0])
-    
-    def __init__(self, project_dir):
+    def __init__(self, project_dir, src_dir, work_dir, results_dir):
         self.project_dir = project_dir
-        self.work_dir = self.project_dir + '/_pl-stats'
-        self.xml_dir = self.work_dir + '/xmls'
-        self.project_results_dir = self.work_dir + '/results'
+        self.work_dir = src_dir
+        self.xml_dir = work_dir
+        self.project_results_dir = results_dir
         self.prefix_src = ''
         self.prefix_cpp = ''
     
-    def logErrors(self, filename, method_name, exception):
+    def getStatistics(self):
+        pass
+    
+    def logErrors(self, filename, exception):
         '''
-        Creates a log error structure
+        Cria um log de erro e copia o arquivo que deu erro para _pl-stat/error
         '''
         error_dir = self.work_dir + '/error'
         log_file = error_dir + '/log.txt'
         if not os.path.exists(error_dir):
-#            os.system('rm -rf %s' % (error_dir))
             os.mkdir(error_dir)
         if not os.path.exists(log_file):
             log_file = open(log_file, 'w')
         else:
             log_file = open(log_file, 'a')
-
         date_time = datetime.datetime.now()
         if not filename.__contains__('None'):
-            os.system("cp %s %s" % (self.work_dir + '/' + filename, error_dir))
-        log_file.write('Date and time: %s\nFilename: %s\nMethod name: %s\n\n' % (date_time, filename, method_name))
+            filename = filename + '.c'
+            os.system("mv %s %s" % (self.work_dir + '/' + filename, error_dir))
+        log_file.write('Date and time: %s\nFilename: %s\n\n' % (date_time, filename))
         log_file.write('%s\n\n' % (str(exception)))
         log_file.write('----------------------------------------------------\n\n')
-        log_file.close()
-
-
-    def getStats(self, function):
-        pass
-
-
-    def _getFunctionTags(self, document):
-        '''
-        Get <function> or <constructor> tag elements
-        '''
-        return [f for f in document.getiterator('*') if f.tag == self.prefix_src + 'constructor' or f.tag == self.prefix_src + 'function']
-
     
-    def _getMethodName(self, function):
+    def _getPackageName(self, document):
         '''
-        Get method name!
+        Retorna o nome do pacote do arquivo
         '''
-        return function.findtext(self.prefix_src + 'name')
+        pack_name = ''
+        package = document.find(self.prefix_src + 'package')
+        if package is not None:
+            for child in package.iterchildren():
+                pack_name += child.text + '.'
+                
+        return pack_name
     
+    def _getMethodName(self, file_name, pack_name, function):
+        '''
+        Retorna o nome do método
+        '''
+        return pack_name + file_name + function.findtext(self.prefix_src + 'name')
     
-    def _getMethodSignature(self, function):
+    def _checkMethodName(self, dict_methods, method_name, method_repeated):
         '''
-        Get method signature!
+        Verifica se já existe método com esse nome na lista
         '''
-        signature = ""
-        type = function.find(self.prefix_src + 'type')
-        for name in type.iter(self.prefix_src + 'name'):
-            signature += name.text + ' '
-        func_name = function.find(self.prefix_src + 'name')
-        signature += func_name.text
-
-        return signature
-    
-    
-    def _getFileName(self, function):
-        '''
-        Get package name!
-        '''
-        parent = function.getparent()
-        while parent.tag != self.prefix_src + 'unit':
-            parent = parent.getparent()
-
-        return parent.attrib['filename']
-    
-    
-    def _checkMethodName(self, method_name, dict_method, method_repeated):
-        '''
-        Verify if this method has already in method list
-        '''
-        if method_name in dict_method:
+        if dict_methods.__contains__(method_name):
             method_repeated += 1
             method_name += method_repeated.__str__()
             
         return [method_name, method_repeated]
     
+    def _getFunctionTags(self, document):
+        '''
+        Retorna uma lista de elementos de tag <function>
+        '''
+        return [f for f in document.getiterator('*') if f.tag == self.prefix_src + 'constructor' or f.tag == self.prefix_src + 'function']
     
-    def _getElementBlock(self, function):
+    def _getParamVarDeclared(self, function):
         '''
-        Get <block> element in function
-        '''
-        block = function.find(self.prefix_src + 'block')
-        # Handle THROWS clausule in method signature
-        if block is None:
-            expr_stmt = function.find(self.prefix_src + 'expr_stmt')
-            if expr_stmt is not None:
-                expr = expr_stmt.find(self.prefix_src + 'expr')
-                block = expr.find(self.prefix_src + 'block')
-        return block
-
-    
-    def _getMethodParams(self, function):
-        '''
-        Get variables which are function params
+        Retorna as variáveis passadas como parâmetro do método
         '''
         aux = ''
-        list_params_decl = []
+        dict_params_decl = {}
         
-        for param in function.iter(self.prefix_src + 'param'):
-            dict_param = {}
+        for param in function.iter(tag=self.prefix_src + 'param'):
             try:
                 names = [child for child in param.iter(self.prefix_src + 'name') if child.getparent().tag == self.prefix_src + 'decl']
                 for name in names:
@@ -179,494 +118,609 @@ class Statistics(object):
                     else:
                         subname = name.find(self.prefix_src + 'name')
                         aux = subname.text
-                    
-                    dict_param[aux] = ('', 'Mandatory')
-                    list_params_decl.append(dict_param)
+                    dict_params_decl[aux] = 'Mandatory'
                     
             except Exception as e:
-                print "Exception (_getMethodParams): %s" % (e.__str__())
+                print "Exception (_getParamVarDeclared): %s" % (e.__str__())
 
-        return list_params_decl
+        return dict_params_decl
     
-    
-    def _getVarsDeclared(self, function):
+    def _isEndDirective(self, directive):
         '''
-        Get vars has been declared in function
+        Verifica se a diretiva é um #endif ou #enddebug
         '''
-        list_vars_declared = []
-        stack_feature = []
-        
-        list_decl_stmt_elements = [decl_stmt for decl_stmt in function.iter(self.prefix_src + 'decl_stmt')]
-        block = self._getElementBlock(function)
-        
-        if block is not None:
-            for child in block.getiterator('*'):
-                try:
-                    if not list_decl_stmt_elements.__contains__(child):
-                        # Get current feature
-                        if self._isValidDirective(child):
-                            directive = child.find(self.prefix_cpp + 'directive')
-                            if not self._isEndDirective(directive):
-                                if self._isMiddleDirective(directive):
-                                    aux = stack_feature.pop()
-                                    tuple = (directive.text, '! ' + aux[1])
-                                else:
-                                    text = ''
-                                    expr = child.find(self.prefix_src + 'expr')
-                                    if expr is None:
-                                        for name in child.getiterator(self.prefix_src + 'name'):
-                                            if name.tail is not None:
-                                                text += name.text + name.tail
-                                            else:
-                                                text += name.text
-                                    else:
-                                        # Can have a method as feature name (ex: #ifdef m())
-                                        calls = expr.findall(self.prefix_src + 'call')
-                                        if len(calls) > 0:
-                                            for call in calls:
-                                                text += call.findtext(self.prefix_src + 'name')
-                                        elif expr.text is not None:
-                                            text = expr.text
-                                        else:
-                                            text = expr.findtext(self.prefix_src + 'name')
-                                    
-                                    tuple = (directive.text, text)
-                                stack_feature.append(tuple)
-                            else:
-                                if len(stack_feature) > 0:
-                                    stack_feature.pop()
-                    else:
-                        dict_vars = {}
-                        
-                        if len(stack_feature) > 0:
-                            current_feature = stack_feature[len(stack_feature) - 1]
-                        else:
-                            current_feature = ('', 'Mandatory')
-                        
-                        decl = child.find(self.prefix_src + 'decl')
-                        name = decl.find(self.prefix_src + 'name')
-                        # Can have a <block> tag as <decl> child
-                        if name is not None:
-                            if name.text is None:
-                                name = name.find(self.prefix_src + 'name')
-                            
-                            dict_vars[name.text] = current_feature
-                            list_vars_declared.append(dict_vars)
-                        
-                except Exception as e:
-                    exception = "Exception (_getVarsDeclared): %s" % (e.__str__())
-                    print exception
-                    self.logErrors(self._getFileName(function), self._getMethodName(function), exception)
-#        print dict_vars
-        return list_vars_declared
-    
-    
-    def _getVarsUsed(self, function):
-        '''
-        Get vars has been used in function (in <expr> tag)
-        '''
-        list_vars_used = []
-        stack_feature = []
-        
-        # Normalizes the list of <expr> elements
-        list_expr_elements = [expr for expr in function.iter(self.prefix_src + 'expr')]
-        for expr_element in list_expr_elements:
-            list_aux = [child for child in expr_element.iter(self.prefix_src + 'expr')]
-            if len(list_aux) > 1:
-                for element in list_aux[1:]:
-                    list_expr_elements.remove(element)
-                
-        block = self._getElementBlock(function)
-        
-        if block is not None:
-            for child in block.getiterator('*'):
-                try:
-                    if not list_expr_elements.__contains__(child):
-                        # Get current feature
-                        if self._isValidDirective(child):
-                            directive = child.find(self.prefix_cpp + 'directive')
-                            if not self._isEndDirective(directive):
-                                if self._isMiddleDirective(directive):
-                                    aux = stack_feature.pop()
-                                    tuple = (directive.text, '! ' + aux[1])
-                                else:
-                                    text = ''
-                                    expr = child.find(self.prefix_src + 'expr')
-                                    if expr is None:
-                                        for name in child.getiterator(self.prefix_src + 'name'):
-                                            if name.tail is not None:
-                                                text += name.text + name.tail
-                                            else:
-                                                text += name.text
-                                    else:
-                                        # Can have a method as feature name (ex: #ifdef m())
-                                        calls = expr.findall(self.prefix_src + 'call')
-                                        if len(calls) > 0:
-                                            for call in calls:
-                                                text += call.findtext(self.prefix_src + 'name')
-                                        elif expr.text is not None:
-                                            text = expr.text
-                                        else:
-                                            text = expr.findtext(self.prefix_src + 'name')
-                                    
-                                    tuple = (directive.text, text)
-                                stack_feature.append(tuple)
-                            else:
-                                if len(stack_feature) > 0:
-                                    stack_feature.pop()
-                    else:
-                        if len(stack_feature) > 0:
-                            current_feature = stack_feature[len(stack_feature) - 1]
-                        else:
-                            current_feature = ('', 'Mandatory')
-                        
-                        expr_name_elements = [name for name in child.iter(self.prefix_src + 'name')]
-                        # The <expr> tag can have something like: <expr>"a string here"</expr>, whitout <name>
-                        if len(expr_name_elements) > 0:
-                            var_names = [name.text for name in expr_name_elements]
-                            for var in var_names:
-                                dict_var = {}
-                                dict_var[var] = current_feature
-                                list_vars_used.append(dict_var)
-                            
-                except Exception as e:
-                    exception = "Exception (_getVarsUsed): %s" % (e.__str__())
-                    print exception
-                    self.logErrors(self._getFileName(function), self._getMethodName(function), exception)
-
-        return list_vars_used
-    
-    
-    def _isEndDirective(self, element):
-        '''
-        Check if element is an #endif or #enddebug
-        '''
-        dir_name = element.text.split(' ')
-        dir_name = dir_name[0].split('\t')
-        if dir_name[0] == 'endif' or dir_name[0] == 'enddebug':
+        # foi utilizado startswith pois a diretiva pode vir seguida de espaço em branco
+        if directive.startswith('endif') or directive.startswith('enddebug'):
             return True
         return False
     
-    def _isMiddleDirective(self, element):
+    def _isMiddleDirective(self, directive):
         '''
-        Check if element is an #else
+        Verifica se a diretiva é um #else
         '''
-        dir_name = element.text.split(' ')
-        dir_name = dir_name[0].split('\t')
-        if dir_name[0] == 'else':
+        # foi utilizado startswith pois a diretiva pode vir seguida de espaço em branco
+        if directive.startswith('else'):
             return True
         return False
     
-    def _isMiddleDeclDirective(self, element):
+    def _isMiddleDeclDirective(self, directive):
         '''
-        Check if element is an #elif, #elifdef or #elifndef
+        Verifica se a diretiva é um #elifdef ou #elifndef
         '''
-        dir_name = element.text.split(' ')
-        dir_name = dir_name[0].split('\t')
-        if dir_name[0] == 'elif' or dir_name[0] == 'elifdef' or dir_name[0] == 'elifndef':
-            return True
-        return False
-
-    
-    def _isValidDirective(self, element):
-        '''
-        Check if element tag is a valid directive
-        '''
-        if element.tag.startswith(self.prefix_cpp) and element.tag != self.prefix_cpp + 'directive' \
-            and element.tag != self.prefix_cpp + 'define' and element.tag != self.prefix_cpp + 'undef' \
-            and element.tag != self.prefix_cpp + 'file' and element.tag != self.prefix_cpp + 'pragma' \
-            and element.tag != self.prefix_cpp + 'error' and element.tag != self.prefix_cpp + 'line' \
-            and element.tag != self.prefix_cpp + 'include':
+        if directive == 'elif' or directive == 'elifdef' or directive == 'elifndef':
             return True
         return False
     
-    
-    def _getNumberOfDirectives(self, function):
+    def _getVarDeclared(self, list_vars_decl, dict_decl, stack_directive, decl_stmt):
         '''
-        Get the occurrence of <directive> in a <function>
+        Coloca no dicionário as variáveis envolvidas em uma declaração
         '''
-        dict_directives = {}
-        for directive in self.list_directives:
-            dict_directives[directive] = 0
+        vars = [child for child in decl_stmt.iter(self.prefix_src + 'name') if child.getparent().tag == self.prefix_src + 'decl']
+        
+        for var in vars:
+            if len(var.getchildren()) == 0:
+                aux = var.text
+            else:
+                subname = var.find(self.prefix_src + 'name')
+                aux = subname.text
+            list_vars_decl.append(aux)
             
-        for child in function.iter(self.prefix_cpp + 'directive'):
-            try:
-                dir_name = child.text.split(' ')
-                dir_name = dir_name[0].split('\t')
-                if dir_name[0] in dict_directives:
-                    dict_directives[dir_name[0]] += 1
-            except Exception as e:
-                exception = "Exception (_getNumberOfDirectives): %s" % (e.__str__())
-                print exception
-                self.logErrors(self._getMethodName(function), exception)
+        try:
+            if len(stack_directive) > 0:
+                for var in vars:
+                    dict_decl[var.text] = stack_directive.pop()
+                    stack_directive.append(dict_decl[var.text])
+            else:
+                for var in vars:
+                    dict_decl[var.text] = 'Mandatory'
 
-        return dict_directives
-    
-    
-    def _getNumberOfFeatures(self, function):
-        '''
-        Get the number of features in function
-        '''
-        list_features = []
-        block = self._getElementBlock(function)
+        except Exception as e:
+            print "Exception (_getVarDeclared): %s" % (e.__str__())
         
-        if block is not None:
-            for child in block.iter(self.prefix_cpp + 'directive'):
-                try:
-                    parent = child.getparent()
-                    if self._isValidDirective(parent) and not self._isEndDirective(child):
-                        aux = ''
-                        name = parent.findtext(self.prefix_src + 'name')
-                        if name is None:
-                            # Check if is an #else directive
-                            if self._isMiddleDirective(child):
-                                aux = list_features[len(list_features) - 1]
-                                aux = '! ' + aux
-                            else:
-                                expr = parent.find(self.prefix_src + 'expr')
-                                if expr is None:
-                                    for name in parent.getiterator(self.prefix_src + 'name'):
-                                        if name.tail is not None:
-                                            aux += name.text + name.tail
-                                        else:
-                                            aux += name.text
-                                else:
-                                    # Can have a method as feature name (ex: #ifdef m())
-                                    calls = expr.findall(self.prefix_src + 'call')
-                                    if len(calls) > 0:
-                                        for call in calls:
-                                            aux += call.findtext(self.prefix_src + 'name')
-                                    elif expr.text is not None:
-                                            text = expr.text
-                                    else:
-                                        aux = expr.findtext(self.prefix_src + 'name')
+        return [list_vars_decl, dict_decl, stack_directive]
+    
+    def _checkFeature(self, stack_directive):
+        '''
+        Retorna qual a feature atual 
+        '''
+        if len(stack_directive) > 0:
+            assign_feature = stack_directive.pop()
+            stack_directive.append(assign_feature)
+        else:
+            assign_feature = 'Mandatory'
+
+        return assign_feature
+    
+    def _getExprVars(self, expr_names, call):
+        '''
+        Retorna uma lista das variáveis declaradas em uma atribuição
+        '''
+        list_vars = []
+        aux = ''
+        for name in expr_names:
+            # pode-se ter: <name><name>...</name></name> sem name.text
+            if name.text is not None and not self._isBooleanNullVar(name):
+                if name.tail is not None and name.tail == '.':
+                    # checa se NÃO é uma classe e sim um objeto
+                    if name.text[0].islower():
+                        list_vars.append(name.text)
+                    aux += name.text + name.tail
+                else:
+                    aux += name.text
+                    list_vars.append(aux)
+                    aux = ''
+
+        # remove os 'this'
+        if list_vars.__contains__('this'):
+            list_vars.remove('this')
+
+        # remove o nome dos métodos da lista
+        if call is not None:
+            call_name = call.find(self.prefix_src + 'name')
+            if call_name is not None:
+                if call_name.text in list_vars:
+                    list_vars.remove(call_name.text)
+                else:
+                    names = call_name.findall(self.prefix_src + 'name')
+                    aux = ''
+                    for name in names:
+                        if name.tail == '.':
+                            aux += name.text + name.tail
                         else:
-                            aux = name
-
-                        list_features.append(aux)
-                except Exception as e:
-                    exception = "Exception (_getNumberOfFeatures): %s" % (e.__str__())
-                    print exception
-                    self.logErrors(self._getFileName(function), self._getMethodName(function), exception)
-                
-        return len(list(set(list_features)))
-
-
-    def _getDeclDependencies(self, function):
-        '''
-        Computes 'declaration <-> use' dependencies' type in a method
-        '''
-        list_dependencies = []
-        # Get function params
-        list_params = self._getMethodParams(function)
-        # Get vars declared in function
-        list_vars_declared = self._getVarsDeclared(function)
-        # Get vars used
-        list_vars_used = self._getVarsUsed(function)
-
-        for dict_var_param in list_params:
-            var_param = dict_var_param.keys()[0]
-            value_param = dict_var_param[var_param]
-            for dict_var_used in list_vars_used:
-                var_used = dict_var_used.keys()[0]
-                value_used = dict_var_used[var_used]
-                if var_used == var_param:
-                    if value_used[1] != value_param[1]:
-                        dict_dependency = {}
-                        dict_dependency[var_param] = [dict_var_param[var_param], dict_var_used[var_used]]
-                        list_dependencies.append(dict_dependency)
-    
-        for dict_var_declared in list_vars_declared:
-            var_declared = dict_var_declared.keys()[0]
-            value_declared = dict_var_declared[var_declared]
-            for dict_var_used in list_vars_used:
-                var_used = dict_var_used.keys()[0]
-                value_used = dict_var_used[var_used]
-                if var_used == var_declared:
-                    if value_used[1] != value_declared[1]:
-                        dict_dependency = {}
-                        dict_dependency[var_declared] = [dict_var_declared[var_declared], dict_var_used[var_used]]
-                        list_dependencies.append(dict_dependency)
-
-#        print len(list_dependencies)
-        return list_dependencies
-    
-    
-    def _getMethodLOC(self, method_fqdn):
-        '''
-        Get the Method LoC of function
-        '''
-        count = 0
-        next = ''
-        
-        file = method_fqdn.split('.')
-        filename = file[0]
-        method_name = file[1]
-        with open(os.path.join(self.xml_dir, filename + '.xml'), 'rb') as file_opened:
-            for line in file_opened:
-                try:
-                    # Check function name
-                    if line.__contains__('<name>%s</name>' % (method_name)) and line.__contains__('<parameter_list>'):
-                        next = line
-                        while not next.__contains__('<block>{'):
-                            next = file_opened.next()
-
-                        while not next.__contains__('</block></function>'):
-                            next = file_opened.next()
-                            if not next.__contains__('</block></function>'):
-                                next = next.strip()
-                                # Handle comment lines
-                                if next.startswith('<comment'):
-                                    while not next.__contains__('</comment>'):
-                                        next = file_opened.next()
-                                # Handle blank lines
-                                elif next != '':
-                                    count += 1
-
-                        break
-        
-                except Exception as e:
-                    count = 0
-                    exception = "Exception (_getMethodLOC): %s" % (e.__str__())
-                    print exception
-#                    self.logErrors(filename + '.c', method_name, exception)
+                            aux += name.text
                     
-#        print count
-        return count
-                    
-                    
-    def _isMethodSignature(self, line, method_signature, method_name):
+                    if aux in list_vars:
+                        list_vars.remove(aux)
+
+        return list_vars
+    
+    def _isBooleanNullVar(self, expr_name):
         '''
-        Check if there is a method signature in line
+        Verifica se uma tag <name> é do tipo boolean
         '''
-        if line.__contains__(method_signature):
+        if expr_name.text == 'true' or expr_name.text == 'false' \
+            or expr_name.text == 'True' or expr_name.text == 'False' \
+            or expr_name.text == 'null' or expr_name.text == 'NULL':
             return True
-        elif not line.__contains__(';') and not line.__contains__('=') and \
-                not line.__contains__('/*') and not line.__contains__('//') and not line.__contains__('*/') and \
-                line.split('(')[0].strip() == method_name:
-            return True
-        
         return False
     
-    
-    def _getMethodLOF(self, method_fqdn):
+    def _checkDeclCoupling(self, assign_feature, dict_decl, dict_param_decl, list_var_assign, count, list_var_coupling, list_feature_coupling):
         '''
-        Get the Method LoF of function
+        Checa o acoplamento do tipo declaração<->uso
         '''
-        count = 0
-        next = ''
-        
-        file = method_fqdn.split('.')
-        filename = file[0]
-        method_name = file[1]
-        with open(os.path.join(self.xml_dir, filename + '.xml'), 'rb') as file_opened:
-            for line in file_opened:
-                try:
-                    # Check function name
-                    if line.__contains__('<name>%s</name>' % (method_name)) and line.__contains__('<parameter_list>'):
-                        next = line
-                        while not next.__contains__('<block>{'):
-                            next = file_opened.next()
-
-                        while not next.__contains__('</block></function>'):
-                            next = file_opened.next()
-                            if not next.__contains__('</block></function>'):
-                                next = next.strip()
-                                # Handle directive occurrence
-                                if next.startswith('<cpp:') and not next.__contains__('<cpp:endif>') and \
-                                        not next.__contains__('<cpp:define>') and not next.__contains__('<cpp:undef>') and \
-                                        not next.__contains__('<cpp:file>') and not next.__contains__('<cpp:pragma>') and \
-                                        not next.__contains__('<cpp:error>') and not next.__contains__('<cpp:line>') and \
-                                        not next.__contains__('<cpp:include>'):
-                                    next = file_opened.next()
-                                    while not next.__contains__('<cpp:endif>'):
-                                        next = next.strip()
-                                        if next.__contains__('<cpp:else') or next.__contains__('<cpp:elif') or \
-                                                next.__contains__('<cpp:elifdef') or next.__contains__('<cpp:elifndef'):
-                                            next = file_opened.next()
-                                            next = next.strip()
-                                        # Handle comment lines
-                                        if next.startswith('<comment'):
-                                            while not next.__contains__('</comment>'):
-                                                next = file_opened.next()
-                                        elif next != '':
-                                            count += 1
-                                        next = file_opened.next()
-
-                        break
+        for var in list_var_assign:
+        # checa se a variável já foi declarada
+            if var in dict_decl or var in dict_param_decl:
+                if var in dict_decl:
+                    dict = dict_decl
+                else:
+                    dict = dict_param_decl
                     
-                except Exception as e:
-                    count = 0
-                    exception = "Exception (_getMethodLOF): %s" % (e.__str__())
-                    print exception
-#                    self.logErrors(filename + '.c', method_name, exception)
-#        print count
-        return count
+                if dict[var] != assign_feature:
+                    count += 1
+                    if not var in list_var_coupling:
+                        list_var_coupling.append(var)
+                    list_feature_coupling.append(dict[var] + '<->' + assign_feature)
+        
+        return count, list_var_coupling, list_feature_coupling
     
-    
-    def exportDataToCSV(self, dict_data):
+    def _checkAssignCoupling(self, assign_feature, dict_decl, list_var_assign, count, list_var_coupling, list_feature_coupling):
         '''
-        Export data to CSV
+        Checa o acoplamento do tipo atribuição<->uso
+        '''
+        for var in list_var_assign:
+            # checa se a variável já foi declarada
+            if var in dict_decl:
+                if dict_decl[var] != assign_feature:
+                    count += 1
+                    if not var in list_var_coupling:
+                        list_var_coupling.append(var)
+                    list_feature_coupling.append(dict_decl[var] + '<->' + assign_feature)
+            else:
+                # se não foi declarada, coloca na lista de variáveis declaradas
+                dict_decl[var] = assign_feature
+        
+        return count, dict_decl, list_var_coupling, list_feature_coupling
+    
+    def exportDirectivesToXLS(self, dict_methods, dict_features):
+        '''
+        Exporta o resultado das diretivas para o arquivo directives.csv
         '''
         os.chdir(self.project_results_dir)
-        file_writer = csv.writer(open('data.csv', 'wb'), delimiter=';', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+
+        # coloca as diretivas em ordem alfabética 
+        list_directives_sorted = sorted(Statistics.list_directives)
+#            list_cbr_keys_sorted = sorted(['Continue', 'Break', 'Return'])
         
-        # Header
+        wb = xlwt.Workbook(encoding="utf-8")
+        
+        row_limit = 65535
+        list_methods = dict_methods.keys()
+        total_methods = len(list_methods)
+        number_of_sheets = (total_methods/row_limit) + 1
+        
+        for x in range(number_of_sheets):
+            sheet = wb.add_sheet("directives%d" % (x+1))
+            
+            # cabeçalho
+            row_count = 0
+            col_count = 0
+            row = sheet.row(row_count)
+            row.write(col_count, 'Method FQDN')
+            for value in list_directives_sorted:
+                # não nos interessa para os valores da planilha
+                if not value.__contains__('#endif') and not value.__contains__('#enddebug'):
+                    col_count += 1
+                    row.write(col_count, value)
+            row.write(col_count+1, 'NoDi')
+            row.write(col_count+2, 'NoFE')
+            ######
+            
+            limit_min = x*(row_limit - 20)
+            if x == (number_of_sheets - 1):
+                limit_max = total_methods
+            else:
+                limit_max = (x+1)*(row_limit - 20)
+                    
+            for method_name in list_methods[limit_min:limit_max]:
+                try:
+                    dict = dict_methods[method_name]
+                    list_directive_values = []
+                    total_directives = 0
+    
+                    for directive in list_directives_sorted:
+                        # não nos interessa para os valores da planilha
+                        if not directive.__contains__('#endif') and not directive.__contains__('#enddebug'):
+                            total_directives += dict[directive]
+                            list_directive_values.append(dict[directive])
+    
+    #                writer.writerow([method_name] + list_directive_values + [total_directives] + [dict_features[method_name]] + list_cbr_values)
+                    
+                    col_count = 0
+                    row_count += 1
+                    row = sheet.row(row_count)
+                    row.write(col_count, method_name)
+                    for value in list_directive_values:
+                        col_count += 1
+                        row.write(col_count, value)
+                    row.write(col_count+1, total_directives)
+                    row.write(col_count+2, dict_features[method_name])
+                    
+                except Exception as e:
+                    exception = 'Exception (exportDirectivesToXLS): %s' % (e.__str__())
+                    print exception
+                    self.logErrors('None', exception)
+                
+            # escrita dos dados estatísticos finais
+            sheet_methods = limit_max - limit_min
+            
+            row = sheet.row(row_count+2)
+            row.write(0, 'Total of methods')
+            row.write(1, '%d' % (total_methods))
+            
+            row = sheet.row(row_count+3)
+            row.write(0, 'Methods with directives')
+            row.write(1, xlwt.Formula('COUNTIF(K2:K%d;">0")' % (sheet_methods+1)))
+            row.write(2, xlwt.Formula('(B%d/%d)*100' % (sheet_methods+4, sheet_methods)))
+            
+            row = sheet.row(row_count+4)
+            row.write(0, 'Methods without directives')
+            row.write(1, xlwt.Formula('COUNTIF(K2:K%d;"0")' % (sheet_methods+1)))
+            row.write(2, xlwt.Formula('(B%d/%d)*100' % (sheet_methods+5, sheet_methods)))
+            
+            row = sheet.row(row_count+6)
+            row.write(0, 'Average of NoDi per method (all methods)')
+            row.write(1, xlwt.Formula('AVERAGE(K2:K%d)' % (sheet_methods+1)))
+            
+            row = sheet.row(row_count+7)
+            row.write(0, 'Average of NoDi per method (only methods with directives)')
+            row.write(1, xlwt.Formula('SUMIF(K2:K%d, ">0")/COUNTIF(K2:K%d, ">0")' % (sheet_methods+1, sheet_methods+1)))
+
+            row = sheet.row(row_count+9)
+            row.write(0, 'Standard Deviation (all methods)')
+            row.write(1, xlwt.Formula('STDEV(K2:K%d)' % (sheet_methods+1)))
+            
+            row = sheet.row(row_count+10)
+            row.write(0, 'Standard Deviation (only methods with directives)')
+#            row.write(1, xlwt.Formula('(  /(SUM(M2:M%s)-1))' % (total_methods+1, total_methods+1)))
+
+            row = sheet.row(row_count+12)
+            row.write(0, 'Methods with one directive')
+            row.write(1, xlwt.Formula('COUNTIF(K2:K%d;"1")' % (sheet_methods+1)))
+            row.write(2, xlwt.Formula('(B%d/%d)*100' % (sheet_methods+13, sheet_methods)))
+            
+            row = sheet.row(row_count+13)
+            row.write(0, 'Methods with more than one directive')
+            row.write(1, xlwt.Formula('COUNTIF(K2:K%d;">1")' % (sheet_methods+1)))
+            row.write(2, xlwt.Formula('(B%d/%d)*100' % (sheet_methods+14, sheet_methods)))
+            
+            row = sheet.row(row_count+14)
+            row.write(0, 'Methods with more than two directives')
+            row.write(1, xlwt.Formula('COUNTIF(K2:K%d;">2")' % (sheet_methods+1)))
+            row.write(2, xlwt.Formula('(B%d/%d)*100' % (sheet_methods+15, sheet_methods)))
+            
+            row = sheet.row(row_count+15)
+            row.write(0, 'Methods with more than three directives')
+            row.write(1, xlwt.Formula('COUNTIF(K2:K%d;">3")' % (sheet_methods+1)))
+            row.write(2, xlwt.Formula('(B%d/%d)*100' % (sheet_methods+16, sheet_methods)))
+            
+            row = sheet.row(row_count+16)
+            row.write(0, 'Methods with more than four directives')
+            row.write(1, xlwt.Formula('COUNTIF(K2:K%d;">4")' % (sheet_methods+1)))
+            row.write(2, xlwt.Formula('(B%d/%d)*100' % (sheet_methods+17, sheet_methods)))
+            
+            row = sheet.row(row_count+17)
+            row.write(0, 'Methods with more than five directives')
+            row.write(1, xlwt.Formula('COUNTIF(K2:K%d;">5")' % (sheet_methods+1)))
+            row.write(2, xlwt.Formula('(B%d/%d)*100' % (sheet_methods+18, sheet_methods)))
+            
+            row = sheet.row(row_count+18)
+            row.write(0, 'Methods with more than ten directives')
+            row.write(1, xlwt.Formula('COUNTIF(K2:K%d;">10")' % (sheet_methods+1)))
+            row.write(2, xlwt.Formula('(B%d/%d)*100' % (sheet_methods+19, sheet_methods)))
+            
+            row = sheet.row(row_count+19)
+            row.write(0, 'Methods with more than twelve directives')
+            row.write(1, xlwt.Formula('COUNTIF(K2:K%d;">20")' % (sheet_methods+1)))
+            row.write(2, xlwt.Formula('(B%d/%d)*100' % (sheet_methods+20, sheet_methods)))
+                        
+        wb.save('directives.xls')
+        
+        
+    def exportDependenciesToXLS(self, dict_decl_coupling, dict_assign_coupling):
+        '''
+        Exporta o resultado dos acoplamentos para o arquivo dependencies.csv
+        '''
+        os.chdir(self.project_results_dir)
+        
+        wb = xlwt.Workbook(encoding="utf-8")
+        
+        row_limit = 65535
+        list_methods = dict_decl_coupling.keys()
+        total_methods = len(list_methods)
+        number_of_sheets = (total_methods/row_limit) + 1
+        
+        for x in range(number_of_sheets):
+            sheet = wb.add_sheet('dependencies%d' % (x+1))
+            
+            # cabeçalho
+            row_count = 0
+            col_count = 0
+            row = sheet.row(row_count)
+            row.write(col_count, 'Method FQDN')
+            row.write(col_count+1, 'NoDDe')
+            row.write(col_count+2, 'Vars')
+            row.write(col_count+3, 'Features')
+            row.write(col_count+4, 'NoADe')
+            row.write(col_count+5, 'Vars')
+            row.write(col_count+6, 'Features')
+            row.write(col_count+7, 'Has dependency?')
+            ######
+            
+            limit_min = x*(row_limit - 20)
+            if x == (number_of_sheets - 1):
+                limit_max = total_methods
+            else:
+                limit_max = (x+1)*(row_limit - 20)
+            
+            for method_name in list_methods[limit_min:limit_max]:
+                try:
+                    dict_decl = dict_decl_coupling[method_name]
+                    list_decl_values = []
+                    dict_assign = dict_assign_coupling[method_name]
+                    list_assign_values = []
+                    
+                    for value in dict_decl:
+                        list_decl_values.append(dict_decl[value])
+                    
+                    for value in dict_assign:
+                        list_assign_values.append(dict_assign[value])
+                        
+    #                writer.writerow([method] + list_decl_values)
+
+                    col_count = 0
+                    row_count += 1
+                    row = sheet.row(row_count)
+                    row.write(col_count, method_name)
+                    for value_list in list_decl_values:
+                        col_count += 1
+                        if type(value_list).__name__ != 'list':
+                            row.write(col_count, value_list)
+                        else:
+                            value = ", ".join(value_list)
+                            # handle strings with more than 65535 characters (features column in the sheet)
+                            if len(value) >= 65535:
+                                value = value[0:65535]
+                            row.write(col_count, value)
+                            
+                    for value_list in list_assign_values:
+                        col_count +=1
+                        if type(value_list).__name__ != 'list':
+                            row.write(col_count, value_list)
+                        else:
+                            value = ", ".join(value_list)
+                            # handle strings with more than 65535 characters (features column in the sheet)
+                            if len(value) >= 65535:
+                                value = value[0:65535]
+                            row.write(col_count, value)
+                    
+                    # marca os métodos que tem algum tipo de dependência
+                    row.write(col_count+1, xlwt.Formula('IF(OR(B%d>0;E%d>0);1;0)' % (row_count+1, row_count+1)))
+                    
+                except Exception as e:
+                    exception =  'Exception (exportDependenciesToXLS): %s' % (e.__str__())
+                    print exception
+                    self.logErrors('None', exception)
+                
+            # escrita dos dados estatísticos finais
+            sheet_methods = limit_max - limit_min
+            
+            row = sheet.row(row_count+2)
+            row.write(0, 'Número de métodos com dependência')
+            row.write(1, xlwt.Formula('COUNTIF(H2:H%d, ">0"))' % (sheet_methods+1)))
+
+            wb.save('dependencies.xls')
+
+
+    def exportDirectivesDataToCSV(self, dict_methods, dict_features):
+        '''
+        Export directives data to csv file
+        '''
+        os.chdir(self.project_results_dir)
+
+        # coloca as diretivas em ordem alfabética 
+        list_directives_sorted = sorted(Statistics.list_directives)
+        
+        file_writer = csv.writer(open('directives_data.csv', 'wb'), delimiter=';', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+        
+        # cabeçalho
         row = []
         row.append("Method_FQDN")
-        row.append('MLoC')
-        row.append('MLoF')
+        for value in list_directives_sorted:
+            # não nos interessa para os valores da planilha
+            if not value.__contains__('#endif') and not value.__contains__('#enddebug'):
+                row.append(value.split(' ')[0])
         row.append("NoDi")
-        for directive in sorted(Statistics.list_directives):
-            if not directive.__contains__('endif') and not directive.__contains__('enddebug'):
-                row.append('#' + directive)
         row.append("NoFE")
-        row.append("NoDe")
-        for directive in sorted(Statistics.list_directives):
-            if not directive.__contains__('endif') and not directive.__contains__('enddebug'):
-                row.append('#' + directive)
-                
         file_writer.writerow(row)
         ######
         
-        for file in sorted(dict_data):
-            dict_method = dict_data[file]
-            for method in sorted(dict_method):
+        for method_name in dict_methods.keys():
+            try:
                 row = []
-                list_nodi_aux = []
-                list_node_aux = []
-                dict_aux = {}
-                for directive in sorted(Statistics.list_directives):
-                    if not directive.__contains__('endif') and not directive.__contains__('enddebug'):
-                        dict_aux[directive] = 0
-                # Set method name
-                method_fqdn = file + '.' + method
-                row.append(method_fqdn)
-                dict_metric = dict_method[method]
-                # Set NoDi metrics
-                nodi = dict_metric['NoDi']
-                # Set MLoC metric
-                row.append(dict_metric['MLoC'])
-                # Set MLoF metric
-                row.append(dict_metric['MLoF'])
-                for value in sorted(nodi):
-                    if not value.__contains__('endif') and not value.__contains__('enddebug'):
-                        list_nodi_aux.append(nodi[value])
-                row.append(sum(list_nodi_aux))
-                # Set NoFE metric
-                row += list_nodi_aux
-                row.append(dict_metric['NoFE'])
-                # Set NoDe metrics
-                list_node = dict_metric['NoDe']
-                row.append(len(list_node))
-                for dict_node_aux in list_node:
-                    for key, list_value in dict_node_aux.items():
-                        for tuple in list_value:
-                            if tuple[0] != '':
-#                                print tuple
-                                dict_aux[tuple[0]] += 1
-                for key in sorted(dict_aux):
-                    list_node_aux.append(dict_aux[key])
-                row += list_node_aux
+                row.append(method_name)
+                dict = dict_methods[method_name]
+                total_directives = 0
+
+                for directive in list_directives_sorted:
+                    # não nos interessa para os valores da planilha
+                    if not directive.__contains__('#endif') and not directive.__contains__('#enddebug'):
+                        total_directives += dict[directive]
+                        row.append(dict[directive])
+                
+                row.append(total_directives)
+                row.append(dict_features[method_name])
+                file_writer.writerow(row)
+                
+            except Exception as e:
+                exception = 'Exception (exportDirectivesToXLS): %s' % (e.__str__())
+                print exception
+                self.logErrors('None', exception)
+    
+    
+    def exportDirectivesResultsToCSV(self, dict_methods, dict_features):
+        '''
+        Export directives results to directives_result.csv file 
+        '''
+        os.chdir(self.project_results_dir)
+        
+        file_writer = csv.writer(open('directives_result.csv', 'wb'), delimiter=';', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+        
+        # cabeçalho
+        row = []
+        row.append("ToM")
+        row.append("MwD")
+        row.append("MwoD")
+        row.append("NoDiAVGAll")
+        row.append("NoDiAVG")
+        row.append("SDAll")
+        row.append("SD")
+        row.append("M1")
+        row.append("Mm1")
+        row.append("Mm2")
+        row.append("Mm3")
+        row.append("Mm4")
+        row.append("Mm5")
+        row.append("Mm10")
+        row.append("Mm20")
+        
+        file_writer.writerow(row)
+        ######
+        
+        mwd = 0
+        mwod = 0
+        nodi = []
+        nodiall = []
+        m1 = 0
+        mm1 = 0
+        mm2 = 0
+        mm3 = 0
+        mm4 = 0
+        mm5 = 0
+        mm10 = 0
+        mm20 = 0
+        row = []
+        header = True
+        
+        file_reader = csv.reader(open('directives_data.csv', 'rb'), delimiter=';', quotechar='|')
+        
+        for reader in file_reader:
+            if header:
+                header = False
+            else:
+                if int(reader[10]) > 0:
+                    mwd += 1
+                    nodi.append(int(reader[10]))
+                else:
+                    mwod += 1
+                
+                nodiall.append(int(reader[10]))
+                
+                if int(reader[10]) == 1:
+                    m1 += 1
+                if int(reader[10]) > 1:
+                    mm1 += 1
+                if int(reader[10]) > 2:
+                    mm2 += 1
+                if int(reader[10]) >3:
+                    mm3 += 1
+                if int(reader[10]) > 4:
+                    mm4 += 1
+                if int(reader[10]) > 5:
+                    mm5 += 1
+                if int(reader[10]) > 10:
+                    mm10 += 1
+                if int(reader[10]) > 20:
+                    mm20 += 1
+                
+        tom = file_reader.line_num - 1
+        nodiavgall = numpy.average(nodiall)
+        nodiavg = numpy.average(nodi)
+        sdall = numpy.std(nodiall)
+        sd = numpy.std(nodi)
+        
+        row.append(tom)
+        row.append(mwd)
+        row.append(mwod)
+        row.append(nodiavgall)
+        row.append(nodiavg)
+        row.append(sdall)
+        row.append(sd)
+        row.append(m1)
+        row.append(mm1)
+        row.append(mm2)
+        row.append(mm3)
+        row.append(mm4)
+        row.append(mm5)
+        row.append(mm10)
+        row.append(mm20)
+        
+        file_writer.writerow(row)
+
+
+    def exportDependenciesToCSV(self, dict_decl_coupling, dict_assign_coupling):
+        '''
+        Export dependencies results to .csv file
+        '''
+        os.chdir(self.project_results_dir)
+        
+        file_writer = csv.writer(open('dependencies.csv', 'wb'), delimiter=';', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+        
+        # cabeçalho
+        row = []
+        row.append("Method_FQDN")
+        row.append("Declared_vars")
+        row.append("NoDDe")
+        row.append("DDe_vars")
+        row.append("DDe_features")
+        row.append("NoADe")
+        row.append("ADe_vars")
+        row.append("ADe_features")
+        row.append("Has_dependencies")
+        
+        file_writer.writerow(row)
+        ######
+        
+        list_methods = dict_decl_coupling.keys()
+        
+        for method_name in list_methods:
+            try:
+                row = []
+                has_dependencies = False
+                dict_decl = dict_decl_coupling[method_name]
+                dict_assign = dict_assign_coupling[method_name]
+                
+                row.append(method_name)
+                row.append(", ".join(dict_decl['declared']))
+                row.append(dict_decl['coupling'])
+                row.append(", ".join(dict_decl['vars']))
+                row.append(", ".join(dict_decl['features']))
+                row.append(dict_assign['coupling'])
+                row.append(", ".join(dict_assign['vars']))
+                row.append(", ".join(dict_assign['features']))
+                if dict_decl['coupling'] > 0 or dict_assign['coupling'] > 0:
+                    has_dependencies = True
+                                
+                # marca os métodos que tem algum tipo de dependência
+#                row.write(col_count+1, xlwt.Formula('IF(OR(B%d>0;E%d>0);1;0)' % (row_count+1, row_count+1)))
+                if has_dependencies:
+                    row.append(1)
+                else:
+                    row.append(0)
                 
                 file_writer.writerow(row)
+                
+            except Exception as e:
+                exception =  'Exception (exportDependenciesToXLS): %s' % (e.__str__())
+                print exception
+                self.logErrors('None', exception)

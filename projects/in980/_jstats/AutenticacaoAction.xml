@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit language="Java" dir="" filename="AutenticacaoAction.java"><package>package <name>in980</name>.<name>rgms</name>.<name>presentation</name>.<name>actions</name>;</package>
+
+<import>import <name>in980</name>.<name>rgms</name>.<name>domain</name>.<name>Membro</name>;</import>
+<import>import <name>in980</name>.<name>rgms</name>.<name>domain</name>.<name>Usuario</name>;</import>
+<import>import <name>in980</name>.<name>rgms</name>.<name>persistence</name>.<name>MembroDAO</name>;</import>
+<import>import <name>in980</name>.<name>rgms</name>.<name>persistence</name>.<name>UsuarioDAO</name>;</import>
+
+<import>import <name>org</name>.<name>apache</name>.<name>struts2</name>.<name>convention</name>.<name>annotation</name>.<name>Action</name>;</import>
+<import>import <name>org</name>.<name>apache</name>.<name>struts2</name>.<name>convention</name>.<name>annotation</name>.<name>Result</name>;</import>
+
+<import>import <name>com</name>.<name>opensymphony</name>.<name>xwork2</name>.<name>ActionContext</name>;</import>
+
+<class><specifier>public</specifier> class <name>AutenticacaoAction</name> <block>{
+	
+	<decl_stmt><decl><type><specifier>private</specifier> <name>Usuario</name></type> <name>usuario</name></decl>;</decl_stmt>
+	<decl_stmt><decl><type><specifier>private</specifier> <name>String</name></type> <name>msg</name></decl>;</decl_stmt>
+	
+
+	@<expr_stmt><expr><call><name>Action</name><argument_list>(<argument><expr><name>value</name> = "autentica"</expr></argument>, <argument><expr><name>results</name> = <block>{ 
+			@<expr><call><name>Result</name><argument_list>(<argument><expr><name>name</name>="valido"</expr></argument>, <argument><expr><name>location</name>="/index.jsp"</expr></argument>)</argument_list></call></expr>,
+		    @<expr><call><name>Result</name><argument_list>(<argument><expr><name>name</name>="invalido"</expr></argument>, <argument><expr><name>location</name>="/login.jsp"</expr></argument>)</argument_list></call></expr> 
+			}</block></expr></argument>
+	)</argument_list></call>
+	public <name>String</name> <call><name>login</name><argument_list>()</argument_list></call> <block>{
+		<try>try <block>{
+			<expr_stmt><expr><name>usuario</name> = new <call><name>UsuarioDAO</name><argument_list>()</argument_list></call>.<call><name>checaLogin</name><argument_list>(<argument><expr><name>usuario</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+			<if>if <condition>(<expr><name>usuario</name> != <name>null</name></expr>)</condition><then> <block>{
+			    <expr_stmt><expr><call><name><name>ActionContext</name>.<name>getContext</name></name><argument_list>()</argument_list></call>.<call><name>getSession</name><argument_list>()</argument_list></call>.<call><name>put</name><argument_list>(<argument><expr>"usuarioAutenticado"</expr></argument>, <argument><expr><name>usuario</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+			    <decl_stmt><decl><type><name>Membro</name></type> <name>membro</name> =<init> <expr>new <call><name>Membro</name><argument_list>()</argument_list></call></expr></init></decl>;</decl_stmt> 
+			    <expr_stmt><expr><call><name><name>membro</name>.<name>setUsuario</name></name><argument_list>(<argument><expr><name>usuario</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+			    <expr_stmt><expr><name>membro</name> = new <call><name>MembroDAO</name><argument_list>()</argument_list></call>.<call><name>buscaPeloUsuario</name><argument_list>(<argument><expr><name>usuario</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+			    <if>if<condition>(<expr><name>membro</name> != <name>null</name></expr>)</condition><then><block>{
+			    	<expr_stmt><expr><call><name><name>ActionContext</name>.<name>getContext</name></name><argument_list>()</argument_list></call>.<call><name>getSession</name><argument_list>()</argument_list></call>.<call><name>put</name><argument_list>(<argument><expr>"membroAutenticado"</expr></argument>, <argument><expr><name>membro</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+			    <expr_stmt/></block></then></if></block></then></if></block></try>}</block></expr></expr_stmt>
+			    <return>return <expr>"valido"</expr>;</return>
+			}</block></class>
+		} <catch>catch (<param><decl><type><name>Exception</name></type> <name>e</name></decl></param>) <block>{
+			<expr_stmt><expr><call><name><name>e</name>.<name>printStackTrace</name></name><argument_list>()</argument_list></call></expr>;</expr_stmt>
+			<expr_stmt><expr><call><name>setMsg</name><argument_list>(<argument><expr>"Erro ao Logar o usuario: " +<call><name><name>e</name>.<name>getMessage</name></name><argument_list>()</argument_list></call></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+		}</block></catch>
+		<return>return <expr>"invalido"</expr>;</return>
+		
+	}
+	
+	<function><type><specifier>public</specifier> <name>Usuario</name></type> <name>getUsuario</name><parameter_list>()</parameter_list> <block>{
+		<return>return <expr><name>usuario</name></expr>;</return>
+	}</block></function>
+	
+	<function><type><specifier>public</specifier> <name>void</name></type> <name>setUsuario</name><parameter_list>(<param><decl><type><name>Usuario</name></type> <name>usuario</name></decl></param>)</parameter_list> <block>{
+		<expr_stmt><expr><name>this</name>.<name>usuario</name> = <name>usuario</name></expr>;</expr_stmt>
+	}</block></function>
+	
+
+	
+	<function><type><specifier>public</specifier> <name>String</name></type> <name>getMsg</name><parameter_list>()</parameter_list> <block>{
+		<return>return <expr><name>msg</name></expr>;</return>
+	}</block></function>
+	
+	<function><type><specifier>public</specifier> <name>void</name></type> <name>setMsg</name><parameter_list>(<param><decl><type><name>String</name></type> <name>msg</name></decl></param>)</parameter_list> <block>{
+		<expr_stmt><expr><name>this</name>.<name>msg</name> = <name>msg</name></expr>;</expr_stmt>
+	}</block></function>
+
+}
+</unit>
